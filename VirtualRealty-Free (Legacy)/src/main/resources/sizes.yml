@@ -1,0 +1,22 @@
+plots-sizes:
+  SMALL:
+    floorMaterial: GRASS
+    floorData: 0
+    size:
+      length: 10
+      width: 10
+      height: 10
+  MEDIUM:
+    floorMaterial: GRASS
+    floorData: 0
+    size:
+      length: 25
+      width: 25
+      height: 25
+  LARGE:
+    floorMaterial: GRASS
+    floorData: 0
+    size:
+      length: 50
+      width: 50
+      height: 50

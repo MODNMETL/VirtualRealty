@@ -1,0 +1,10 @@
+#Test config
+data-storage: H2
+mysql-settings:
+  host: 127.0.0.1
+  port: 3306
+  database-name: virtualrealty
+  database-username: username
+  database-password: pass123
+  useSSL: false
+  autoReconnect: true
