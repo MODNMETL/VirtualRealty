@@ -23,7 +23,6 @@ import java.util.ArrayList;
 
 public final class VirtualRealty extends JavaPlugin {
 
-    private static final String PLUGIN_VERSION = "V1.2.1_SNAPSHOT";
     private static VirtualRealty instance;
     public static final String PREFIX = "§a§lVR §8§l» §7";
     public static ArrayList<BukkitTask> tasks = new ArrayList<>();
@@ -40,7 +39,6 @@ public final class VirtualRealty extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
         instance = this;
-        //this.getServer().getConsoleSender().sendMessage("");
         setCompatibleVersions();
         if (!checkCompatibleVersion(Bukkit.getBukkitVersion())) {
             closedDueToIncompatibleVersion = true;
