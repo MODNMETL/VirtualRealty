@@ -1,0 +1,11 @@
+name: VirtualRealty
+version: ${project.version}
+main: me.plytki.virtualrealty.VirtualRealty
+prefix: Virtual Realty
+authors: [ plytki ]
+description: Virtual Realty Plugin
+commands:
+  virtualrealty:
+    aliases: [vrplot, virtualr]
+  plot:
+    aliases: [p]
