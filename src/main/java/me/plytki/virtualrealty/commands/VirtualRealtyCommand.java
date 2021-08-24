@@ -523,6 +523,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
 //                    text1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§7§oClick to teleport to the cords!")}));
 //                    text1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tppos " + plot.getBottomLeftCorner().getBlockX() + " " + plot.getBottomLeftCorner().getBlockY() + " " + plot.getBottomLeftCorner().getBlockZ()));
 //                    BaseComponent text12 = new TextComponent(" §7Pos 1 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f");
+//                    p.spigot().sendMessage(text12, text1);
                     p.sendMessage(" §7Pos 1 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f" + plot.getBottomLeftCorner().toString());
 //                    BaseComponent text2 = new TextComponent(plot.getBottomLeftCorner().toString());
 //                    text2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§7§oClick to teleport to the cords!")}));
