@@ -6,7 +6,7 @@
 
     <groupId>me.plytki</groupId>
     <artifactId>VirtualRealty-LEGACY</artifactId>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.2</version>
     <packaging>jar</packaging>
 
     <name>VirtualRealty</name>
