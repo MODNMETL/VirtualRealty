@@ -61,7 +61,6 @@ public class Cuboid {
 
 
     public List<Block> blockList() {
-        //long time = System.currentTimeMillis();
         ArrayList<Block> bL = new ArrayList<>((xMax - xMin) * (yMax - yMin) * (zMax - zMin));
         for(int x = this.xMin; x <= this.xMax; ++x) {
             for(int y = this.yMin; y <= this.yMax; ++y) {
@@ -71,16 +70,15 @@ public class Cuboid {
                 }
             }
         }
-        //System.out.println("blockList() time " + (System.currentTimeMillis() - time));
         return bL;
     }
 
     public Location getCenter() {
-        return new Location(this.world, (this.xMax - this.xMin) / 2 + this.xMin, (this.yMax - this.yMin) / 2 + this.yMin, (this.zMax - this.zMin) / 2 + this.zMin);
+        return new Location(this.world, (this.xMax - this.xMin) / 2 + this.xMin + 1, (this.yMax - this.yMin) / 2 + this.yMin, (this.zMax - this.zMin) / 2 + this.zMin + 1);
     }
 
     public BlockVector3 getCenterVector() {
-        return BlockVector3.at((this.xMax - this.xMin) / 2 + this.xMin, (this.yMax - this.yMin) / 2 + this.yMin, (this.zMax - this.zMin) / 2 + this.zMin);
+        return BlockVector3.at((this.xMax - this.xMin) / 2 + this.xMin + 1, (this.yMax - this.yMin) / 2 + this.yMin, (this.zMax - this.zMin) / 2 + this.zMin + 1);
     }
 
     public double getDistance() {
