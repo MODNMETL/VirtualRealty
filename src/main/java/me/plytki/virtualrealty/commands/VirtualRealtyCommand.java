@@ -120,25 +120,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             }
                         }
                     }
-                    sender.sendMessage(" §7Assigned By §8§l‣ §a" + assignedBy);
-                    sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTimeFormatter.format(localDateTime));
-                    sender.sendMessage(" §7Size §8§l‣ §f" + plot.getPlotSize());
-                    sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
-                    sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
-                    sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
-                    sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterial().name());
-//                    BaseComponent text1 = new TextComponent(plot.getBottomLeftCorner().toString());
-//                    text1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§7§oClick to teleport to the cords!")}));
-//                    text1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tppos " + plot.getBottomLeftCorner().getBlockX() + " " + plot.getBottomLeftCorner().getBlockY() + " " + plot.getBottomLeftCorner().getBlockZ()));
-                    //BaseComponent text12 = new TextComponent(" §7Pos 1 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f");
-
-                    p.sendMessage(" §7Pos 1 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f" + plot.getBottomLeftCorner().toString());
-//                    BaseComponent text2 = new TextComponent(plot.getBottomLeftCorner().toString());
-//                    text2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§7§oClick to teleport to the cords!")}));
-//                    text2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tppos " + plot.getTopRightCorner().getBlockX() + " " + plot.getTopRightCorner().getBlockY() + " " + plot.getTopRightCorner().getBlockZ()));
-                    //BaseComponent text22 = new TextComponent(" §7Pos 2 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f");
-                    p.sendMessage(" §7Pos 2 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f" + plot.getTopRightCorner().toString());
-                    sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());
+                    printInfo(sender, assignedBy, dateTimeFormatter.format(localDateTime), plot);
                     break;
                 }
                 case "LIST": {
@@ -150,9 +132,8 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     sender.sendMessage(" ");
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
                     sender.sendMessage(" ");
-                    //sender.sendMessage("§7|   §a§l§oID   §7|    §a§l§oOwned By   §7|   §a§l§oOwned Until  §7|   §a§l§oSize   §7|   §a§l§oCreated At   §7|");
                     sender.sendMessage("§7§m                                                                                ");
-                    sender.sendMessage(" §7|  §a§l§oID  §7|   §a§l§oOwned By §7|  §a§l§oOwned Until §7|  §a§l§oSize §7|  §a§l§oPlot Center  §7|");
+                    sender.sendMessage(" §7|  §a§l§oID§7  |   §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
                     for (Plot plot : PlotManager.plots) {
                         LocalDateTime localDateTime = plot.getOwnedUntilDate();
                         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -166,7 +147,14 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         for (int i = size.length(); i < 6; i++) {
                             size.append(" ");
                         }
-                        sender.sendMessage(" §f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8   §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
+                        BaseComponent textComponent = new TextComponent(" §f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8   §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
+                        textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
+                        textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
+                        if (sender instanceof Player) {
+                            p.sendMessage(textComponent);
+                        } else {
+                            sender.sendMessage(textComponent.toLegacyText());
+                        }
                     }
                     sender.sendMessage("§7§m                                                                                ");
                     break;
@@ -512,25 +500,33 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             }
                         }
                     }
-                    sender.sendMessage(" §7Assigned By §8§l‣ §a" + assignedBy);
-                    sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTimeFormatter.format(localDateTime));
-                    sender.sendMessage(" §7Size §8§l‣ §f" + plot.getPlotSize());
-                    sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
-                    sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
-                    sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
-                    sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterial().name());
-//                    BaseComponent text1 = new TextComponent(plot.getBottomLeftCorner().toString());
-//                    text1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§7§oClick to teleport to the cords!")}));
-//                    text1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tppos " + plot.getBottomLeftCorner().getBlockX() + " " + plot.getBottomLeftCorner().getBlockY() + " " + plot.getBottomLeftCorner().getBlockZ()));
-//                    BaseComponent text12 = new TextComponent(" §7Pos 1 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f");
-//                    p.spigot().sendMessage(text12, text1);
-                    p.sendMessage(" §7Pos 1 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f" + plot.getBottomLeftCorner().toString());
-//                    BaseComponent text2 = new TextComponent(plot.getBottomLeftCorner().toString());
-//                    text2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§7§oClick to teleport to the cords!")}));
-//                    text2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tppos " + plot.getTopRightCorner().getBlockX() + " " + plot.getTopRightCorner().getBlockY() + " " + plot.getTopRightCorner().getBlockZ()));
-//                    BaseComponent text22 = new TextComponent(" §7Pos 2 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f");
-                    p.sendMessage(" §7Pos 2 §8| §7X §8| §7Y §8| §7Z §8| §8§l‣ §f" + plot.getTopRightCorner().toString());
-                    sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());
+                    printInfo(sender, assignedBy, dateTimeFormatter.format(localDateTime), plot);
+                    break;
+                }
+                case "TP": {
+                    if (!Permissions.hasPermission(sender, commandPermission, "tp")) return false;
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(VirtualRealty.PREFIX + "§cCommand only for players!");
+                        return false;
+                    }
+                    if (args.length == 2) {
+                        int plotID;
+                        try {
+                            plotID = Integer.parseInt(args[1]);
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                            return false;
+                        }
+                        Plot plot = PlotManager.getPlot(plotID);
+                        if (plot == null) {
+                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                            return false;
+                        }
+                        Location loc = new Location(plot.getCreatedLocation().getWorld(), plot.getCenter().getBlockX(), plot.getCenter().getBlockY() + 1, plot.getCenter().getBlockZ());
+                        loc.setY(loc.getWorld().getHighestBlockAt(loc.getBlockX(), loc.getBlockZ()).getY() + 1);
+                        p.teleport(loc);
+                        sender.sendMessage(VirtualRealty.PREFIX + "§aYou have been teleported to the plot!");
+                    }
                     break;
                 }
                 default: {
@@ -540,6 +536,19 @@ public class VirtualRealtyCommand implements CommandExecutor {
             }
         }
         return false;
+    }
+
+    private static void printInfo(CommandSender sender, String assignedBy, String dateTime, Plot plot) {
+        sender.sendMessage(" §7Assigned By §8§l‣ §a" + assignedBy);
+        sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTime);
+        sender.sendMessage(" §7Size §8§l‣ §f" + plot.getPlotSize());
+        sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
+        sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
+        sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
+        sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterial().name());
+        sender.sendMessage(" §7Pos 1 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getBottomLeftCorner().toString());
+        sender.sendMessage(" §7Pos 2 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getTopRightCorner().toString());
+        sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());
     }
 
     private static void printHelp(CommandSender sender) {
@@ -552,6 +561,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
         sender.sendMessage(" §a/vrplot unassign §8- §7Sets assigned to and assigned by to null");
         sender.sendMessage(" §a/vrplot info §8- §7Prints info about plot");
         sender.sendMessage(" §a/vrplot list §8- §7Prints all plots");
+        sender.sendMessage(" §a/vrplot tp §8- §7Teleports to the plot");
     }
 
 }

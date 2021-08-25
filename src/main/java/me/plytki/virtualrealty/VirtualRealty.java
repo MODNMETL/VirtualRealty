@@ -7,9 +7,15 @@ import me.plytki.virtualrealty.exceptions.IncompatibleVersionException;
 import me.plytki.virtualrealty.listeners.PlotListener;
 import me.plytki.virtualrealty.listeners.PlotProtectionListener;
 import me.plytki.virtualrealty.managers.PlotManager;
+import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.tasks.PlotExpireTask;
+import me.plytki.virtualrealty.utils.UpdateChecker;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedPie;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,10 +27,12 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 public final class VirtualRealty extends JavaPlugin {
 
-    private static final String PLUGIN_VERSION = "V1.2.1-LEGACY_SNAPSHOT";
     private static VirtualRealty instance;
     public static final String PREFIX = "§a§lVR §8§l» §7";
     public static ArrayList<BukkitTask> tasks = new ArrayList<>();
@@ -34,7 +42,7 @@ public final class VirtualRealty extends JavaPlugin {
     public static File plotsFolder;
     public static File plotsSchemaFolder;
 
-    private static ArrayList<String> compatibleVersions = new ArrayList<>();
+    private static final ArrayList<String> compatibleVersions = new ArrayList<>();
     private boolean closedDueToIncompatibleVersion = false;
 
     @Override
@@ -52,13 +60,20 @@ public final class VirtualRealty extends JavaPlugin {
             Bukkit.getServer().getPluginManager().disablePlugin(instance);
             return;
         }
-//        if (!isVersionUpToDate(PLUGIN_VERSION, "https://pastebin.com/raw/0ajGD1yt")) {
-//            Bukkit.getServer().getConsoleSender().sendMessage("§f§m                                                         ");
-//            Bukkit.getServer().getConsoleSender().sendMessage("§a[Virtual Realty] §fNew update available! (§7§o" + getLatestVersion("https://pastebin.com/raw/0ajGD1yt") + "§7)");
-//            Bukkit.getServer().getConsoleSender().sendMessage("§f§m                                                         ");
-//        } else {
-//            Bukkit.getServer().getConsoleSender().sendMessage("§a[Virtual Realty] §7Up to date!");
-//        }
+        String[] updateCheck = UpdateChecker.getUpdate();
+        if (updateCheck != null) {
+            if (!updateCheck[0].equals(this.getDescription().getVersion())) {
+                System.out.println(" ");
+                this.getLogger().info("A new version is available!");
+                this.getLogger().info("Current version you're using: " + this.getDescription().getVersion());
+                this.getLogger().info("Latest version available: " + updateCheck[0]);
+                this.getLogger().info("Download link: https://www.spigotmc.org/resources/virtual-realty-legacy.95600/");
+                System.out.println(" ");
+            } else {
+                this.getLogger().info("Plugin is up to date!");
+            }
+        }
+        registerMetrics();
         plotsFolder = new File(getInstance().getDataFolder().getAbsolutePath(), "plots");
         plotsFolder.mkdirs();
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
@@ -75,10 +90,11 @@ public final class VirtualRealty extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        if (!closedDueToIncompatibleVersion) {
-            tasks.forEach(BukkitTask::cancel);
-            SQL.closeConnection();
+        if (closedDueToIncompatibleVersion) {
+            return;
         }
+        tasks.forEach(BukkitTask::cancel);
+        SQL.closeConnection();
     }
 
     private void registerCommands() {
@@ -93,6 +109,48 @@ public final class VirtualRealty extends JavaPlugin {
 
     private void registerTasks() {
         tasks.add(new PlotExpireTask().runTaskTimer(this, 20 * 30, 20 * 30));
+    }
+
+    private void registerMetrics() {
+        Metrics metrics = new Metrics(this, 12578);
+        metrics.addCustomChart(new SimplePie("used_database", () -> this.getConfig().getString("data-storage")));
+        metrics.addCustomChart(new AdvancedPie("created_plots", new Callable<Map<String, Integer>>() {
+            @Override
+            public Map<String, Integer> call() throws Exception {
+                Map<String, Integer> valueMap = new HashMap<String, Integer>();
+                int smallPlots = 0;
+                int mediumPlots = 0;
+                int largePlots = 0;
+                int customPlots = 0;
+                for (Plot plot : PlotManager.plots) {
+                    switch (plot.getPlotSize()) {
+                        case SMALL: {
+                            smallPlots++;
+                            break;
+                        }
+                        case MEDIUM: {
+                            mediumPlots++;
+                            break;
+                        }
+                        case LARGE: {
+                            largePlots++;
+                            break;
+                        }
+                        case CUSTOM: {
+                            customPlots++;
+                            break;
+                        }
+                        default:
+                            throw new IllegalStateException("Unexpected value: " + plot.getPlotSize());
+                    }
+                }
+                valueMap.put("SMALL", smallPlots);
+                valueMap.put("MEDIUM", mediumPlots);
+                valueMap.put("LARGE", largePlots);
+                valueMap.put("CUSTOM", customPlots);
+                return valueMap;
+            }
+        }));
     }
 
     private void connectToDatabase() {
@@ -147,30 +205,6 @@ public final class VirtualRealty extends JavaPlugin {
         compatibleVersions.add("1.10");
         compatibleVersions.add("1.9");
         compatibleVersions.add("1.8");
-    }
-
-    public static boolean isVersionUpToDate(String version, String link) {
-        try {
-            URL url = new URL(link);
-            URLConnection urlConnection = url.openConnection();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-            return bufferedReader.readLine().equals(version);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public static String getLatestVersion(String link) {
-        try {
-            URL url = new URL(link);
-            URLConnection urlConnection = url.openConnection();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-            return bufferedReader.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
 }
