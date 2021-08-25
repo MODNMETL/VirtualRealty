@@ -212,8 +212,12 @@ public class Plot {
         this.borderTopRightCorner = borderTopRightCorner;
     }
 
-    public BlockVector3 getCenter() {
+    public BlockVector3 getBorderedCenter() {
         return new Cuboid(borderBottomLeftCorner, borderTopRightCorner, createdLocation.getWorld()).getCenterVector();
+    }
+
+    public BlockVector3 getCenter() {
+        return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld()).getCenterVector();
     }
 
     public GameMode getSelectedGameMode() {

@@ -7,9 +7,15 @@ import me.plytki.virtualrealty.exceptions.IncompatibleVersionException;
 import me.plytki.virtualrealty.listeners.PlotListener;
 import me.plytki.virtualrealty.listeners.PlotProtectionListener;
 import me.plytki.virtualrealty.managers.PlotManager;
+import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.tasks.PlotExpireTask;
+import me.plytki.virtualrealty.utils.UpdateChecker;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedPie;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -20,6 +26,9 @@ import org.bukkit.scheduler.BukkitTask;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 public final class VirtualRealty extends JavaPlugin {
 
@@ -32,7 +41,7 @@ public final class VirtualRealty extends JavaPlugin {
     public static File plotsFolder;
     public static File plotsSchemaFolder;
     
-    private static ArrayList<String> compatibleVersions = new ArrayList<>();
+    private static final ArrayList<String> compatibleVersions = new ArrayList<>();
     private boolean closedDueToIncompatibleVersion = false;
 
     @Override
@@ -50,6 +59,20 @@ public final class VirtualRealty extends JavaPlugin {
             Bukkit.getServer().getPluginManager().disablePlugin(instance);
             return;
         }
+        String[] updateCheck = UpdateChecker.getUpdate();
+        if (updateCheck != null) {
+            if (!updateCheck[0].equals(this.getDescription().getVersion())) {
+                System.out.println(" ");
+                this.getLogger().info("A new version is available!");
+                this.getLogger().info("Current version you're using: " + this.getDescription().getVersion());
+                this.getLogger().info("Latest version available: " + updateCheck[0]);
+                this.getLogger().info("Download link: https://www.spigotmc.org/resources/virtual-realty.95599/");
+                System.out.println(" ");
+            } else {
+                this.getLogger().info("Plugin is up to date!");
+            }
+        }
+        registerMetrics();
         plotsFolder = new File(getInstance().getDataFolder().getAbsolutePath(), "plots");
         plotsFolder.mkdirs();
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
@@ -85,6 +108,48 @@ public final class VirtualRealty extends JavaPlugin {
 
     private void registerTasks() {
         tasks.add(new PlotExpireTask().runTaskTimer(this, 20 * 30, 20 * 30));
+    }
+
+    private void registerMetrics() {
+        Metrics metrics = new Metrics(this, 12578);
+        metrics.addCustomChart(new SimplePie("used_database", () -> this.getConfig().getString("data-storage")));
+        metrics.addCustomChart(new AdvancedPie("created_plots", new Callable<Map<String, Integer>>() {
+            @Override
+            public Map<String, Integer> call() throws Exception {
+                Map<String, Integer> valueMap = new HashMap<String, Integer>();
+                int smallPlots = 0;
+                int mediumPlots = 0;
+                int largePlots = 0;
+                int customPlots = 0;
+                for (Plot plot : PlotManager.plots) {
+                    switch (plot.getPlotSize()) {
+                        case SMALL: {
+                            smallPlots++;
+                            break;
+                        }
+                        case MEDIUM: {
+                            mediumPlots++;
+                            break;
+                        }
+                        case LARGE: {
+                            largePlots++;
+                            break;
+                        }
+                        case CUSTOM: {
+                            customPlots++;
+                            break;
+                        }
+                        default:
+                            throw new IllegalStateException("Unexpected value: " + plot.getPlotSize());
+                    }
+                }
+                valueMap.put("SMALL", smallPlots);
+                valueMap.put("MEDIUM", mediumPlots);
+                valueMap.put("LARGE", largePlots);
+                valueMap.put("CUSTOM", customPlots);
+                return valueMap;
+            }
+        }));
     }
 
     private void connectToDatabase() {
