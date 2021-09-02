@@ -46,7 +46,7 @@ public class PlotManager {
     }
 
     public static Plot createPlot(Location creationLocation, int length, int width, int height) {
-        Plot plot = new Plot(creationLocation, Material.matchMaterial("GRASS_BLOCK"), length, width, height);
+        Plot plot = new Plot(creationLocation, Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK"), length, width, height);
         plots.add(plot);
         plot.insert();
         return plot;

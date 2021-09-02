@@ -4,11 +4,11 @@ import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.enums.Direction;
 import me.plytki.virtualrealty.enums.PlotSize;
 import me.plytki.virtualrealty.managers.PlotManager;
-import me.plytki.virtualrealty.objects.Cuboid;
 import me.plytki.virtualrealty.objects.Plot;
-import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.utils.Permissions;
 import me.plytki.virtualrealty.utils.PlotUtil;
+import me.plytki.virtualrealty.utils.multiversion.Chat;
+import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -69,11 +69,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                 }
                 case "SET": {
                     if (!Permissions.hasPermission(sender, tempPermission, "set")) return false;
-                    sender.sendMessage(" ");
-                    sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-                    sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownedBy §8<§7username§8>");
-                    sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7floorMaterial §8<§7material§8> §8<§7initialize (optional)§8>");
-                    sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownerExpires §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
+                    printSetHelp(sender);
                     break;
                 }
                 case "ASSIGN": {
@@ -135,7 +131,6 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     sender.sendMessage("§7§m                                                                                ");
                     sender.sendMessage(" §7|  §a§l§oID§7  |   §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
                     for (Plot plot : PlotManager.plots) {
-
                         LocalDateTime localDateTime = plot.getOwnedUntilDate();
                         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                         StringBuilder ownedBy = new StringBuilder();
@@ -151,7 +146,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         BaseComponent textComponent = new TextComponent(" §f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8   §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
                         textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                         textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                        sender.spigot().sendMessage(textComponent);
+                        new Chat(textComponent).sendTo(p);
                     }
                     sender.sendMessage("§7§m                                                                                ");
                     break;
@@ -314,7 +309,11 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 }
                                 Material material;
                                 try {
-                                    material = Material.matchMaterial(args[3]);
+                                    material = Material.matchMaterial(args[3].split(":")[0].toUpperCase());
+                                    if (material == null) {
+                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                        return false;
+                                    }
                                 } catch (IllegalArgumentException e) {
                                     sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
                                     return false;
@@ -324,7 +323,11 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
                                     return false;
                                 }
-                                plot.setFloorMaterial(material);
+                                byte data = 0;
+                                if (args[3].split(":").length == 2) {
+                                    data = Byte.parseByte(args[3].split(":")[1]);
+                                }
+                                plot.setFloorMaterial(material, data);
                                 if (args.length == 5 && (args[4].toLowerCase().startsWith("t"))) {
                                     plot.initializeFloor();
                                     sender.sendMessage(VirtualRealty.PREFIX + "§aNew floor material has been set and initialized!");
@@ -335,7 +338,46 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 plot.update();
                                 break;
                             }
-                            case "OWNEREXPIRES": {
+                            case "BORDERMATERIAL": {
+                                if (!Permissions.hasPermission(sender, commandPermission, "set.bordermaterial"))
+                                    return false;
+                                if (args.length < 4) {
+                                    sender.sendMessage(VirtualRealty.PREFIX + "§cSpecify material name!");
+                                    return false;
+                                }
+                                int plotID;
+                                try {
+                                    plotID = Integer.parseInt(args[1]);
+                                } catch (IllegalArgumentException e) {
+                                    sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                                    return false;
+                                }
+                                Material material;
+                                try {
+                                    material = VMaterial.getMaterial(args[3].split(":")[0].toUpperCase());
+                                    if (material == null) {
+                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                        return false;
+                                    }
+                                } catch (IllegalArgumentException e) {
+                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                    return false;
+                                }
+                                Plot plot = PlotManager.getPlot(plotID);
+                                if (plot == null) {
+                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                                    return false;
+                                }
+                                byte data = 0;
+                                if (args[3].split(":").length == 2) {
+                                    data = Byte.parseByte(args[3].split(":")[1]);
+                                }
+                                plot.setBorder(material, data);
+                                sender.sendMessage(VirtualRealty.PREFIX + "§aNew border material has been set!");
+                                plot.update();
+                                return false;
+                            }
+                            case "OWNERSHIPEXPIRES": {
                                 if (!Permissions.hasPermission(sender, commandPermission, "set.ownerexpires")) return false;
                                 if (args.length < 4) {
                                     sender.sendMessage(VirtualRealty.PREFIX + "§cSpecify expiry date!");
@@ -381,20 +423,12 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 break;
                             }
                             default: {
-                                sender.sendMessage(" ");
-                                sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-                                sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownedBy §8<§7username§8>");
-                                sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7floorMaterial §8<§7material§8> §8<§7initialize (optional)§8>");
-                                sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownerExpires §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
+                                printSetHelp(sender);
                                 break;
                             }
                         }
                     } else {
-                        sender.sendMessage(" ");
-                        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-                        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownedBy §8<§7username§8>");
-                        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7floorMaterial §8<§7material§8> §8<§7initialize (optional)§8>");
-                        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownerExpires §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
+                        printSetHelp(sender);
                     }
                     break;
                 }
@@ -566,6 +600,15 @@ public class VirtualRealtyCommand implements CommandExecutor {
         sender.sendMessage(" §a/vrplot info §8- §7Prints info about plot");
         sender.sendMessage(" §a/vrplot list §8- §7Prints all plots");
         sender.sendMessage(" §a/vrplot tp §8- §7Teleports to the plot");
+    }
+
+    private static void printSetHelp(CommandSender sender) {
+        sender.sendMessage(" ");
+        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
+        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownedBy §8<§7username§8>");
+        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7floorMaterial §8<§7material§8> §8<§7initialize{true/false} (optional)§8>");
+        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7borderMaterial §8<§7material§8>");
+        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownershipExpires §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
     }
 
 }

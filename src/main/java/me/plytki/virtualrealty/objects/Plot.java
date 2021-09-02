@@ -7,6 +7,7 @@ import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.utils.SchematicUtil;
+import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -14,9 +15,12 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -31,6 +35,7 @@ public class Plot {
     private int width;
     private int height;
     private Material floorMaterial;
+    private byte floorData;
     private Location createdLocation;
     private Direction createdDirection;
     private BlockVector3 bottomLeftCorner;
@@ -50,13 +55,14 @@ public class Plot {
         this.assignedBy = null;
         this.ownedUntilDate = LocalDateTime.of(2999, 1, 1, 0, 0);
         this.floorMaterial = floorMaterial;
+        this.floorData = 0;
         this.plotSize = plotSize;
         this.length = plotSize.getLength();
         this.width = plotSize.getWidth();
         this.height = plotSize.getHeight();
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
-        this.selectedGameMode = GameMode.CREATIVE;
+        this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
         initialize();
         initializeCorners();
     }
@@ -67,13 +73,14 @@ public class Plot {
         this.assignedBy = null;
         this.ownedUntilDate = LocalDateTime.of(2999, 12, 31, 0, 0);
         this.floorMaterial = floorMaterial;
+        this.floorData = 0;
         this.plotSize = PlotSize.CUSTOM;
         this.length = length;
         this.width = width;
         this.height = height;
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
-        this.selectedGameMode = GameMode.CREATIVE;
+        this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
         initialize();
         initializeCorners();
     }
@@ -85,7 +92,8 @@ public class Plot {
             this.ownedBy = rs.getString("ownedBy").isEmpty() ? null : UUID.fromString(rs.getString("ownedBy"));
             this.assignedBy = rs.getString("assignedBy").equalsIgnoreCase("null") ? null : rs.getString("assignedBy");
             this.ownedUntilDate = rs.getTimestamp("ownedUntilDate").toLocalDateTime();
-            this.floorMaterial = Material.getMaterial(rs.getString("floorMaterial"));
+            this.floorMaterial = Material.getMaterial(rs.getString("floorMaterial").split(":")[0]);
+            this.floorData = rs.getString("floorMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("floorMaterial").split(":")[1]);
             this.plotSize = PlotSize.valueOf(rs.getString("plotSize"));
             this.length = rs.getInt("length");
             this.width = rs.getInt("width");
@@ -168,8 +176,9 @@ public class Plot {
         return floorMaterial;
     }
 
-    public void setFloorMaterial(Material floorMaterial) {
+    public void setFloorMaterial(Material floorMaterial, byte data) {
         this.floorMaterial = floorMaterial;
+        this.floorData = data;
     }
 
     public Location getCreatedLocation() {
@@ -236,7 +245,20 @@ public class Plot {
                 for (int x = location.getBlockX() - width + 1; x < location.getBlockX() + 1; x++) {
                     for (int z = location.getBlockZ(); z < location.getBlockZ() + length; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m = Block.class.getDeclaredMethod("setType", Material.class);
+                                m.setAccessible(true);
+                                m.invoke(floorBlock, this.floorMaterial);
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, this.floorData);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            floorBlock.setType(floorMaterial);
+                        }
                     }
                 }
                 break;
@@ -245,7 +267,20 @@ public class Plot {
                 for (int x = location.getBlockX() - length + 1; x < location.getBlockX() + 1; x++) {
                     for (int z = location.getBlockZ() - width + 1; z < location.getBlockZ() + 1; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m = Block.class.getDeclaredMethod("setType", Material.class);
+                                m.setAccessible(true);
+                                m.invoke(floorBlock, this.floorMaterial);
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, this.floorData);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            floorBlock.setType(floorMaterial);
+                        }
                     }
                 }
                 break;
@@ -254,7 +289,20 @@ public class Plot {
                 for (int x = location.getBlockX(); x < location.getBlockX() + width; x++) {
                     for (int z = location.getBlockZ() - length + 1; z < location.getBlockZ() + 1; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m = Block.class.getDeclaredMethod("setType", Material.class);
+                                m.setAccessible(true);
+                                m.invoke(floorBlock, this.floorMaterial);
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, this.floorData);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            floorBlock.setType(floorMaterial);
+                        }
                     }
                 }
                 break;
@@ -263,7 +311,20 @@ public class Plot {
                  for (int x = location.getBlockX(); x < location.getBlockX() + length; x++) {
                     for (int z = location.getBlockZ(); z < location.getBlockZ() + width; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m = Block.class.getDeclaredMethod("setType", Material.class);
+                                m.setAccessible(true);
+                                m.invoke(floorBlock, this.floorMaterial);
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, this.floorData);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            floorBlock.setType(floorMaterial);
+                        }
                     }
                 }
                 break;
@@ -324,6 +385,119 @@ public class Plot {
                         //+ " blocks");
     }
 
+    public void setBorder(Material material, byte data) {
+        Location location = this.getCreatedLocation();
+        Direction direction = Direction.byYaw(location.getYaw());
+        switch(direction) {
+            case SOUTH: {
+                int maxX = location.getBlockX() + 1 + 1;
+                int maxZ = location.getBlockZ() + length + 1;
+                int minX = location.getBlockX() - width + 1;
+                int minZ = location.getBlockZ() - 1;
+                for (int x = minX - 1; x < maxX; x++) {
+                    for (int z = minZ; z < maxZ; z++) {
+                        if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
+                            Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(material);
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, data);
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(material);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case WEST: {
+                int maxX = location.getBlockX() + 1 + 1;
+                int maxZ = location.getBlockZ() + 1 + 1;
+                int minX = location.getBlockX() - length + 1;
+                int minZ = location.getBlockZ() - width;
+                for (int x = minX - 1; x < maxX; x++) {
+                    for (int z = minZ; z < maxZ; z++) {
+                        if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
+                            Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(material);
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, data);
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(material);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case NORTH: {
+                int maxX = location.getBlockX() + width + 1;
+                int maxZ = location.getBlockZ() + 1 + 1;
+                int minX = location.getBlockX();
+                int minZ = location.getBlockZ() - length;
+                for (int x = minX - 1; x < maxX; x++) {
+                    for (int z = minZ; z < maxZ; z++) {
+                        if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
+                            Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(material);
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, data);
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(material);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case EAST: {
+                int maxX = location.getBlockX() + length + 1;
+                int maxZ = location.getBlockZ() + width + 1;
+                int minX = location.getBlockX();
+                int minZ = location.getBlockZ() - 1;
+                for (int x = minX - 1; x < maxX; x++) {
+                    for (int z = minZ; z < maxZ; z++) {
+                        if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
+                            Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(material);
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, data);
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(material);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            default:
+                throw new IllegalStateException("Unexpected value: " + direction);
+        }
+    }
+
     public List<Block> prepareBlocks(Location location) {
         List<Block> blocks = new ArrayList<>();
         Direction direction = Direction.byYaw(location.getYaw());
@@ -343,10 +517,21 @@ public class Plot {
                     for (int z = location.getBlockZ(); z < location.getBlockZ() + length; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, plotSize.getFloorData());
+                            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
                             Block block = location.getWorld().getBlockAt(x, y, z);
                             Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            airBlock.setType(Material.AIR);
+                            if (airBlock == null || airBlock != null) {
+                                airBlock.setType(Material.AIR);
+                            }
                             blocks.add(block);
                         }
                     }
@@ -359,7 +544,18 @@ public class Plot {
                     for (int z = minZ; z < maxZ; z++) {
                         if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
                             Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
-                            borderBlock.setType(Material.matchMaterial("STONE_BRICK_SLAB"));
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, plotSize.getBorderData());
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                            }
                         }
                     }
                 }
@@ -376,10 +572,23 @@ public class Plot {
                     for (int z = location.getBlockZ() - width + 1; z < location.getBlockZ() + 1; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, plotSize.getFloorData());
+                            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
                             Block block = location.getWorld().getBlockAt(x, y, z);
-                            Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            airBlock.setType(Material.AIR);
+                            Block airBlock = location.
+                                    getWorld().
+                                    getBlockAt(x, y + 1, z);
+                            if (airBlock == null || airBlock != null) {
+                                airBlock.setType(Material.AIR);
+                            }
                             blocks.add(block);
                         }
                     }
@@ -392,7 +601,18 @@ public class Plot {
                     for (int z = minZ; z < maxZ; z++) {
                         if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
                             Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
-                            borderBlock.setType(Material.matchMaterial("STONE_BRICK_SLAB"));
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, plotSize.getBorderData());
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                            }
                         }
                     }
                 }
@@ -409,10 +629,21 @@ public class Plot {
                     for (int z = location.getBlockZ() - length + 1; z < location.getBlockZ() + 1; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, plotSize.getFloorData());
+                            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
                             Block block = location.getWorld().getBlockAt(x, y, z);
                             Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            airBlock.setType(Material.AIR);
+                            if (airBlock == null || airBlock != null) {
+                                airBlock.setType(Material.AIR);
+                            }
                             blocks.add(block);
                         }
                     }
@@ -425,7 +656,18 @@ public class Plot {
                     for (int z = minZ; z < maxZ; z++) {
                         if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
                             Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
-                            borderBlock.setType(Material.matchMaterial("STONE_BRICK_SLAB"));
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, plotSize.getBorderData());
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                            }
                         }
                     }
                 }
@@ -442,10 +684,21 @@ public class Plot {
                     for (int z = location.getBlockZ(); z < location.getBlockZ() + width; z++) {
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
+                        if (VirtualRealty.isLegacy) {
+                            try {
+                                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                m2.setAccessible(true);
+                                m2.invoke(floorBlock, plotSize.getFloorData());
+                            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
                             Block block = location.getWorld().getBlockAt(x, y, z);
                             Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            airBlock.setType(Material.AIR);
+                            if (airBlock == null || airBlock != null) {
+                                airBlock.setType(Material.AIR);
+                            }
                             blocks.add(block);
                         }
                     }
@@ -458,7 +711,18 @@ public class Plot {
                     for (int z = minZ; z < maxZ; z++) {
                         if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
                             Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
-                            borderBlock.setType(Material.matchMaterial("STONE_BRICK_SLAB"));
+                            if (VirtualRealty.isLegacy) {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                                try {
+                                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                                    m2.setAccessible(true);
+                                    m2.invoke(borderBlock, plotSize.getBorderData());
+                                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                borderBlock.setType(plotSize.getBorderMaterial());
+                            }
                         }
                     }
                 }
@@ -520,7 +784,7 @@ public class Plot {
             SQL.getStatement().execute("INSERT INTO `vr_plots` (`ID`, `ownedBy`, `assignedBy`, `ownedUntilDate`," +
                     " `floorMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`) " +
                     "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', '" + this.assignedBy + "', " +
-                    "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + "'," +
+                    "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + ":" + this.floorData + "'," +
                     " '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" + this.height + "', '" + builder.toString() + "')");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -530,7 +794,7 @@ public class Plot {
     public void update() {
         try {
             SQL.getStatement().execute("UPDATE `vr_plots` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', `assignedBy`='" + this.assignedBy + "'," +
-                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "', `floorMaterial`='" + this.floorMaterial + "'," +
+                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "', `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "'," +
                     " `plotSize`='" + this.plotSize + "', `length`='" + this.length + "', `width`='" + this.width + "', `height`='" + this.height + "'" +
                     " WHERE `ID`='" + this.ID + "'");
         } catch (SQLException e) {

@@ -3,6 +3,7 @@ package me.plytki.virtualrealty.utils;
 import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
+import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,6 +12,8 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.plugin.Plugin;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class SchematicUtil {
@@ -34,8 +37,11 @@ public class SchematicUtil {
                 for (int z = minZ; z <= maxZ; ++z) {
                     Block b = block.getWorld().getBlockAt(x, y, z);
                     if (b.getType() != Material.AIR)
-                        blocks.add(x - minX + ";" + (y - minY) + ";" + (z - minZ) + ";" + b.getBlockData().getAsString().substring(10));
-                    //System.out.println(b.getBlockData().getAsString());
+                        if (VirtualRealty.isLegacy) {
+                            blocks.add(x - minX + ";" + (y - minY) + ";" + (z - minZ) + ";" + b.getType().getId() + ";" + b.getData());
+                        } else {
+                            blocks.add(x - minX + ";" + (y - minY) + ";" + (z - minZ) + ";" + b.getBlockData().getAsString().substring(10));
+                        }
                 }
             }
         }
@@ -71,8 +77,21 @@ public class SchematicUtil {
             Location displaced = l.clone();
             displaced.add(x, y, z);
             Block b = displaced.getBlock();
-            BlockData blockData = Bukkit.createBlockData("minecraft:" + cords[3]);
-            b.setBlockData(blockData);
+            if (VirtualRealty.isLegacy) {
+                try {
+                    Method m = Block.class.getDeclaredMethod("setType", Material.class);
+                    m.setAccessible(true);
+                    m.invoke(b, VMaterial.getMaterial(Integer.parseInt(cords[3])));
+                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                    m2.setAccessible(true);
+                    m2.invoke(b, (byte) Integer.parseInt(cords[4]));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                BlockData blockData = Bukkit.createBlockData("minecraft:" + cords[3]);
+                b.setBlockData(blockData);
+            }
             b.getState().update(true);
         }
     }
