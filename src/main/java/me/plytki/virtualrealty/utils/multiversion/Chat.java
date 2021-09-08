@@ -10,10 +10,17 @@ import java.lang.reflect.Method;
 
 public class Chat {
 
-    private final BaseComponent text;
+    private BaseComponent text;
 
     public Chat(BaseComponent text) {
         this.text = text;
+    }
+
+    public Chat(BaseComponent... text) {
+        this.text = new TextComponent();
+        for (BaseComponent baseComponent : text) {
+            this.text.addExtra(baseComponent);
+        }
     }
 
     public Chat(String text) {

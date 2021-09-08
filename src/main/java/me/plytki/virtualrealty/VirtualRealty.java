@@ -2,17 +2,18 @@ package me.plytki.virtualrealty;
 
 import me.plytki.virtualrealty.commands.PlotCommand;
 import me.plytki.virtualrealty.commands.VirtualRealtyCommand;
+import me.plytki.virtualrealty.configs.PluginConfiguration;
+import me.plytki.virtualrealty.configs.SizesConfiguration;
 import me.plytki.virtualrealty.enums.PlotSize;
+import me.plytki.virtualrealty.exceptions.MaterialMatchException;
 import me.plytki.virtualrealty.listeners.PlotListener;
 import me.plytki.virtualrealty.listeners.PlotProtectionListener;
 import me.plytki.virtualrealty.listeners.WorldListener;
-import me.plytki.virtualrealty.loaders.PluginConfiguration;
-import me.plytki.virtualrealty.loaders.SizesConfiguration;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.tasks.PlotExpireTask;
-import me.plytki.virtualrealty.utils.ConfigUtil;
+import me.plytki.virtualrealty.utils.ConfigurationFactory;
 import me.plytki.virtualrealty.utils.UpdateChecker;
 import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import org.apache.commons.io.FileUtils;
@@ -38,8 +39,8 @@ public final class VirtualRealty extends JavaPlugin {
     public static File plotsFolder;
     public static File plotsSchemaFolder;
 
-    private PluginConfiguration pluginConfiguration;
-    private SizesConfiguration sizesConfiguration;
+    public static PluginConfiguration pluginConfiguration;
+    public static SizesConfiguration sizesConfiguration;
     private final File pluginConfigurationFile  = new File(this.getDataFolder(), "config.yml");
     private final File sizesConfigurationFile  = new File(this.getDataFolder(), "sizes.yml");
 
@@ -78,14 +79,16 @@ public final class VirtualRealty extends JavaPlugin {
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
         plotsSchemaFolder.mkdirs();
         try {
-            this.pluginConfiguration = ConfigUtil.loadConfig(this.pluginConfigurationFile, PluginConfiguration.class);
-            this.sizesConfiguration = ConfigUtil.loadConfig(this.sizesConfigurationFile, SizesConfiguration.class);
-        } catch (Exception exception) {
+            ConfigurationFactory configFactory = new ConfigurationFactory();
+            pluginConfiguration = configFactory.createPluginConfiguration(pluginConfigurationFile);
+            sizesConfiguration = configFactory.createSizesConfiguration(sizesConfigurationFile);
+        }
+        catch (Exception exception) {
             exception.printStackTrace();
-            configError = true;
-            this.getServer().getPluginManager().disablePlugin(this);
+            //shutdown("Critical error has been encountered!");
             return;
         }
+
         //createSizesConfig();
         loadSizesConfiguration();
         connectToDatabase();
@@ -170,36 +173,36 @@ public final class VirtualRealty extends JavaPlugin {
     public static void loadSizesConfiguration() {
         for (PlotSize plotSize : PlotSize.values()) {
             if (plotSize == PlotSize.CUSTOM) return;
-            SizesConfiguration.Size classSize = null;
+            SizesConfiguration.PlotSizes.Size classSize = null;
             switch (plotSize) {
                 case SMALL: {
-                    classSize = getInstance().sizesConfiguration.plotSizes.SMALL;
+                    classSize = sizesConfiguration.plotSizes.SMALL;
                     break;
                 }
                 case MEDIUM: {
-                    classSize = getInstance().sizesConfiguration.plotSizes.MEDIUM;
+                    classSize = sizesConfiguration.plotSizes.MEDIUM;
                     break;
                 }
                 case LARGE: {
-                    classSize = getInstance().sizesConfiguration.plotSizes.LARGE;
+                    classSize = sizesConfiguration.plotSizes.LARGE;
                     break;
                 }
             }
             Material floorMaterial;
             try {
-                floorMaterial = VMaterial.getMaterial(classSize.floorMaterial.toUpperCase());
-                floorMaterial.name();
-            } catch (Exception e) {
+                floorMaterial = VMaterial.catchMaterial(classSize.floorMaterial.toUpperCase());
+            } catch (MaterialMatchException e) {
                 floorMaterial = VirtualRealty.isLegacy ? Material.GRASS : Material.GRASS_BLOCK;
-                VirtualRealty.getInstance().getLogger().warning("Couldn't parse floor-material from sizes.yml | Using default: " + (VirtualRealty.isLegacy ? Material.GRASS : Material.GRASS_BLOCK));
+                e.printStackTrace();
+                //throw new MaterialMatchException("Couldn't parse floor-material from sizes.yml | Using default: " + (VirtualRealty.isLegacy ? Material.GRASS : Material.GRASS_BLOCK));
             }
             Material borderMaterial;
             try {
-                borderMaterial = VMaterial.getMaterial(classSize.borderMaterial.toUpperCase());
-                borderMaterial.name();
-            } catch (Exception e) {
+                borderMaterial = VMaterial.catchMaterial(classSize.borderMaterial.toUpperCase());
+            } catch (MaterialMatchException e) {
                 borderMaterial = VirtualRealty.isLegacy ? Material.getMaterial("STEP") : Material.STONE_BRICK_SLAB;
-                VirtualRealty.getInstance().getLogger().warning("Couldn't parse border-material from sizes.yml | Using default: " + (VirtualRealty.isLegacy ? Material.getMaterial("STEP") : Material.STONE_BRICK_SLAB));
+                e.printStackTrace();
+                //throw new MaterialMatchException("Couldn't parse border-material from sizes.yml | Using default: " + (VirtualRealty.isLegacy ? Material.getMaterial("STEP") : Material.STONE_BRICK_SLAB));
             }
             plotSize.setFloorMaterial(floorMaterial);
             plotSize.setFloorData(classSize.floorData);
@@ -216,7 +219,7 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public static PluginConfiguration getPluginConfiguration() {
-        return getInstance().pluginConfiguration;
+        return pluginConfiguration;
     }
 
     public boolean checkLegacyVersions() {

@@ -32,7 +32,11 @@ public class PlotProtectionListener implements Listener {
             Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
             if (plot != null) {
                 if (plot.getOwnedBy() != null) {
-                    if (!plot.getOwnedBy().equals(player.getUniqueId())) {
+                    boolean hasAccess = player.hasPermission("virtualrealty.plot.build");
+                    if (!hasAccess) {
+                        hasAccess = plot.getOwnedBy().equals(player.getUniqueId());
+                    }
+                    if (!hasAccess) {
                         e.setCancelled(true);
                         player.sendMessage(VirtualRealty.PREFIX + "§cYou can't interact here!");
                     } else {
@@ -75,7 +79,11 @@ public class PlotProtectionListener implements Listener {
         Plot plot = PlotManager.getBorderedPlot(player.getLocation());
         if (plot != null) {
             if (plot.getOwnedBy() != null) {
-                if (plot.getOwnedBy().equals(player.getUniqueId())) {
+                boolean hasAccess = player.hasPermission("virtualrealty.plot.build");
+                if (!hasAccess) {
+                    hasAccess = plot.getOwnedBy().equals(player.getUniqueId());
+                }
+                if (!hasAccess) {
                     Plot locationPlot = PlotManager.getBorderedPlot(player.getLocation());
                     if (locationPlot != null && !PlotManager.isLocationInPlot(e.getBlock().getLocation(), plot)) {
                         e.setCancelled(true);
@@ -92,7 +100,11 @@ public class PlotProtectionListener implements Listener {
         Plot plot = PlotManager.getPlot(e.getBlockPlaced().getLocation());
         if (plot != null) {
             if (plot.getOwnedBy() != null) {
-                if (!plot.getOwnedBy().equals(player.getUniqueId())) {
+                boolean hasAccess = player.hasPermission("virtualrealty.plot.build");
+                if (!hasAccess) {
+                    hasAccess = plot.getOwnedBy().equals(player.getUniqueId());
+                }
+                if (!hasAccess) {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + "§cYou can't build here!");
                 } else {
@@ -111,7 +123,11 @@ public class PlotProtectionListener implements Listener {
         Plot plot = PlotManager.getPlot(e.getBlock().getLocation());
         if (plot != null) {
             if (plot.getOwnedBy() != null) {
-                if (!plot.getOwnedBy().equals(player.getUniqueId())) {
+                boolean hasAccess = player.hasPermission("virtualrealty.plot.build");
+                if (!hasAccess) {
+                    hasAccess = plot.getOwnedBy().equals(player.getUniqueId());
+                }
+                if (!hasAccess) {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + "§cYou can't build here!");
                 } else {

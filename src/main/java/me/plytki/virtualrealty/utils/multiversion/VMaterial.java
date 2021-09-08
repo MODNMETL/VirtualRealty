@@ -1,6 +1,7 @@
 package me.plytki.virtualrealty.utils.multiversion;
 
 import me.plytki.virtualrealty.VirtualRealty;
+import me.plytki.virtualrealty.exceptions.MaterialMatchException;
 import org.bukkit.Material;
 
 import java.lang.reflect.InvocationTargetException;
@@ -8,7 +9,7 @@ import java.lang.reflect.Method;
 
 public class VMaterial {
 
-    public static Material getMaterial(int materialID) {
+    public static Material getMaterial(int materialID) throws MaterialMatchException {
         if (VirtualRealty.isLegacy) {
             try {
                 Method m = Material.class.getDeclaredMethod("getMaterial", int.class);
@@ -26,6 +27,21 @@ public class VMaterial {
                 counter++;
             }
         }
+        throw new MaterialMatchException("Couldn't parse material: " + materialID);
+    }
+
+    public static Material catchMaterial(String material) throws MaterialMatchException {
+        try {
+            Method m = Material.class.getDeclaredMethod("getMaterial", String.class);
+            m.setAccessible(true);
+            Material mat = (Material) m.invoke(Material.class, material);
+            if (mat == null) {
+                throw new MaterialMatchException("Couldn't parse material: \"" + material + "\"");
+            }
+            return mat;
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -39,5 +55,6 @@ public class VMaterial {
         }
         return null;
     }
+
 
 }

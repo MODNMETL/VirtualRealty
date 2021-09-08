@@ -6,7 +6,7 @@
 
     <groupId>me.plytki</groupId>
     <artifactId>VirtualRealty</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <packaging>jar</packaging>
 
     <name>VirtualRealty</name>
@@ -52,6 +52,9 @@
                     <relocations>
                         <relocation>
                             <pattern>org.bstats</pattern>
+                            <shadedPattern>me.plytki.virtualrealty.utils</shadedPattern>
+                        </relocation><relocation>
+                            <pattern>org.apache.commons.io</pattern>
                             <shadedPattern>me.plytki.virtualrealty.utils</shadedPattern>
                         </relocation>
                         <relocation>
@@ -101,6 +104,10 @@
             <id>panda-repository</id>
             <url>https://repo.panda-lang.org/</url>
         </repository>
+        <repository>
+            <id>okaeri-repo</id>
+            <url>https://storehouse.okaeri.eu/repository/maven-public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -135,9 +142,32 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.diorite</groupId>
-            <artifactId>diorite-config-minimal</artifactId>
-            <version>1.2</version>
+            <groupId>eu.okaeri</groupId>
+            <artifactId>okaeri-configs-yaml-bukkit</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.okaeri</groupId>
+            <artifactId>okaeri-configs-serdes-commons</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.okaeri</groupId>
+            <artifactId>okaeri-configs-validator-okaeri</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
+
 </project>
