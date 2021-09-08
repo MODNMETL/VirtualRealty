@@ -3,6 +3,7 @@ package me.plytki.virtualrealty.commands;
 import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.enums.Direction;
 import me.plytki.virtualrealty.enums.PlotSize;
+import me.plytki.virtualrealty.exceptions.MaterialMatchException;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.utils.Permissions;
@@ -169,7 +170,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                 case "CREATE": {
                     if (!Permissions.hasPermission(sender, commandPermission, "create")) return false;
                     if (sender instanceof Player) {
-                        if (args.length == 2 || args.length == 3) {
+                        if ((args.length == 2 || args.length == 3) && !args[1].equalsIgnoreCase("custom")) {
                             PlotSize plotSize = null;
                             try {
                                 plotSize = PlotSize.valueOf(args[1].toUpperCase());
@@ -193,16 +194,20 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     }
                                     sender.sendMessage(VirtualRealty.PREFIX + "§aNot colliding. Creating plot..");
                                     long timeStart = System.currentTimeMillis();
-                                    PlotManager.createPlot(location, plotSize, material);
+                                    Plot plot = PlotManager.createPlot(location, plotSize, material);
                                     long timeEnd = System.currentTimeMillis();
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§aPlot created! §8(§7" + (timeEnd - timeStart) + " ms§8)");
+                                    BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aPlot ");
+                                    BaseComponent textComponent2 = new TextComponent("§8#§7" + plot.getID());
+                                    BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
+                                    textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
+                                    textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
+                                    new Chat(textComponent, textComponent2, textComponent3).sendTo(p);
                                 }
                             } else {
                                 sender.sendMessage(VirtualRealty.PREFIX + "§cSize not recognized!");
                                 return false;
                             }
                         } else {
-                            PlotSize plotSize = PlotSize.CUSTOM;
                             int length;
                             int width;
                             int height;
@@ -222,7 +227,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 sender.sendMessage(VirtualRealty.PREFIX + "§cYou cant create new plot on the existing plot!");
                                 return false;
                             } else {
-                                Material material = Material.GRASS;
+                                Material material = Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK");
                                 if (args.length >= 5) {
                                     try {
                                         //String[] materialText = Arrays.copyOfRange(args, 5, args.length);
@@ -234,9 +239,14 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 }
                                 sender.sendMessage(VirtualRealty.PREFIX + "§aNot colliding. Creating plot..");
                                 long timeStart = System.currentTimeMillis();
-                                PlotManager.createPlot(location, length, width, height, material);
+                                Plot plot = PlotManager.createPlot(location, length, width, height, material);
                                 long timeEnd = System.currentTimeMillis();
-                                sender.sendMessage(VirtualRealty.PREFIX + "§aPlot created! §8(§7" + (timeEnd - timeStart) + " ms§8)");
+                                BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aPlot ");
+                                BaseComponent textComponent2 = new TextComponent("§8#§7" + plot.getID());
+                                BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
+                                textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
+                                textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
+                                new Chat(textComponent, textComponent2, textComponent3).sendTo(p);
                             }
                         }
                     }

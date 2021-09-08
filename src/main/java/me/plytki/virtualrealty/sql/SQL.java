@@ -1,7 +1,7 @@
 package me.plytki.virtualrealty.sql;
 
 import me.plytki.virtualrealty.VirtualRealty;
-import me.plytki.virtualrealty.loaders.PluginConfiguration;
+import me.plytki.virtualrealty.configs.PluginConfiguration;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
