@@ -7,7 +7,7 @@ import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.utils.SchematicUtil;
-import me.plytki.virtualrealty.utils.multiversion.VMaterial;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -53,7 +52,7 @@ public class Plot {
         this.ID = PlotManager.plots.isEmpty() ? 10000 : PlotManager.plots.get(PlotManager.plots.size() - 1).getID() + 1;
         this.ownedBy = null;
         this.assignedBy = null;
-        this.ownedUntilDate = LocalDateTime.of(2999, 1, 1, 0, 0);
+        this.ownedUntilDate = LocalDateTime.of(2999, 12, 31, 0, 0);
         this.floorMaterial = floorMaterial;
         this.floorData = 0;
         this.plotSize = plotSize;
@@ -65,6 +64,7 @@ public class Plot {
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
         initialize();
         initializeCorners();
+        PlotManager.resetPlotMarker(this);
     }
 
     public Plot(Location location, Material floorMaterial, int length, int width, int height) {
@@ -83,6 +83,7 @@ public class Plot {
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
         initialize();
         initializeCorners();
+        PlotManager.resetPlotMarker(this);
     }
 
 
@@ -108,6 +109,22 @@ public class Plot {
         }
     }
 
+    public int getXMin() {
+        return Math.min(this.getBorderBottomLeftCorner().getBlockX(), this.borderTopRightCorner.getBlockX());
+    }
+
+    public int getXMax() {
+        return Math.max(this.getBorderBottomLeftCorner().getBlockX(), this.borderTopRightCorner.getBlockX());
+    }
+
+    public int getZMin() {
+        return Math.min(this.getBorderBottomLeftCorner().getBlockZ(), this.borderTopRightCorner.getBlockZ());
+    }
+
+    public int getZMax() {
+        return Math.max(this.getBorderBottomLeftCorner().getBlockZ(), this.borderTopRightCorner.getBlockZ());
+    }
+
     public int getID() {
         return ID;
     }
@@ -122,6 +139,7 @@ public class Plot {
 
     public void setOwnedBy(UUID ownedBy) {
         this.ownedBy = ownedBy;
+        updateMarker();
     }
 
     public String getAssignedBy() {
@@ -138,6 +156,7 @@ public class Plot {
 
     public void setOwnedUntilDate(LocalDateTime ownedUntilDate) {
         this.ownedUntilDate = ownedUntilDate;
+        updateMarker();
     }
 
     public PlotSize getPlotSize() {
@@ -380,9 +399,7 @@ public class Plot {
     }
 
     public void initialize() {
-        //System.out.println(
-                prepareBlocks(createdLocation);
-                        //+ " blocks");
+        prepareBlocks(createdLocation);
     }
 
     public void setBorder(Material material, byte data) {
@@ -498,23 +515,21 @@ public class Plot {
         }
     }
 
-    public List<Block> prepareBlocks(Location location) {
-        List<Block> blocks = new ArrayList<>();
+    public void prepareBlocks(Location location) {
         Direction direction = Direction.byYaw(location.getYaw());
         Location location1;
         Location location2;
-        long time = System.currentTimeMillis();
-        long time2;
-        switch(direction) {
+        switch (direction) {
             case SOUTH: {
                 location1 = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() - 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() - width, location.getBlockY() + height, location.getBlockZ() + length);
-                SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                schematicUtil.save(ID, schematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
-                time2 = System.currentTimeMillis();
-                // SchematicUtil.saveSchematic(ID, location1, location2);
+                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
                 for (int x = location.getBlockX() - width + 1; x < location.getBlockX() + 1; x++) {
                     for (int z = location.getBlockZ(); z < location.getBlockZ() + length; z++) {
+                        for (int y = location.getBlockY() + height; y > location.getBlockY() - 1; y--) {
+                            Block airBlock = location.getWorld().getBlockAt(x, y, z);
+                            airBlock.setType(Material.AIR);
+                        }
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
                         if (VirtualRealty.isLegacy) {
@@ -525,14 +540,6 @@ public class Plot {
                             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                             }
-                        }
-                        for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
-                            Block block = location.getWorld().getBlockAt(x, y, z);
-                            Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            if (airBlock == null || airBlock != null) {
-                                airBlock.setType(Material.AIR);
-                            }
-                            blocks.add(block);
                         }
                     }
                 }
@@ -564,12 +571,13 @@ public class Plot {
             case WEST: {
                 location1 = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() + 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() - length, location.getBlockY() + height, location.getBlockZ() - width);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.save(ID, schematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
-                time2 = System.currentTimeMillis();
-                //SchematicUtil.saveSchematic(ID, location1, location2);
+                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
                 for (int x = location.getBlockX() - length + 1; x < location.getBlockX() + 1; x++) {
                     for (int z = location.getBlockZ() - width + 1; z < location.getBlockZ() + 1; z++) {
+                        for (int y = location.getBlockY() + height; y > location.getBlockY() - 1; y--) {
+                            Block airBlock = location.getWorld().getBlockAt(x, y, z);
+                            airBlock.setType(Material.AIR);
+                        }
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
                         if (VirtualRealty.isLegacy) {
@@ -580,16 +588,6 @@ public class Plot {
                             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                             }
-                        }
-                        for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
-                            Block block = location.getWorld().getBlockAt(x, y, z);
-                            Block airBlock = location.
-                                    getWorld().
-                                    getBlockAt(x, y + 1, z);
-                            if (airBlock == null || airBlock != null) {
-                                airBlock.setType(Material.AIR);
-                            }
-                            blocks.add(block);
                         }
                     }
                 }
@@ -621,12 +619,13 @@ public class Plot {
             case NORTH: {
                 location1 = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() - 10, location.getBlockZ() + 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() + width, location.getBlockY() + height, location.getBlockZ() - length);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.save(ID, schematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
-                time2 = System.currentTimeMillis();
-                //SchematicUtil.saveSchematic(ID, location1, location2);
+                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
                 for (int x = location.getBlockX(); x < location.getBlockX() + width; x++) {
                     for (int z = location.getBlockZ() - length + 1; z < location.getBlockZ() + 1; z++) {
+                        for (int y = location.getBlockY() + height; y > location.getBlockY() - 1; y--) {
+                            Block airBlock = location.getWorld().getBlockAt(x, y, z);
+                            airBlock.setType(Material.AIR);
+                        }
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
                         if (VirtualRealty.isLegacy) {
@@ -637,14 +636,6 @@ public class Plot {
                             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                             }
-                        }
-                        for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
-                            Block block = location.getWorld().getBlockAt(x, y, z);
-                            Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            if (airBlock == null || airBlock != null) {
-                                airBlock.setType(Material.AIR);
-                            }
-                            blocks.add(block);
                         }
                     }
                 }
@@ -676,12 +667,13 @@ public class Plot {
             case EAST: {
                 location1 = new Location(location.getWorld(), location.getBlockX() + length, location.getBlockY() - 10, location.getBlockZ() - 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() + height, location.getBlockZ() + width);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.save(ID, schematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
-                time2 = System.currentTimeMillis();
-                //SchematicUtil.saveSchematic(ID, location1, location2);
+                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
                 for (int x = location.getBlockX(); x < location.getBlockX() + length; x++) {
                     for (int z = location.getBlockZ(); z < location.getBlockZ() + width; z++) {
+                        for (int y = location.getBlockY() + height; y > location.getBlockY() - 1; y--) {
+                            Block airBlock = location.getWorld().getBlockAt(x, y, z);
+                            airBlock.setType(Material.AIR);
+                        }
                         Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
                         floorBlock.setType(floorMaterial);
                         if (VirtualRealty.isLegacy) {
@@ -692,14 +684,6 @@ public class Plot {
                             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                                 e.printStackTrace();
                             }
-                        }
-                        for (int y = location.getBlockY(); y < location.getBlockY() + height; y++) {
-                            Block block = location.getWorld().getBlockAt(x, y, z);
-                            Block airBlock = location.getWorld().getBlockAt(x, y + 1, z);
-                            if (airBlock == null || airBlock != null) {
-                                airBlock.setType(Material.AIR);
-                            }
-                            blocks.add(block);
                         }
                     }
                 }
@@ -731,42 +715,28 @@ public class Plot {
             default:
                 throw new IllegalStateException("Unexpected value: " + direction);
         }
-        //System.out.println(time2 - time + "  ms (saved)");
-        return blocks;
     }
 
     public void unloadPlot() {
         switch (createdDirection) {
             case SOUTH: {
-//                SchematicUtil3.loadSchematic(ID, createdLocation.getWorld(),
-//                        createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                            createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1));
+                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
+                        createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1));
                 break;
             }
             case WEST: {
-//                SchematicUtil3.loadSchematic(ID, createdLocation.getWorld(),
-//                        createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                            createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width));
+                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
+                        createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width));
                 break;
             }
             case NORTH: {
-//                SchematicUtil3.loadSchematic(ID, createdLocation.getWorld(),
-//                        createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                            createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length));
+                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
+                        createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length));
                 break;
             }
             case EAST: {
-//                SchematicUtil3.loadSchematic(ID, createdLocation.getWorld(),
-//                        createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
-                    SchematicUtil schematicUtil = new SchematicUtil(VirtualRealty.getInstance());
-                    schematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                            createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1));
+                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
+                        createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1));
                 break;
             }
         }
@@ -804,14 +774,16 @@ public class Plot {
 
     public void remove() {
         this.unloadPlot();
+        PlotManager.removeDynMapMarker(this);
         try {
             SQL.getStatement().execute("DELETE FROM `vr_plots` WHERE `ID` = '" + ID + "';");
         } catch (SQLException e) {
             e.printStackTrace();
         }
         int id = ID;
-        File file = new File(VirtualRealty.plotsSchemaFolder, "plot" + id + ".schem");
-        file.delete();
+        File file = new File(VirtualRealty.plotsSchemaFolder, "plot" + id + ".region");
+        if (file.exists())
+            FileUtils.deleteQuietly(file);
         PlotManager.plots.remove(this);
     }
 
@@ -822,4 +794,9 @@ public class Plot {
     public void setCreatedDirection(Direction createdDirection) {
         this.createdDirection = createdDirection;
     }
+
+    public void updateMarker() {
+        PlotManager.resetPlotMarker(this);
+    }
+
 }

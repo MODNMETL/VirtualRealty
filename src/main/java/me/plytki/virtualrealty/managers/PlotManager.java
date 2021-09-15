@@ -1,23 +1,32 @@
 package me.plytki.virtualrealty.managers;
 
 import me.plytki.virtualrealty.VirtualRealty;
+import me.plytki.virtualrealty.enums.HighlightType;
 import me.plytki.virtualrealty.enums.PlotSize;
 import me.plytki.virtualrealty.objects.Cuboid;
 import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.objects.math.BlockVector2;
 import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.sql.SQL;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.dynmap.markers.AreaMarker;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class PlotManager {
 
+    private static final String markerString = "<h3>Plot #%s</h3><b>Owned By: </b>Available";
+    private static final String markerOwnedString = "<h3>Plot #%s</h3><b>Owned By: </b>%s<br><b>Owned Until: </b>%s";
+
+    public static ArrayList<AreaMarker> areaMarkers = new ArrayList<>();
     public static ArrayList<Plot> plots = new ArrayList<>();
 
     public static void loadPlots() {
@@ -83,7 +92,6 @@ public class PlotManager {
     public static Plot getPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
-            //CuboidRegion region = new CuboidRegion(plot.getBottomLeftCorner(), plot.getTopRightCorner());
             Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
             if(region.contains(newVector)) {
                 return plot;
@@ -116,7 +124,6 @@ public class PlotManager {
     }
 
     public static boolean isColliding(Cuboid newPlot) {
-        //long time = System.currentTimeMillis();
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), plot.getCreatedLocation().getWorld());
             for (BlockVector2 vector2 : region.getWalls()) {
@@ -125,8 +132,50 @@ public class PlotManager {
                 }
             }
         }
-        //System.out.println("isColliding() time " + (System.currentTimeMillis() - time));
         return false;
+    }
+
+    public static void resetPlotMarker(Plot plot) {
+        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        LocalDateTime localDateTime = plot.getOwnedUntilDate();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String ownedBy;
+        double opacity;
+        int color;
+        if (plot.getOwnedBy() == null) {
+            ownedBy = "Available";
+            color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.getHexColor();
+            opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.opacity;
+        } else {
+            ownedBy = Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName();
+            color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.getHexColor();
+            opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.opacity;
+        }
+        if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.OWNED && plot.getOwnedBy() == null) return;
+        if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.AVAILABLE && plot.getOwnedBy() != null) return;
+        AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
+        if (marker == null) {
+            marker = VirtualRealty.markerset.createAreaMarker("virtualrealty.plots." + plot.getID(),
+
+                    plot.getOwnedBy() == null ? String.format(markerString, plot.getID()) : String.format(markerOwnedString, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true,
+
+                    "world", new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
+            areaMarkers.add(marker);
+        } else {
+            marker.setLabel(
+
+                    plot.getOwnedBy() == null ? String.format(markerString, plot.getID()) : String.format(markerOwnedString, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true);
+
+        }
+        marker.setFillStyle(opacity, color);
+        marker.setLineStyle(3, 0.8, 0x474747);
+    }
+
+    public static void removeDynMapMarker(Plot plot) {
+        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
+        areaMarkers.remove(marker);
+        marker.deleteMarker();
     }
 
 }

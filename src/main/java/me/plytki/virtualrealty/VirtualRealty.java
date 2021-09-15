@@ -14,6 +14,7 @@ import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.tasks.PlotExpireTask;
 import me.plytki.virtualrealty.utils.ConfigurationFactory;
+import me.plytki.virtualrealty.utils.SchematicUtil;
 import me.plytki.virtualrealty.utils.UpdateChecker;
 import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import org.apache.commons.io.FileUtils;
@@ -23,8 +24,12 @@ import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.dynmap.DynmapAPI;
+import org.dynmap.markers.MarkerSet;
 
 import java.io.*;
 import java.util.*;
@@ -32,26 +37,27 @@ import java.util.concurrent.Callable;
 
 public final class VirtualRealty extends JavaPlugin {
 
+    //CORE
     private static VirtualRealty instance;
     public static final String PREFIX = "§a§lVR §8§l» §7";
     public static ArrayList<BukkitTask> tasks = new ArrayList<>();
+    private static final ArrayList<String> postVersions = new ArrayList<>();
+    public static boolean isLegacy = false;
 
+    //FILES
     public static File plotsFolder;
     public static File plotsSchemaFolder;
+    public PluginConfiguration pluginConfiguration;
+    public SizesConfiguration sizesConfiguration;
+    private final File pluginConfigurationFile = new File(this.getDataFolder(), "config.yml");
+    private final File sizesConfigurationFile = new File(this.getDataFolder(), "sizes.yml");
 
-    public static PluginConfiguration pluginConfiguration;
-    public static SizesConfiguration sizesConfiguration;
-    private final File pluginConfigurationFile  = new File(this.getDataFolder(), "config.yml");
-    private final File sizesConfigurationFile  = new File(this.getDataFolder(), "sizes.yml");
-
-    private static final ArrayList<String> postVersions = new ArrayList<>();
-    private boolean configError = false;
-
-    public static boolean isLegacy = false;
+    //DYNMAP API
+    public static DynmapAPI dapi = null;
+    public static MarkerSet markerset = null;
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
         instance = this;
         if (!checkLegacyVersions()) {
             isLegacy = true;
@@ -59,8 +65,8 @@ public final class VirtualRealty extends JavaPlugin {
         String[] updateCheck = UpdateChecker.getUpdate();
         if (updateCheck != null) {
             if (!updateCheck[0].equals(this.getDescription().getVersion())) {
-                this.getLogger().info("A new version is available!");
-                this.getLogger().info("Current version you're using: " + this.getDescription().getVersion());
+                this.getLogger().info("A newer version is available!");
+                this.getLogger().info("The current version you use: " + this.getDescription().getVersion());
                 this.getLogger().info("Latest version available: " + updateCheck[0]);
                 this.getLogger().info("Download link: https://www.spigotmc.org/resources/virtual-realty.95599/");
             } else {
@@ -73,7 +79,6 @@ public final class VirtualRealty extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        registerMetrics();
         plotsFolder = new File(getInstance().getDataFolder().getAbsolutePath(), "plots");
         plotsFolder.mkdirs();
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
@@ -82,30 +87,66 @@ public final class VirtualRealty extends JavaPlugin {
             ConfigurationFactory configFactory = new ConfigurationFactory();
             pluginConfiguration = configFactory.createPluginConfiguration(pluginConfigurationFile);
             sizesConfiguration = configFactory.createSizesConfiguration(sizesConfigurationFile);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
             exception.printStackTrace();
-            //shutdown("Critical error has been encountered!");
             return;
         }
-
-        //createSizesConfig();
+        registerMetrics();
         loadSizesConfiguration();
         connectToDatabase();
+        PlotManager.loadPlots();
+        if (pluginConfiguration.dynmapMarkers) {
+            registerDynmap();
+        }
         registerCommands();
         registerListeners();
         registerTasks();
+        checkForOldSchemas();
+        debug("Server Version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
-        if (configError) {
-            return;
-        }
         tasks.forEach(BukkitTask::cancel);
         SQL.closeConnection();
     }
+
+    public static void debug(String debugMessage) {
+        if (VirtualRealty.getPluginConfiguration().debugMode)
+            VirtualRealty.getInstance().getLogger().warning("DEBUG-MODE > " + debugMessage);
+    }
+
+    public static void checkForOldSchemas() {
+        for (Plot plot : PlotManager.plots) {
+            File f = new File(VirtualRealty.plotsSchemaFolder, "plot" + plot.getID() + ".schem");
+            if (f.exists()) {
+                List<String> data = SchematicUtil.oldLoad(plot.getID());
+                FileUtils.deleteQuietly(f);
+                SchematicUtil.save(plot.getID(), data.toArray(new String[0]));
+                debug("Converted Plot #" + plot.getID() + " | File: " + f.getName());
+            }
+        }
+    }
+
+    public void registerDynmap() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("dynmap");
+                if (plugin != null && plugin.isEnabled()) {
+                    dapi = (DynmapAPI)plugin;
+                    markerset = dapi.getMarkerAPI().createMarkerSet("virutalrealty.plots", "Plots", dapi.getMarkerAPI().getMarkerIcons(), false);
+                    VirtualRealty.debug("Registering plots markers..");
+                    for (Plot plot : PlotManager.plots) {
+                        PlotManager.resetPlotMarker(plot);
+                    }
+                    VirtualRealty.debug("Registered plots markers");
+                    this.cancel();
+                }
+            }
+        }.runTaskTimer(this, 20, 20*5);
+    }
+
 
     private void registerCommands() {
         this.getCommand("plot").setExecutor(new PlotCommand());
@@ -116,10 +157,12 @@ public final class VirtualRealty extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlotListener(), this);
         getServer().getPluginManager().registerEvents(new PlotProtectionListener(), this);
         getServer().getPluginManager().registerEvents(new WorldListener(), this);
+        debug("Registered listeners");
     }
 
     private void registerTasks() {
         tasks.add(new PlotExpireTask().runTaskTimer(this, 20 * 30, 20 * 30));
+        debug("Registered tasks");
     }
 
     private void registerMetrics() {
@@ -162,15 +205,16 @@ public final class VirtualRealty extends JavaPlugin {
                 return valueMap;
             }
         }));
+        debug("Registered metrics");
     }
 
     private void connectToDatabase() {
         SQL.connect();
         SQL.createTables();
-        PlotManager.loadPlots();
+        debug("Connected to database");
     }
 
-    public static void loadSizesConfiguration() {
+    public void loadSizesConfiguration() {
         for (PlotSize plotSize : PlotSize.values()) {
             if (plotSize == PlotSize.CUSTOM) return;
             SizesConfiguration.PlotSizes.Size classSize = null;
@@ -212,6 +256,7 @@ public final class VirtualRealty extends JavaPlugin {
             plotSize.setWidth(classSize.width);
             plotSize.setHeight(classSize.height);
         }
+        debug("Loaded sizes config");
     }
 
     public static VirtualRealty getInstance() {
@@ -219,7 +264,19 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public static PluginConfiguration getPluginConfiguration() {
-        return pluginConfiguration;
+        return VirtualRealty.getInstance().pluginConfiguration;
+    }
+
+    public static File getPluginConfigurationFile() {
+        return VirtualRealty.getInstance().pluginConfigurationFile;
+    }
+
+    public static SizesConfiguration getSizesConfiguration() {
+        return VirtualRealty.getInstance().sizesConfiguration;
+    }
+
+    public static File getSizesConfigurationFile() {
+        return VirtualRealty.getInstance().sizesConfigurationFile;
     }
 
     public boolean checkLegacyVersions() {
@@ -241,12 +298,13 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public void checkConfig() throws IOException {
-        File oldConfigFile = new File(this.getDataFolder().getAbsolutePath(), "config.yml");
+        File oldConfigFile = new File(this.getDataFolder(), "config.yml");
         if (!oldConfigFile.exists()) return;
         String version = null;
         boolean isOldVersion = true;
         boolean updateConfigVersion = false;
-        BufferedReader reader = new BufferedReader(new FileReader(this.pluginConfigurationFile));
+        FileReader fileReader = new FileReader(this.pluginConfigurationFile);
+        BufferedReader reader = new BufferedReader(fileReader);
         String latestLine;
         while((latestLine = reader.readLine()) != null) {
             if (latestLine.contains("config-version")) {
@@ -254,6 +312,8 @@ public final class VirtualRealty extends JavaPlugin {
                 isOldVersion = false;
             }
         }
+        fileReader.close();
+        reader.close();
         if (version == null) {
             System.err.println(" ");
             this.getLogger().warning("Config has been reset due to major config changes!");
@@ -275,7 +335,7 @@ public final class VirtualRealty extends JavaPlugin {
             oldConfigFile.delete();
         }
 
-        // update config version
+//         update config version
         if (updateConfigVersion) {
             List<String> lines = new ArrayList<>();
             LineIterator iterator = FileUtils.lineIterator(oldConfigFile);
@@ -297,12 +357,12 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public void checkSizesConfig() throws IOException {
-        File oldConfigFile = new File(this.getDataFolder().getAbsolutePath(), "sizes.yml");
+        File oldConfigFile = new File(this.getDataFolder(), "sizes.yml");
         if (!oldConfigFile.exists()) return;
         String version = null;
         boolean isOldVersion = true;
         boolean updateConfigVersion = false;
-        BufferedReader reader = new BufferedReader(new FileReader(this.pluginConfigurationFile));
+        BufferedReader reader = new BufferedReader(new FileReader(this.sizesConfigurationFile));
         String latestLine;
         while((latestLine = reader.readLine()) != null) {
             if (latestLine.contains("config-version")) {
@@ -310,6 +370,7 @@ public final class VirtualRealty extends JavaPlugin {
                 isOldVersion = false;
             }
         }
+        reader.close();
         if (version == null) {
             System.err.println(" ");
             this.getLogger().warning("Config has been reset due to major config changes!");

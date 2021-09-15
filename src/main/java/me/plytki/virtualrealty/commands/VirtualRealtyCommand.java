@@ -3,9 +3,9 @@ package me.plytki.virtualrealty.commands;
 import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.enums.Direction;
 import me.plytki.virtualrealty.enums.PlotSize;
-import me.plytki.virtualrealty.exceptions.MaterialMatchException;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
+import me.plytki.virtualrealty.utils.ConfigurationFactory;
 import me.plytki.virtualrealty.utils.Permissions;
 import me.plytki.virtualrealty.utils.PlotUtil;
 import me.plytki.virtualrealty.utils.multiversion.Chat;
@@ -147,7 +147,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         BaseComponent textComponent = new TextComponent(" §f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8   §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
                         textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                         textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                        new Chat(textComponent).sendTo(p);
+                        new Chat(textComponent).sendTo(sender);
                     }
                     sender.sendMessage("§7§m                                                                                ");
                     break;
@@ -157,6 +157,32 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     sender.sendMessage(" ");
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
                     sender.sendMessage(" §a/vrplot tp §8<§7plotID§8>");
+                    break;
+                }
+                case "RELOAD": {
+                    if (!Permissions.hasPermission(sender, tempPermission, "reload")) return false;
+                    try {
+                        ConfigurationFactory configFactory = new ConfigurationFactory();
+                        VirtualRealty.getInstance().pluginConfiguration = configFactory.createPluginConfiguration(VirtualRealty.getPluginConfigurationFile());
+                        VirtualRealty.getInstance().sizesConfiguration = configFactory.createSizesConfiguration(VirtualRealty.getSizesConfigurationFile());
+                        if (VirtualRealty.getPluginConfiguration().dynmapMarkers) {
+                            if (VirtualRealty.markerset != null) {
+                                VirtualRealty.markerset.deleteMarkerSet();
+                            }
+                            VirtualRealty.getInstance().registerDynmap();
+                            for (Plot plot : PlotManager.plots) {
+                                PlotManager.resetPlotMarker(plot);
+                            }
+                        } else {
+                            if (VirtualRealty.markerset != null) {
+                                VirtualRealty.markerset.deleteMarkerSet();
+                            }
+                        }
+                        VirtualRealty.getInstance().loadSizesConfiguration();
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+                    sender.sendMessage(VirtualRealty.PREFIX + "§aReload completed!");
                     break;
                 }
                 default: {
@@ -185,7 +211,6 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     Material material = plotSize.getFloorMaterial();
                                     if (args.length == 3) {
                                         try {
-                                            //String[] materialText = Arrays.copyOfRange(args, 3, args.length);
                                             material = Material.getMaterial(args[2].toUpperCase().replaceAll(" ", "_"));
                                         } catch (IllegalArgumentException e) {
                                             sender.sendMessage(VirtualRealty.PREFIX + "§cMaterial not found");
@@ -201,7 +226,9 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
                                     textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                                     textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                                    new Chat(textComponent, textComponent2, textComponent3).sendTo(p);
+                                    textComponent.addExtra(textComponent2);
+                                    textComponent.addExtra(textComponent3);
+                                    new Chat(textComponent).sendTo(p);
                                 }
                             } else {
                                 sender.sendMessage(VirtualRealty.PREFIX + "§cSize not recognized!");
@@ -230,7 +257,6 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 Material material = Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK");
                                 if (args.length >= 5) {
                                     try {
-                                        //String[] materialText = Arrays.copyOfRange(args, 5, args.length);
                                         material = Material.getMaterial(args[4].toUpperCase().replaceAll(" ", "_"));
                                     } catch (IllegalArgumentException e) {
                                         sender.sendMessage(VirtualRealty.PREFIX + "§cMaterial not found");
@@ -246,7 +272,9 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
                                 textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                                 textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                                new Chat(textComponent, textComponent2, textComponent3).sendTo(p);
+                                textComponent.addExtra(textComponent2);
+                                textComponent.addExtra(textComponent3);
+                                new Chat(textComponent).sendTo(p);
                             }
                         }
                     }
@@ -610,6 +638,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
         sender.sendMessage(" §a/vrplot info §8- §7Prints info about plot");
         sender.sendMessage(" §a/vrplot list §8- §7Prints all plots");
         sender.sendMessage(" §a/vrplot tp §8- §7Teleports to the plot");
+        sender.sendMessage(" §a/vrplot reload §8- §7Reloads plugin");
     }
 
     private static void printSetHelp(CommandSender sender) {

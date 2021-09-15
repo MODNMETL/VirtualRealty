@@ -46,11 +46,15 @@ public class SQL {
 
     public static void closeConnection() {
         try {
-            if (VirtualRealty.getPluginConfiguration().dataModel.equals(PluginConfiguration.DataModel.H2)) {
-                statement.execute("SHUTDOWN");
+            if (statement != null) {
+                if (VirtualRealty.getPluginConfiguration().dataModel.equals(PluginConfiguration.DataModel.H2)) {
+                    statement.execute("SHUTDOWN");
+                }
+                statement.close();
             }
-            statement.close();
-            connection.close();
+            if (connection != null)
+                connection.close();
+            VirtualRealty.debug("Database connection closed");
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
