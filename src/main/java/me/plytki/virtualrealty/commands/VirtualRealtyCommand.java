@@ -24,6 +24,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
+import org.dynmap.markers.AreaMarker;
+import org.dynmap.markers.Marker;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
@@ -130,7 +132,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
                     sender.sendMessage(" ");
                     sender.sendMessage("§7§m                                                                                ");
-                    sender.sendMessage(" §7|  §a§l§oID§7  |   §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
+                    sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
                     for (Plot plot : PlotManager.plots) {
                         LocalDateTime localDateTime = plot.getOwnedUntilDate();
                         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -144,7 +146,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         for (int i = size.length(); i < 6; i++) {
                             size.append(" ");
                         }
-                        BaseComponent textComponent = new TextComponent(" §f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8   §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
+                        BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
                         textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                         textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
                         new Chat(textComponent).sendTo(sender);
@@ -178,6 +180,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 VirtualRealty.markerset.deleteMarkerSet();
                             }
                         }
+                        PlotManager.loadPlots();
                         VirtualRealty.getInstance().loadSizesConfiguration();
                     } catch (Exception exception) {
                         exception.printStackTrace();

@@ -1,8 +1,5 @@
 package me.plytki.virtualrealty.utils.data;
 
-import net.minecraft.server.v1_13_R2.EntityChicken;
-import net.minecraft.server.v1_13_R2.EntityPlayer;
-
 import java.io.*;
 import java.util.zip.*;
 

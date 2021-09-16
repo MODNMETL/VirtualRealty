@@ -30,6 +30,7 @@ public class PlotManager {
     public static ArrayList<Plot> plots = new ArrayList<>();
 
     public static void loadPlots() {
+        plots.clear();
         try {
             ResultSet rs = SQL.getStatement().executeQuery("SELECT * FROM `vr_plots`");
             while (rs.next()) {
@@ -135,8 +136,17 @@ public class PlotManager {
         return false;
     }
 
+    public static AreaMarker getAreaMarker(String areaMarkerName) {
+        for (AreaMarker areaMarker : VirtualRealty.markerset.getAreaMarkers()) {
+            if (areaMarker.getMarkerID().equalsIgnoreCase(areaMarkerName)) {
+                return areaMarker;
+            }
+        }
+        return null;
+    }
+
     public static void resetPlotMarker(Plot plot) {
-        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        //if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
         LocalDateTime localDateTime = plot.getOwnedUntilDate();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         String ownedBy;
@@ -153,13 +163,14 @@ public class PlotManager {
         }
         if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.OWNED && plot.getOwnedBy() == null) return;
         if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.AVAILABLE && plot.getOwnedBy() != null) return;
-        AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
+        AreaMarker marker = getAreaMarker("virtualrealty.plots." + plot.getID());
         if (marker == null) {
             marker = VirtualRealty.markerset.createAreaMarker("virtualrealty.plots." + plot.getID(),
 
                     plot.getOwnedBy() == null ? String.format(markerString, plot.getID()) : String.format(markerOwnedString, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true,
 
-                    "world", new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
+                    plot.getCreatedWorld(), new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
+
             areaMarkers.add(marker);
         } else {
             marker.setLabel(
@@ -168,11 +179,12 @@ public class PlotManager {
 
         }
         marker.setFillStyle(opacity, color);
-        marker.setLineStyle(3, 0.8, 0x474747);
+        marker.setLineStyle(2, 0.8, 0x474747);
+        marker.setMarkerSet(VirtualRealty.markerset);
     }
 
     public static void removeDynMapMarker(Plot plot) {
-        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        //if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
         AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
         areaMarkers.remove(marker);
         marker.deleteMarker();

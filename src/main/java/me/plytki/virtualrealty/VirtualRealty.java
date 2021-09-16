@@ -29,6 +29,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.dynmap.DynmapAPI;
+import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 
 import java.io.*;
@@ -55,6 +56,7 @@ public final class VirtualRealty extends JavaPlugin {
     //DYNMAP API
     public static DynmapAPI dapi = null;
     public static MarkerSet markerset = null;
+    public static MarkerIcon markerIcon = null;
 
     @Override
     public void onEnable() {
@@ -134,14 +136,35 @@ public final class VirtualRealty extends JavaPlugin {
             public void run() {
                 Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("dynmap");
                 if (plugin != null && plugin.isEnabled()) {
-                    dapi = (DynmapAPI)plugin;
-                    markerset = dapi.getMarkerAPI().createMarkerSet("virutalrealty.plots", "Plots", dapi.getMarkerAPI().getMarkerIcons(), false);
-                    VirtualRealty.debug("Registering plots markers..");
-                    for (Plot plot : PlotManager.plots) {
-                        PlotManager.resetPlotMarker(plot);
+                    dapi = (DynmapAPI) plugin;
+                    if (dapi.markerAPIInitialized()) {
+                        markerset = dapi.getMarkerAPI().getMarkerSet("virtualrealty.plots");
+                        if (markerset == null)
+                            markerset = dapi.getMarkerAPI().createMarkerSet("virutalrealty.plots", "Plots", dapi.getMarkerAPI().getMarkerIcons(), false);
+                        for (MarkerSet markerSet : dapi.getMarkerAPI().getMarkerSets()) {
+                            if (markerSet.getMarkerSetLabel().equalsIgnoreCase("Plots")) {
+                                markerset = markerSet;
+                            }
+                        }
+                        try {
+                            if (dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon") == null) {
+                                InputStream in = this.getClass().getResourceAsStream("/ploticon.png");
+                                if (in.available() > 0) {
+                                    markerIcon = dapi.getMarkerAPI().createMarkerIcon("virtualrealty_main_icon", "Plots", in);
+                                }
+                            }
+                            else {
+                                 markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
+                            }
+                        }
+                        catch (IOException ex) {}
+                        VirtualRealty.debug("Registering plots markers..");
+                        for (Plot plot : PlotManager.plots) {
+                            PlotManager.resetPlotMarker(plot);
+                        }
+                        VirtualRealty.debug("Registered plots markers");
+                        this.cancel();
                     }
-                    VirtualRealty.debug("Registered plots markers");
-                    this.cancel();
                 }
             }
         }.runTaskTimer(this, 20, 20*5);

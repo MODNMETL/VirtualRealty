@@ -42,6 +42,7 @@ public class Plot {
     private BlockVector3 borderBottomLeftCorner;
     private BlockVector3 borderTopRightCorner;
     private GameMode selectedGameMode;
+    private String createdWorld;
 
     @Override
     public String toString() {
@@ -62,6 +63,7 @@ public class Plot {
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
+        this.createdWorld = location.getWorld().getName();
         initialize();
         initializeCorners();
         PlotManager.resetPlotMarker(this);
@@ -81,6 +83,7 @@ public class Plot {
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
+        this.createdWorld = location.getWorld().getName();
         initialize();
         initializeCorners();
         PlotManager.resetPlotMarker(this);
@@ -100,9 +103,11 @@ public class Plot {
             this.width = rs.getInt("width");
             this.height = rs.getInt("height");
             ArrayList<String> location = new ArrayList<>(Arrays.asList(rs.getString("createdLocation").subSequence(0, rs.getString("createdLocation").length() - 1).toString().split(";")));
-            this.createdLocation = rs.getString("createdLocation").isEmpty() ? null : new Location(Bukkit.getWorld(location.get(0)), Double.parseDouble(location.get(1)), Double.parseDouble(location.get(2)), Double.parseDouble(location.get(3)), Float.parseFloat(location.get(4)), Float.parseFloat(location.get(5)));
+            Location createLocation = new Location(Bukkit.getWorld(location.get(0)), Double.parseDouble(location.get(1)), Double.parseDouble(location.get(2)), Double.parseDouble(location.get(3)), Float.parseFloat(location.get(4)), Float.parseFloat(location.get(5)));
+            this.createdLocation = rs.getString("createdLocation").isEmpty() ? null : createLocation;
             this.createdDirection = Direction.byYaw(createdLocation.getYaw());
             this.selectedGameMode = GameMode.CREATIVE;
+            this.createdWorld = location.get(0);
             initializeCorners();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -250,6 +255,10 @@ public class Plot {
 
     public GameMode getSelectedGameMode() {
         return selectedGameMode;
+    }
+
+    public String getCreatedWorld() {
+        return createdWorld;
     }
 
     public void setSelectedGameMode(GameMode selectedGameMode) {
