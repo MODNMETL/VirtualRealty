@@ -67,7 +67,7 @@ public class Plot {
         this.createdWorld = location.getWorld().getName();
         initialize();
         initializeCorners();
-        if (VirtualRealty.dapi != null) {
+        if (VirtualRealty.markerset != null) {
             PlotManager.resetPlotMarker(this);
         }
     }
@@ -91,7 +91,7 @@ public class Plot {
         this.createdWorld = location.getWorld().getName();
         initialize();
         initializeCorners();
-        if (VirtualRealty.dapi != null) {
+        if (VirtualRealty.markerset != null) {
             PlotManager.resetPlotMarker(this);
         }
     }
