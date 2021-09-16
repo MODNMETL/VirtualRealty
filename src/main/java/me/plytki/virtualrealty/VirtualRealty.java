@@ -109,6 +109,7 @@ public final class VirtualRealty extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        PlotManager.plots.forEach(Plot::update);
         tasks.forEach(BukkitTask::cancel);
         SQL.closeConnection();
     }

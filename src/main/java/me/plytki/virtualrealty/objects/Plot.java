@@ -8,10 +8,7 @@ import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.sql.SQL;
 import me.plytki.virtualrealty.utils.SchematicUtil;
 import org.apache.commons.io.FileUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 
 import java.io.File;
@@ -35,6 +32,8 @@ public class Plot {
     private int height;
     private Material floorMaterial;
     private byte floorData;
+    private Material borderMaterial;
+    private byte borderData;
     private Location createdLocation;
     private Direction createdDirection;
     private BlockVector3 bottomLeftCorner;
@@ -49,13 +48,15 @@ public class Plot {
         return "{ ID: " + ID + ", ownedBy: " + ownedBy + "}";
     }
 
-    public Plot(Location location, Material floorMaterial, PlotSize plotSize) {
+    public Plot(Location location, Material floorMaterial, Material borderMaterial, PlotSize plotSize) {
         this.ID = PlotManager.plots.isEmpty() ? 10000 : PlotManager.plots.get(PlotManager.plots.size() - 1).getID() + 1;
         this.ownedBy = null;
         this.assignedBy = null;
         this.ownedUntilDate = LocalDateTime.of(2999, 12, 31, 0, 0);
         this.floorMaterial = floorMaterial;
         this.floorData = 0;
+        this.borderMaterial = borderMaterial;
+        this.borderData = 0;
         this.plotSize = plotSize;
         this.length = plotSize.getLength();
         this.width = plotSize.getWidth();
@@ -66,16 +67,20 @@ public class Plot {
         this.createdWorld = location.getWorld().getName();
         initialize();
         initializeCorners();
-        PlotManager.resetPlotMarker(this);
+        if (VirtualRealty.getPluginConfiguration().dynmapMarkers) {
+            PlotManager.resetPlotMarker(this);
+        }
     }
 
-    public Plot(Location location, Material floorMaterial, int length, int width, int height) {
+    public Plot(Location location, Material floorMaterial, Material borderMaterial, int length, int width, int height) {
         this.ID =  PlotManager.plots.isEmpty() ? 10000 : PlotManager.plots.get(PlotManager.plots.size() - 1).getID() + 1;
         this.ownedBy = null;
         this.assignedBy = null;
         this.ownedUntilDate = LocalDateTime.of(2999, 12, 31, 0, 0);
         this.floorMaterial = floorMaterial;
         this.floorData = 0;
+        this.borderMaterial = borderMaterial;
+        this.borderData = 0;
         this.plotSize = PlotSize.CUSTOM;
         this.length = length;
         this.width = width;
@@ -86,7 +91,9 @@ public class Plot {
         this.createdWorld = location.getWorld().getName();
         initialize();
         initializeCorners();
-        PlotManager.resetPlotMarker(this);
+        if (VirtualRealty.getPluginConfiguration().dynmapMarkers) {
+            PlotManager.resetPlotMarker(this);
+        }
     }
 
 
@@ -98,6 +105,10 @@ public class Plot {
             this.ownedUntilDate = rs.getTimestamp("ownedUntilDate").toLocalDateTime();
             this.floorMaterial = Material.getMaterial(rs.getString("floorMaterial").split(":")[0]);
             this.floorData = rs.getString("floorMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("floorMaterial").split(":")[1]);
+            if (rs.getString("borderMaterial") != null) {
+                this.borderMaterial = Material.getMaterial(rs.getString("borderMaterial").split(":")[0]);
+                this.borderData = rs.getString("borderMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("borderMaterial").split(":")[1]);
+            }
             this.plotSize = PlotSize.valueOf(rs.getString("plotSize"));
             this.length = rs.getInt("length");
             this.width = rs.getInt("width");
@@ -108,6 +119,14 @@ public class Plot {
             this.createdDirection = Direction.byYaw(createdLocation.getYaw());
             this.selectedGameMode = GameMode.CREATIVE;
             this.createdWorld = location.get(0);
+            if (floorMaterial == null) {
+                floorMaterial = plotSize.getFloorMaterial();
+                floorData = plotSize.getFloorData();
+            }
+            if (borderMaterial == null) {
+                borderMaterial = plotSize.getBorderMaterial();
+                borderData = plotSize.getBorderData();
+            }
             initializeCorners();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -200,13 +219,23 @@ public class Plot {
         return floorMaterial;
     }
 
-    public void setFloorMaterial(Material floorMaterial, byte data) {
+    public void setFloor(Material floorMaterial, byte data) {
         this.floorMaterial = floorMaterial;
         this.floorData = data;
+        initializeFloor();
     }
 
     public Location getCreatedLocation() {
         return createdLocation;
+    }
+
+    public void setBorderMaterial(Material borderMaterial, byte data) {
+        this.borderMaterial = borderMaterial;
+        this.borderData = data;
+    }
+
+    public Material getBorderMaterial() {
+        return borderMaterial;
     }
 
     public void setCreatedLocation(Location createdLocation) {
@@ -261,11 +290,15 @@ public class Plot {
         return createdWorld;
     }
 
+    public OfflinePlayer getPlotOwner() {
+        return ownedBy == null ? null : Bukkit.getOfflinePlayer(ownedBy);
+    }
+
     public void setSelectedGameMode(GameMode selectedGameMode) {
         this.selectedGameMode = selectedGameMode;
     }
 
-    public void initializeFloor() {
+    private void initializeFloor() {
         Location location = createdLocation;
         Direction direction = Direction.byYaw(location.getYaw());
         switch(direction) {
@@ -412,6 +445,8 @@ public class Plot {
     }
 
     public void setBorder(Material material, byte data) {
+        borderMaterial = material;
+        borderData = data;
         Location location = this.getCreatedLocation();
         Direction direction = Direction.byYaw(location.getYaw());
         switch(direction) {
@@ -761,10 +796,10 @@ public class Plot {
         builder.append(this.createdLocation.getPitch() + ";");
         try {
             SQL.getStatement().execute("INSERT INTO `vr_plots` (`ID`, `ownedBy`, `assignedBy`, `ownedUntilDate`," +
-                    " `floorMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`) " +
+                    " `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`) " +
                     "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', '" + this.assignedBy + "', " +
-                    "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + ":" + this.floorData + "'," +
-                    " '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" + this.height + "', '" + builder.toString() + "')");
+                    "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + ":" + this.floorData + "', '" + this.borderMaterial + ":" + this.borderData + "'," +
+                    " '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" + this.height + "', '" + builder + "')");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -773,7 +808,7 @@ public class Plot {
     public void update() {
         try {
             SQL.getStatement().execute("UPDATE `vr_plots` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', `assignedBy`='" + this.assignedBy + "'," +
-                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "', `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "'," +
+                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "', `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "', `borderMaterial`='" + this.borderMaterial + ":" + this.borderData + "'," +
                     " `plotSize`='" + this.plotSize + "', `length`='" + this.length + "', `width`='" + this.width + "', `height`='" + this.height + "'" +
                     " WHERE `ID`='" + this.ID + "'");
         } catch (SQLException e) {

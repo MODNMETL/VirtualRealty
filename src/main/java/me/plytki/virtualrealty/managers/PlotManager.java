@@ -42,28 +42,14 @@ public class PlotManager {
     }
 
     public static Plot createPlot(Location creationLocation, PlotSize plotSize) {
-        Plot plot = new Plot(creationLocation, plotSize.getFloorMaterial(), plotSize);
-        plots.add(plot);
-        plot.insert();
-        return plot;
-    }
-
-    public static Plot createPlot(Location creationLocation, PlotSize plotSize, Material material) {
-        Plot plot = new Plot(creationLocation, material, plotSize);
+        Plot plot = new Plot(creationLocation, plotSize.getFloorMaterial(), plotSize.getBorderMaterial(), plotSize);
         plots.add(plot);
         plot.insert();
         return plot;
     }
 
     public static Plot createPlot(Location creationLocation, int length, int width, int height) {
-        Plot plot = new Plot(creationLocation, Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK"), length, width, height);
-        plots.add(plot);
-        plot.insert();
-        return plot;
-    }
-
-    public static Plot createPlot(Location creationLocation, int length, int width, int height, Material material) {
-        Plot plot = new Plot(creationLocation, material, length, width, height);
+        Plot plot = new Plot(creationLocation, Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK"), Material.matchMaterial(VirtualRealty.isLegacy ? "STEP" : "STONE_BRICK_SLAB"), length, width, height);
         plots.add(plot);
         plot.insert();
         return plot;
@@ -146,7 +132,6 @@ public class PlotManager {
     }
 
     public static void resetPlotMarker(Plot plot) {
-        //if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
         LocalDateTime localDateTime = plot.getOwnedUntilDate();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         String ownedBy;
@@ -157,7 +142,7 @@ public class PlotManager {
             color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.getHexColor();
             opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.opacity;
         } else {
-            ownedBy = Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName();
+            ownedBy = plot.getPlotOwner().getName();
             color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.getHexColor();
             opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.opacity;
         }
@@ -184,7 +169,7 @@ public class PlotManager {
     }
 
     public static void removeDynMapMarker(Plot plot) {
-        //if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
         AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
         areaMarkers.remove(marker);
         marker.deleteMarker();
