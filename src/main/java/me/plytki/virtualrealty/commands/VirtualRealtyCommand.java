@@ -3,9 +3,9 @@ package me.plytki.virtualrealty.commands;
 import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.enums.Direction;
 import me.plytki.virtualrealty.enums.PlotSize;
-import me.plytki.virtualrealty.exceptions.MaterialMatchException;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
+import me.plytki.virtualrealty.utils.ConfigurationFactory;
 import me.plytki.virtualrealty.utils.Permissions;
 import me.plytki.virtualrealty.utils.PlotUtil;
 import me.plytki.virtualrealty.utils.multiversion.Chat;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class VirtualRealtyCommand implements CommandExecutor {
@@ -56,8 +57,8 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     if (sender instanceof Player) {
                         sender.sendMessage(" ");
                         sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-                        sender.sendMessage(" §a/vrplot create §8<§7small/medium/large§8> §8<§7floorMaterial (optional)§8>");
-                        sender.sendMessage(" §a/vrplot create §8<§7length§8> §8<§7width§8> §8<§7height§8> §8<§7floorMaterial (optional)§8>");
+                        sender.sendMessage(" §a/vrplot create §8<§7small/medium/large§8> §8<§7floorMaterial (optional)§8> §8<§7borderMaterial (optional)§8>");
+                        sender.sendMessage(" §a/vrplot create §8<§7length§8> §8<§7width§8> §8<§7height§8> §8<§7floorMaterial (optional)§8> §8<§7borderMaterial (optional)§8>");
                     }
                     break;
                 }
@@ -130,7 +131,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
                     sender.sendMessage(" ");
                     sender.sendMessage("§7§m                                                                                ");
-                    sender.sendMessage(" §7|  §a§l§oID§7  |   §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
+                    sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
                     for (Plot plot : PlotManager.plots) {
                         LocalDateTime localDateTime = plot.getOwnedUntilDate();
                         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -144,10 +145,10 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         for (int i = size.length(); i < 6; i++) {
                             size.append(" ");
                         }
-                        BaseComponent textComponent = new TextComponent(" §f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8   §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
+                        BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
                         textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                         textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                        new Chat(textComponent).sendTo(p);
+                        new Chat(textComponent).sendTo(sender);
                     }
                     sender.sendMessage("§7§m                                                                                ");
                     break;
@@ -157,6 +158,33 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     sender.sendMessage(" ");
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
                     sender.sendMessage(" §a/vrplot tp §8<§7plotID§8>");
+                    break;
+                }
+                case "RELOAD": {
+                    if (!Permissions.hasPermission(sender, tempPermission, "reload")) return false;
+                    try {
+                        ConfigurationFactory configFactory = new ConfigurationFactory();
+                        VirtualRealty.getInstance().pluginConfiguration = configFactory.createPluginConfiguration(VirtualRealty.getPluginConfigurationFile());
+                        VirtualRealty.getInstance().sizesConfiguration = configFactory.createSizesConfiguration(VirtualRealty.getSizesConfigurationFile());
+                        if (VirtualRealty.getPluginConfiguration().dynmapMarkers) {
+                            if (VirtualRealty.markerset != null) {
+                                VirtualRealty.markerset.deleteMarkerSet();
+                            }
+                            VirtualRealty.getInstance().registerDynmap();
+                            for (Plot plot : PlotManager.plots) {
+                                PlotManager.resetPlotMarker(plot);
+                            }
+                        } else {
+                            if (VirtualRealty.markerset != null) {
+                                VirtualRealty.markerset.deleteMarkerSet();
+                            }
+                        }
+                        PlotManager.loadPlots();
+                        VirtualRealty.getInstance().loadSizesConfiguration();
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+                    sender.sendMessage(VirtualRealty.PREFIX + "§aReload completed!");
                     break;
                 }
                 default: {
@@ -170,38 +198,69 @@ public class VirtualRealtyCommand implements CommandExecutor {
                 case "CREATE": {
                     if (!Permissions.hasPermission(sender, commandPermission, "create")) return false;
                     if (sender instanceof Player) {
-                        if ((args.length == 2 || args.length == 3) && !args[1].equalsIgnoreCase("custom")) {
+                        if (Arrays.stream(PlotSize.values()).anyMatch(plotSize -> plotSize.name().equalsIgnoreCase(args[1])) && !args[1].equalsIgnoreCase(PlotSize.CUSTOM.name())) {
                             PlotSize plotSize = null;
                             try {
                                 plotSize = PlotSize.valueOf(args[1].toUpperCase());
                             } catch (IllegalArgumentException ignored) {
                             }
                             if (plotSize != null) {
-                                //TODO create a plot
                                 if (PlotManager.isColliding(PlotUtil.getPlotRegion(location, Direction.byYaw(location.getYaw()), plotSize.getLength(), plotSize.getWidth(), plotSize.getHeight()))) {
                                     sender.sendMessage(VirtualRealty.PREFIX + "§cYou cant create new plot on the existing plot!");
                                     return false;
                                 } else {
-                                    Material material = plotSize.getFloorMaterial();
-                                    if (args.length == 3) {
+                                    Material floorMaterial = null;
+                                    byte floorData = 0;
+                                    if (args.length >= 3) {
                                         try {
-                                            //String[] materialText = Arrays.copyOfRange(args, 3, args.length);
-                                            material = Material.getMaterial(args[2].toUpperCase().replaceAll(" ", "_"));
+                                            floorMaterial = VMaterial.getMaterial(args[2].split(":")[0].toUpperCase());
+                                            if (floorMaterial == null) {
+                                                sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
+                                                return false;
+                                            }
                                         } catch (IllegalArgumentException e) {
-                                            sender.sendMessage(VirtualRealty.PREFIX + "§cMaterial not found");
+                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
                                             return false;
+                                        }
+                                        if (args[2].split(":").length == 2) {
+                                            floorData = Byte.parseByte(args[2].split(":")[1]);
+                                        }
+                                    }
+                                    Material borderMaterial = null;
+                                    byte borderData = 0;
+                                    if (args.length >= 4) {
+                                        try {
+                                            borderMaterial = VMaterial.getMaterial(args[3].split(":")[0].toUpperCase());
+                                            if (borderMaterial == null) {
+                                                sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                                return false;
+                                            }
+                                        } catch (IllegalArgumentException e) {
+                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                            return false;
+                                        }
+                                        if (args[3].split(":").length == 2) {
+                                            borderData = Byte.parseByte(args[3].split(":")[1]);
                                         }
                                     }
                                     sender.sendMessage(VirtualRealty.PREFIX + "§aNot colliding. Creating plot..");
                                     long timeStart = System.currentTimeMillis();
-                                    Plot plot = PlotManager.createPlot(location, plotSize, material);
+                                    Plot plot = PlotManager.createPlot(location, plotSize);
+                                    if (floorMaterial != null) {
+                                        plot.setFloor(floorMaterial, floorData);
+                                    }
+                                    if (borderMaterial != null) {
+                                        plot.setBorder(borderMaterial, borderData);
+                                    }
                                     long timeEnd = System.currentTimeMillis();
                                     BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aPlot ");
                                     BaseComponent textComponent2 = new TextComponent("§8#§7" + plot.getID());
                                     BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
                                     textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                                     textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                                    new Chat(textComponent, textComponent2, textComponent3).sendTo(p);
+                                    textComponent.addExtra(textComponent2);
+                                    textComponent.addExtra(textComponent3);
+                                    new Chat(textComponent).sendTo(p);
                                 }
                             } else {
                                 sender.sendMessage(VirtualRealty.PREFIX + "§cSize not recognized!");
@@ -227,26 +286,58 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 sender.sendMessage(VirtualRealty.PREFIX + "§cYou cant create new plot on the existing plot!");
                                 return false;
                             } else {
-                                Material material = Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK");
+                                Material floorMaterial = null;
+                                byte floorData = 0;
                                 if (args.length >= 5) {
                                     try {
-                                        //String[] materialText = Arrays.copyOfRange(args, 5, args.length);
-                                        material = Material.getMaterial(args[4].toUpperCase().replaceAll(" ", "_"));
+                                        floorMaterial = VMaterial.getMaterial(args[4].split(":")[0].toUpperCase());
+                                        if (floorMaterial == null) {
+                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
+                                            return false;
+                                        }
                                     } catch (IllegalArgumentException e) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cMaterial not found");
+                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
                                         return false;
+                                    }
+                                    if (args[4].split(":").length == 2) {
+                                        floorData = Byte.parseByte(args[4].split(":")[1]);
+                                    }
+                                }
+                                Material borderMaterial = null;
+                                byte borderData = 0;
+                                if (args.length >= 6) {
+                                    try {
+                                        borderMaterial = VMaterial.getMaterial(args[5].split(":")[0].toUpperCase());
+                                        if (borderMaterial == null) {
+                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                            return false;
+                                        }
+                                    } catch (IllegalArgumentException e) {
+                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                        return false;
+                                    }
+                                    if (args[5].split(":").length == 2) {
+                                        borderData = Byte.parseByte(args[5].split(":")[1]);
                                     }
                                 }
                                 sender.sendMessage(VirtualRealty.PREFIX + "§aNot colliding. Creating plot..");
                                 long timeStart = System.currentTimeMillis();
-                                Plot plot = PlotManager.createPlot(location, length, width, height, material);
+                                Plot plot = PlotManager.createPlot(location, length, width, height);
+                                if (floorMaterial != null) {
+                                    plot.setFloor(floorMaterial, floorData);
+                                }
+                                if (borderMaterial != null) {
+                                    plot.setBorder(borderMaterial, borderData);
+                                }
                                 long timeEnd = System.currentTimeMillis();
                                 BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aPlot ");
                                 BaseComponent textComponent2 = new TextComponent("§8#§7" + plot.getID());
                                 BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
                                 textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
                                 textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                                new Chat(textComponent, textComponent2, textComponent3).sendTo(p);
+                                textComponent.addExtra(textComponent2);
+                                textComponent.addExtra(textComponent3);
+                                new Chat(textComponent).sendTo(p);
                             }
                         }
                     }
@@ -337,13 +428,13 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 if (args[3].split(":").length == 2) {
                                     data = Byte.parseByte(args[3].split(":")[1]);
                                 }
-                                plot.setFloorMaterial(material, data);
-                                if (args.length == 5 && (args[4].toLowerCase().startsWith("t"))) {
-                                    plot.initializeFloor();
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§aNew floor material has been set and initialized!");
-                                    plot.update();
-                                    return false;
-                                }
+                                plot.setFloor(material, data);
+//                                if (args.length == 5 && (args[4].toLowerCase().startsWith("t"))) {
+//                                    plot.initializeFloor();
+//                                    sender.sendMessage(VirtualRealty.PREFIX + "§aNew floor material has been set and initialized!");
+//                                    plot.update();
+//                                    return false;
+//                                }
                                 sender.sendMessage(VirtualRealty.PREFIX + "§aNew floor material has been set!");
                                 plot.update();
                                 break;
@@ -594,6 +685,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
         sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
         sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
         sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterial().name());
+        sender.sendMessage(" §7Border Material §8§l‣ §f" + plot.getBorderMaterial().name());
         sender.sendMessage(" §7Pos 1 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getBottomLeftCorner().toString());
         sender.sendMessage(" §7Pos 2 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getTopRightCorner().toString());
         sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());
@@ -610,13 +702,14 @@ public class VirtualRealtyCommand implements CommandExecutor {
         sender.sendMessage(" §a/vrplot info §8- §7Prints info about plot");
         sender.sendMessage(" §a/vrplot list §8- §7Prints all plots");
         sender.sendMessage(" §a/vrplot tp §8- §7Teleports to the plot");
+        sender.sendMessage(" §a/vrplot reload §8- §7Reloads plugin");
     }
 
     private static void printSetHelp(CommandSender sender) {
         sender.sendMessage(" ");
         sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
         sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownedBy §8<§7username§8>");
-        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7floorMaterial §8<§7material§8> §8<§7initialize{true/false} (optional)§8>");
+        sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7floorMaterial §8<§7material§8>");
         sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7borderMaterial §8<§7material§8>");
         sender.sendMessage(" §a/vrplot set §8<§7plotID§8> §7ownershipExpires §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
     }

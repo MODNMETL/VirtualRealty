@@ -1,26 +1,36 @@
 package me.plytki.virtualrealty.managers;
 
 import me.plytki.virtualrealty.VirtualRealty;
+import me.plytki.virtualrealty.enums.HighlightType;
 import me.plytki.virtualrealty.enums.PlotSize;
 import me.plytki.virtualrealty.objects.Cuboid;
 import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.objects.math.BlockVector2;
 import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.sql.SQL;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.dynmap.markers.AreaMarker;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class PlotManager {
 
+    private static final String markerString = "<h3>Plot #%s</h3><b>Owned By: </b>Available";
+    private static final String markerOwnedString = "<h3>Plot #%s</h3><b>Owned By: </b>%s<br><b>Owned Until: </b>%s";
+
+    public static ArrayList<AreaMarker> areaMarkers = new ArrayList<>();
     public static ArrayList<Plot> plots = new ArrayList<>();
 
     public static void loadPlots() {
+        plots.clear();
         try {
             ResultSet rs = SQL.getStatement().executeQuery("SELECT * FROM `vr_plots`");
             while (rs.next()) {
@@ -32,28 +42,14 @@ public class PlotManager {
     }
 
     public static Plot createPlot(Location creationLocation, PlotSize plotSize) {
-        Plot plot = new Plot(creationLocation, plotSize.getFloorMaterial(), plotSize);
-        plots.add(plot);
-        plot.insert();
-        return plot;
-    }
-
-    public static Plot createPlot(Location creationLocation, PlotSize plotSize, Material material) {
-        Plot plot = new Plot(creationLocation, material, plotSize);
+        Plot plot = new Plot(creationLocation, plotSize.getFloorMaterial(), plotSize.getBorderMaterial(), plotSize);
         plots.add(plot);
         plot.insert();
         return plot;
     }
 
     public static Plot createPlot(Location creationLocation, int length, int width, int height) {
-        Plot plot = new Plot(creationLocation, Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK"), length, width, height);
-        plots.add(plot);
-        plot.insert();
-        return plot;
-    }
-
-    public static Plot createPlot(Location creationLocation, int length, int width, int height, Material material) {
-        Plot plot = new Plot(creationLocation, material, length, width, height);
+        Plot plot = new Plot(creationLocation, Material.matchMaterial(VirtualRealty.isLegacy ? "GRASS" : "GRASS_BLOCK"), Material.matchMaterial(VirtualRealty.isLegacy ? "STEP" : "STONE_BRICK_SLAB"), length, width, height);
         plots.add(plot);
         plot.insert();
         return plot;
@@ -83,7 +79,6 @@ public class PlotManager {
     public static Plot getPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
-            //CuboidRegion region = new CuboidRegion(plot.getBottomLeftCorner(), plot.getTopRightCorner());
             Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
             if(region.contains(newVector)) {
                 return plot;
@@ -116,7 +111,6 @@ public class PlotManager {
     }
 
     public static boolean isColliding(Cuboid newPlot) {
-        //long time = System.currentTimeMillis();
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), plot.getCreatedLocation().getWorld());
             for (BlockVector2 vector2 : region.getWalls()) {
@@ -125,8 +119,60 @@ public class PlotManager {
                 }
             }
         }
-        //System.out.println("isColliding() time " + (System.currentTimeMillis() - time));
         return false;
+    }
+
+    public static AreaMarker getAreaMarker(String areaMarkerName) {
+        for (AreaMarker areaMarker : VirtualRealty.markerset.getAreaMarkers()) {
+            if (areaMarker.getMarkerID().equalsIgnoreCase(areaMarkerName)) {
+                return areaMarker;
+            }
+        }
+        return null;
+    }
+
+    public static void resetPlotMarker(Plot plot) {
+        LocalDateTime localDateTime = plot.getOwnedUntilDate();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String ownedBy;
+        double opacity;
+        int color;
+        if (plot.getOwnedBy() == null) {
+            ownedBy = "Available";
+            color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.getHexColor();
+            opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.opacity;
+        } else {
+            ownedBy = plot.getPlotOwner().getName();
+            color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.getHexColor();
+            opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.opacity;
+        }
+        if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.OWNED && plot.getOwnedBy() == null) return;
+        if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.AVAILABLE && plot.getOwnedBy() != null) return;
+        AreaMarker marker = getAreaMarker("virtualrealty.plots." + plot.getID());
+        if (marker == null) {
+            marker = VirtualRealty.markerset.createAreaMarker("virtualrealty.plots." + plot.getID(),
+
+                    plot.getOwnedBy() == null ? String.format(markerString, plot.getID()) : String.format(markerOwnedString, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true,
+
+                    plot.getCreatedWorld(), new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
+
+            areaMarkers.add(marker);
+        } else {
+            marker.setLabel(
+
+                    plot.getOwnedBy() == null ? String.format(markerString, plot.getID()) : String.format(markerOwnedString, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true);
+
+        }
+        marker.setFillStyle(opacity, color);
+        marker.setLineStyle(2, 0.8, 0x474747);
+        marker.setMarkerSet(VirtualRealty.markerset);
+    }
+
+    public static void removeDynMapMarker(Plot plot) {
+        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
+        areaMarkers.remove(marker);
+        marker.deleteMarker();
     }
 
 }

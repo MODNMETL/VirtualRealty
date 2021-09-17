@@ -46,11 +46,15 @@ public class SQL {
 
     public static void closeConnection() {
         try {
-            if (VirtualRealty.getPluginConfiguration().dataModel.equals(PluginConfiguration.DataModel.H2)) {
-                statement.execute("SHUTDOWN");
+            if (statement != null) {
+                if (VirtualRealty.getPluginConfiguration().dataModel.equals(PluginConfiguration.DataModel.H2)) {
+                    statement.execute("SHUTDOWN");
+                }
+                statement.close();
             }
-            statement.close();
-            connection.close();
+            if (connection != null)
+                connection.close();
+            VirtualRealty.debug("Database connection closed");
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -58,10 +62,18 @@ public class SQL {
 
     public static void createTables() {
         try {
-            SQL.getStatement().execute("CREATE TABLE IF NOT EXISTS `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` (`ID` INT(12) NOT NULL, `ownedBy` VARCHAR(36) NOT NULL, `assignedBy` VARCHAR(36) NOT NULL, `ownedUntilDate` DATETIME NOT NULL, `floorMaterial` VARCHAR(32) NOT NULL, `plotSize` VARCHAR(32) NOT NULL, `length` INT(24) NOT NULL, `width` INT(24) NOT NULL, `height` INT(24) NOT NULL, `createdLocation` TEXT(500) NOT NULL, PRIMARY KEY(`ID`))");
-        }
-        catch (SQLException ex) {
+            SQL.getStatement().execute("CREATE TABLE IF NOT EXISTS `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` (`ID` INT(12) NOT NULL, `ownedBy` VARCHAR(36) NOT NULL, `assignedBy` VARCHAR(36) NOT NULL, `ownedUntilDate` DATETIME NOT NULL, `floorMaterial` VARCHAR(32) NOT NULL, `borderMaterial` VARCHAR(32) NOT NULL, `plotSize` VARCHAR(32) NOT NULL, `length` INT(24) NOT NULL, `width` INT(24) NOT NULL, `height` INT(24) NOT NULL, `createdLocation` TEXT(500) NOT NULL, PRIMARY KEY(`ID`))");
+            updateTables();
+        } catch (SQLException ex) {
             ex.printStackTrace();
+        }
+    }
+
+    private static void updateTables() {
+        try {
+            SQL.getStatement().execute("ALTER TABLE `vr_plots` ADD `borderMaterial` VARCHAR(32) AFTER `floorMaterial`;");
+        } catch (SQLException e) {
+            //e.printStackTrace();
         }
     }
 

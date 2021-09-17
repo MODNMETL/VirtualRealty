@@ -5,6 +5,7 @@ prefix: Virtual Realty
 authors: [ plytki ]
 api-version: 1.13
 description: Virtual Realty Plugin
+softdepend: [dynmap]
 commands:
   virtualrealty:
     aliases: [vrplot, virtualr]

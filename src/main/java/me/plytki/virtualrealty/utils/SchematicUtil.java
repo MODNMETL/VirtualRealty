@@ -3,74 +3,77 @@ package me.plytki.virtualrealty.utils;
 import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
+import me.plytki.virtualrealty.utils.data.Data;
 import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.plugin.Plugin;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 public class SchematicUtil {
-
-    Plugin plugin;
-
-    public SchematicUtil(Plugin plugin) {
-        this.plugin = plugin;
-    }
     
-    public static List<String> getStructure(Block block, Block block2) {
-        int minX = (block.getX() < block2.getX()) ? block.getX() : block2.getX();
-        int minZ = (block.getZ() < block2.getZ()) ? block.getZ() : block2.getZ();
-        int minY = (block.getY() < block2.getY()) ? block.getY() : block2.getY();
-        int maxX = (block.getX() > block2.getX()) ? block.getX() : block2.getX();
-        int maxZ = (block.getZ() > block2.getZ()) ? block.getZ() : block2.getZ();
-        int maxY = (block.getY() > block2.getY()) ? block.getY() : block2.getY();
+    public static String[] getStructure(Block block, Block block2) {
+        long time = System.currentTimeMillis();
+        int minX = Math.min(block.getX(), block2.getX());
+        int minZ = Math.min(block.getZ(), block2.getZ());
+        int minY = Math.min(block.getY(), block2.getY());
+        int maxX = Math.max(block.getX(), block2.getX());
+        int maxZ = Math.max(block.getZ(), block2.getZ());
+        int maxY = Math.max(block.getY(), block2.getY());
         List<String> blocks = new ArrayList<>();
         for (int x = minX; x <= maxX; ++x) {
             for (int y = minY; y <= maxY; ++y) {
                 for (int z = minZ; z <= maxZ; ++z) {
                     Block b = block.getWorld().getBlockAt(x, y, z);
-                    if (b.getType() != Material.AIR)
+                    if (b.getType() != Material.AIR) {
                         if (VirtualRealty.isLegacy) {
                             blocks.add(x - minX + ";" + (y - minY) + ";" + (z - minZ) + ";" + b.getType().getId() + ";" + b.getData());
                         } else {
                             blocks.add(x - minX + ";" + (y - minY) + ";" + (z - minZ) + ";" + b.getBlockData().getAsString().substring(10));
                         }
+                    }
                 }
             }
         }
-        return blocks;
+        VirtualRealty.debug("Getted and serialized blocks in: " + (System.currentTimeMillis() - time) + " ms");
+        return blocks.toArray(new String[0]);
     }
 
-    public void paste(int plotID, Location l) {
-        List<String> blocks = this.load(plotID);
+    public static void paste(int plotID, Location l) {
+        long time = System.currentTimeMillis();
+        String[] blocks = load(plotID);
+        if (blocks == null) return;
         Plot plot = PlotManager.getPlot(plotID);
         Location location = new Location(plot.getCreatedLocation().getWorld(), plot.getBorderBottomLeftCorner().getBlockX(), plot.getBorderBottomLeftCorner().getBlockY(), plot.getBorderBottomLeftCorner().getBlockZ());
         Location location2 = new Location(plot.getCreatedLocation().getWorld(), plot.getBorderTopRightCorner().getBlockX(), plot.getBorderTopRightCorner().getBlockY(), plot.getBorderTopRightCorner().getBlockZ());
-        Block block = location.getBlock();
-        Block block2 = location2.getBlock();
-        int minX = (block.getX() < block2.getX()) ? block.getX() : block2.getX();
-        int minZ = (block.getZ() < block2.getZ()) ? block.getZ() : block2.getZ();
-        int minY = (block.getY() < block2.getY()) ? block.getY() : block2.getY();
-        int maxX = (block.getX() > block2.getX()) ? block.getX() : block2.getX();
-        int maxZ = (block.getZ() > block2.getZ()) ? block.getZ() : block2.getZ();
-        int maxY = (block.getY() > block2.getY()) ? block.getY() : block2.getY();
+        Block pos1Block = location.getBlock();
+        Block pos2Block = location2.getBlock();
+        int minX = Math.min(pos1Block.getX(), pos2Block.getX());
+        int minZ = Math.min(pos1Block.getZ(), pos2Block.getZ());
+        int minY = Math.min(pos1Block.getY(), pos2Block.getY());
+        int maxX = Math.max(pos1Block.getX(), pos2Block.getX());
+        int maxZ = Math.max(pos1Block.getZ(), pos2Block.getZ());
+        int maxY = Math.max(pos1Block.getY(), pos2Block.getY());
         for (int x = minX; x <= maxX; ++x) {
             for (int y = minY; y <= maxY; ++y) {
                 for (int z = minZ; z <= maxZ; ++z) {
-                    Block b = block.getWorld().getBlockAt(x, y, z);
+                    Block b = location.getWorld().getBlockAt(x, y, z);
                     b.setType(Material.AIR);
                 }
             }
         }
-        for (String block1 : blocks) {
-            String[] cords = block1.split(";");
+        for (String block : blocks) {
+            String[] cords = block.split(";");
             int x = Integer.parseInt(cords[0]);
             int y = Integer.parseInt(cords[1]);
             int z = Integer.parseInt(cords[2]);
@@ -94,56 +97,51 @@ public class SchematicUtil {
             }
             b.getState().update(true);
         }
+        VirtualRealty.debug("Pasted in: " + (System.currentTimeMillis() - time) + " ms");
     }
 
-    public void save(int plotID, List<String> b) {
-        ObjectOutputStream oos = null;
-        FileOutputStream fout = null;
-        File f = new File(VirtualRealty.plotsSchemaFolder, "plot" + plotID + ".schem");
+    public static void save(int plotID, String[] blocks) {
+        long time = System.currentTimeMillis();
+        File f = new File(VirtualRealty.plotsSchemaFolder, "plot" + plotID + ".region");
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String s : blocks) {
+            stringBuilder.append(s).append("|");
+        }
+        String plotString = stringBuilder.toString();
         try {
-            f.createNewFile();
+            new Data().compressData(plotString.substring(0, plotString.length() - 1).getBytes(StandardCharsets.UTF_8), f);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        try {
-            fout = new FileOutputStream(f);
-            oos = new ObjectOutputStream(fout);
-            oos.writeObject(b);
-        }
-        catch (Exception e2) {
-            e2.printStackTrace();
-            if (oos != null) {
-                try {
-                    oos.close();
-                }
-                catch (IOException e3) {
-                    e3.printStackTrace();
-                }
-            }
-        }
-        finally {
-            if (oos != null) {
-                try {
-                    oos.close();
-                }
-                catch (IOException e4) {
-                    e4.printStackTrace();
-                }
-            }
-        }
+        VirtualRealty.debug("Saved in: " + (System.currentTimeMillis() - time) + " ms");
     }
 
-    public List<String> load(int plotID) {
+    public static String[] load(int plotID) {
+        long time = System.currentTimeMillis();
+        File f = new File(VirtualRealty.plotsSchemaFolder, "plot" + plotID + ".region");
+        if (f.exists()) {
+            String loaded = null;
+            try {
+                loaded = new String(new Data().decompressData(f));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            VirtualRealty.debug("Loaded in: " + (System.currentTimeMillis() - time) + " ms");
+            return loaded.split("\\|");
+        }
+        return null;
+    }
+
+    public static List<String> oldLoad(int plotID) {
         File f = new File(VirtualRealty.plotsSchemaFolder, "plot" + plotID + ".schem");
-        List<String> loaded = new ArrayList<String>();
+        List<String> loaded = new ArrayList<>();
         try {
             FileInputStream streamIn = new FileInputStream(f);
             ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
             loaded = (List<String>)objectinputstream.readObject();
             objectinputstream.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return loaded;
