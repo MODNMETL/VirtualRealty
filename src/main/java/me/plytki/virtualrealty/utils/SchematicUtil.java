@@ -72,6 +72,7 @@ public class SchematicUtil {
                 }
             }
         }
+        if (blocks[0].isEmpty()) return;
         for (String block : blocks) {
             String[] cords = block.split(";");
             int x = Integer.parseInt(cords[0]);
@@ -109,6 +110,8 @@ public class SchematicUtil {
             stringBuilder.append(s).append("|");
         }
         String plotString = stringBuilder.toString();
+        if (plotString.isEmpty())
+            plotString = "clear|";
         try {
             new Data().compressData(plotString.substring(0, plotString.length() - 1).getBytes(StandardCharsets.UTF_8), f);
         } catch (IOException e) {
@@ -127,6 +130,7 @@ public class SchematicUtil {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            if (loaded.equalsIgnoreCase("clear")) return new String[]{""};
             VirtualRealty.debug("Loaded in: " + (System.currentTimeMillis() - time) + " ms");
             return loaded.split("\\|");
         }

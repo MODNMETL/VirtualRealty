@@ -12,22 +12,21 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.dynmap.markers.AreaMarker;
+import org.dynmap.markers.Marker;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class PlotManager {
 
     private static final String markerString = "<h3>Plot #%s</h3><b>Owned By: </b>Available";
     private static final String markerOwnedString = "<h3>Plot #%s</h3><b>Owned By: </b>%s<br><b>Owned Until: </b>%s";
 
-    public static ArrayList<AreaMarker> areaMarkers = new ArrayList<>();
-    public static ArrayList<Plot> plots = new ArrayList<>();
+    public static Set<AreaMarker> areaMarkers = new HashSet<>();
+    public static Set<Plot> plots = new LinkedHashSet<>();
 
     public static void loadPlots() {
         plots.clear();
@@ -62,6 +61,16 @@ public class PlotManager {
             }
         }
         return null;
+    }
+
+    public static int getPlotMinID() {
+        return plots.isEmpty() ? null : plots.stream().findFirst().get().getID();
+    }
+
+    public static int getPlotMaxID() {
+        Plot[] plotArray = PlotManager.plots.toArray(new Plot[PlotManager.plots.size()]);
+        Plot lastPlot = plotArray[plotArray.length - 1];
+        return lastPlot.getID();
     }
 
     public static List<Plot> getPlayerPlots(UUID owner) {
@@ -122,7 +131,7 @@ public class PlotManager {
         return false;
     }
 
-    public static AreaMarker getAreaMarker(String areaMarkerName) {
+    private static AreaMarker getAreaMarker(String areaMarkerName) {
         for (AreaMarker areaMarker : VirtualRealty.markerset.getAreaMarkers()) {
             if (areaMarker.getMarkerID().equalsIgnoreCase(areaMarkerName)) {
                 return areaMarker;
@@ -132,6 +141,7 @@ public class PlotManager {
     }
 
     public static void resetPlotMarker(Plot plot) {
+        if (!VirtualRealty.isDynmapPresent) return;
         LocalDateTime localDateTime = plot.getOwnedUntilDate();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         String ownedBy;
@@ -166,10 +176,11 @@ public class PlotManager {
         marker.setFillStyle(opacity, color);
         marker.setLineStyle(2, 0.8, 0x474747);
         marker.setMarkerSet(VirtualRealty.markerset);
+        //VirtualRealty.markerset.createMarker(String.valueOf(plot.getID()), ownedBy, plot.getCreatedWorld(), plot.getCenter().getBlockX(), plot.getCenter().getBlockY(), plot.getCenter().getBlockZ(), VirtualRealty.markerIcon, true);
     }
 
     public static void removeDynMapMarker(Plot plot) {
-        if (VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
+        if (!VirtualRealty.isDynmapPresent || VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
         AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
         areaMarkers.remove(marker);
         marker.deleteMarker();

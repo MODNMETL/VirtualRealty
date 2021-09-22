@@ -1,0 +1,62 @@
+useNaturalNumbersOnly: §cUżywaj tylko liczb naturalnych!
+noPlotFound: §cNie można uzyskać działki o podanym ID!
+notYourPlot: §cTo nie jest twoja działka!
+ownershipExpired: §cTwoje prawo własności wygasło!
+teleportedToPlot: §aZostałeś teleportowany na działkę!
+gamemodeFeatureDisabled: §cFunkcja zmiany trybu gry jest wyłączona!
+incorrectGamemode: §cNieprawidłowa wartość trybu gry!
+gamemodeDisabled: §cTen tryb gry jest wyłączony!
+cantSwitchGamemode: §cNie możesz tu zmienić trybu!
+creativeIsEnabled: §cTryb kreatywny jest już włączony!
+creativeIsDisabled: §cTryb kreatywny jest już wyłączony!
+creativeEnabled: §aTryb kreatywny został włączony!
+creativeDisabled: §eTryb kreatywny został wyłączony!
+notStandingOnPlot: §cNie stoisz na żadnej z działek!
+assignedByConsole: §eKonsola
+assignedByShopPurchase: §eZakup w Sklepie
+noPlots: §cNie ma żadnych działek!
+available: §cDostępny
+reloadCompleted: §aPomyślnie przeładowano!
+cantCreateOnExisting: §cNie można utworzyć nowej działki na istniejącej działce!
+cantGetFloorMaterial: §cNie udało się znaleźć materiału podłogowego o podanej nazwie!
+cantGetBorderMaterial: §cNie udało się znaleźć materiału granicznego o podanej nazwie!
+cantGetMaterial: §cNie udało sie znaleźć materiału z podaną nazwą!
+notCollidingCreating: §aTworzenie działki...
+clickToShowDetailedInfo: '§a§oClick to show detailed information about the plot! §8(§7ID:
+  §f%plot_id%§8)'
+sizeNotRecognised: §cNie rozpoznano rozmiaru!
+LWHHardLimit: §cTwardy limit dla L, W i H to 500!
+removedPlot: §aPomyślnie usunięto działkę!
+specifyUsername: §cPodaj nazwe użytkownika!
+playerNotFoundWithUsername: §cCouldn't find player with specified username!
+invalidDateProvided: §cPodano nieprawidłowy format daty!
+assignedTo: §aDziałka została przypisana do §f%assigned_to%!
+specifyMaterialName: §cOkreśl nazwę materiału!
+specifyExpiryDate: §cOkreśl datę ważności!
+newFloorMaterialSet: §aUstawiono nowy materiał podłogowy!
+newBorderMaterialSet: §aUstawiono nowy materiał graniczny!
+ownedUntilUpdated: §aData wygaśnięcia własności została zaktualizowana!
+assignedToBy: §aDziałka została przypisana do §f%assigned_to% §aprzez §f%assigned_by%!
+notAssigned: §cNieprzypisane
+unassigned: §aDziałka została zwolniona!
+minPlotID: §cMinimalne ID działki to %min_id%!
+maxPlotID: §cMaksymalne ID działki to %max_id%!
+cmdOnlyPlayers: §cKomenda tylko dla graczy!
+enteredAvailablePlot: §2Wszedłeś na wolną działke!
+enteredOwnedPlot: §7Wszedłeś na działke gracza §2%owner%!
+leftAvailablePlot: §cOpuściłeś wolną działke!
+leftOwnedPlot: §7Opuściłeś działke gracza §2%owner%!
+cantInteract: §cNie możesz tutaj tego robić!
+cantBuildHere: §cNie możesz tutaj budować!
+cantBuildThere: §cNie możesz tam budować!
+cantRideOnPlot: §cNie możesz jeździć na czyjejś działce!
+creationPlotComponent1: '§aDziałka '
+creationPlotComponent2: §8#§7%plot_id%
+creationPlotComponent3: ' §azostała stworzona! §8(§7%creation_time% ms§8)'
+cantAddYourself: §cNie możesz dodać siebie do działki!
+cantKickYourself: §cNie możesz wyrzucić siebie z działki!
+alreadyInMembers: §cTen gracz jest już jednym z członków działki!
+notInMembers: §cTen gracz nie jest członkiem twojej działki!
+cantDoAnyDMG: §cNie możesz tutaj zdawać żadnych obrażeń!
+playerKick: §aGracz §7%player% §azostał wyrzucony z działki!
+playerAdd: §aGracz §7%player% §azostał dodany do działki!

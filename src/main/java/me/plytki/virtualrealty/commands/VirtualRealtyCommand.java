@@ -8,6 +8,7 @@ import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.utils.ConfigurationFactory;
 import me.plytki.virtualrealty.utils.Permissions;
 import me.plytki.virtualrealty.utils.PlotUtil;
+import me.plytki.virtualrealty.utils.UUIDUtils;
 import me.plytki.virtualrealty.utils.multiversion.Chat;
 import me.plytki.virtualrealty.utils.multiversion.VMaterial;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -18,10 +19,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
@@ -92,39 +90,16 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     if (!Permissions.hasPermission(sender, tempPermission, "info")) return false;
                     Plot plot = PlotManager.getPlot(p.getLocation());
                     if (plot == null) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cYou aren't standing on any plot!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notStandingOnPlot);
                         return false;
                     }
-                    LocalDateTime localDateTime = plot.getOwnedUntilDate();
-                    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
-                    sender.sendMessage(" ");
-                    sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-                    sender.sendMessage(" §7Plot ID §8§l‣ §f" + plot.getID());
-                    sender.sendMessage(" §7Owned By §8§l‣ §a" + (plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
-                    String assignedBy = "§cNot assigned";
-                    if (plot.getAssignedBy() != null) {
-                        switch (plot.getAssignedBy().toUpperCase()) {
-                            case "CONSOLE": {
-                                assignedBy = "§eConsole";
-                                break;
-                            }
-                            case "SHOP_PURCHASE": {
-                                assignedBy = "§eShop Purchase";
-                                break;
-                            }
-                            default: {
-                                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(plot.getAssignedBy()));
-                                assignedBy = (offlinePlayer.isOnline() ? "§a" : "§c") + offlinePlayer.getName();
-                            }
-                        }
-                    }
-                    printInfo(sender, assignedBy, dateTimeFormatter.format(localDateTime), plot);
+                    printInfo(sender, plot);
                     break;
                 }
                 case "LIST": {
                     if (!Permissions.hasPermission(sender, tempPermission, "list")) return false;
                     if (PlotManager.plots.isEmpty()) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cThere are no plots!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
                         return false;
                     }
                     sender.sendMessage(" ");
@@ -136,8 +111,8 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         LocalDateTime localDateTime = plot.getOwnedUntilDate();
                         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                         StringBuilder ownedBy = new StringBuilder();
-                        ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
-                        boolean isOwned = !ownedBy.toString().equals("§cAvailable");
+                        ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : VirtualRealty.getMessages().available));
+                        boolean isOwned = !ownedBy.toString().equals(VirtualRealty.getMessages().available);
                         for (int i = ownedBy.length(); i < 16; i++) {
                             ownedBy.append(" ");
                         }
@@ -146,7 +121,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             size.append(" ");
                         }
                         BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
-                        textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
+                        textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
                         textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
                         new Chat(textComponent).sendTo(sender);
                     }
@@ -163,9 +138,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                 case "RELOAD": {
                     if (!Permissions.hasPermission(sender, tempPermission, "reload")) return false;
                     try {
-                        ConfigurationFactory configFactory = new ConfigurationFactory();
-                        VirtualRealty.getInstance().pluginConfiguration = configFactory.createPluginConfiguration(VirtualRealty.getPluginConfigurationFile());
-                        VirtualRealty.getInstance().sizesConfiguration = configFactory.createSizesConfiguration(VirtualRealty.getSizesConfigurationFile());
+                        VirtualRealty.getInstance().reloadConfigs();
                         if (VirtualRealty.getPluginConfiguration().dynmapMarkers) {
                             if (VirtualRealty.markerset != null) {
                                 VirtualRealty.markerset.deleteMarkerSet();
@@ -184,7 +157,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     } catch (Exception exception) {
                         exception.printStackTrace();
                     }
-                    sender.sendMessage(VirtualRealty.PREFIX + "§aReload completed!");
+                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().reloadCompleted);
                     break;
                 }
                 default: {
@@ -206,7 +179,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             }
                             if (plotSize != null) {
                                 if (PlotManager.isColliding(PlotUtil.getPlotRegion(location, Direction.byYaw(location.getYaw()), plotSize.getLength(), plotSize.getWidth(), plotSize.getHeight()))) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cYou cant create new plot on the existing plot!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
                                     return false;
                                 } else {
                                     Material floorMaterial = null;
@@ -215,11 +188,11 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                         try {
                                             floorMaterial = VMaterial.getMaterial(args[2].split(":")[0].toUpperCase());
                                             if (floorMaterial == null) {
-                                                sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
+                                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetFloorMaterial);
                                                 return false;
                                             }
                                         } catch (IllegalArgumentException e) {
-                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
+                                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetFloorMaterial);
                                             return false;
                                         }
                                         if (args[2].split(":").length == 2) {
@@ -232,38 +205,38 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                         try {
                                             borderMaterial = VMaterial.getMaterial(args[3].split(":")[0].toUpperCase());
                                             if (borderMaterial == null) {
-                                                sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetBorderMaterial);
                                                 return false;
                                             }
                                         } catch (IllegalArgumentException e) {
-                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetBorderMaterial);
                                             return false;
                                         }
                                         if (args[3].split(":").length == 2) {
                                             borderData = Byte.parseByte(args[3].split(":")[1]);
                                         }
                                     }
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§aNot colliding. Creating plot..");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                                     long timeStart = System.currentTimeMillis();
                                     Plot plot = PlotManager.createPlot(location, plotSize);
                                     if (floorMaterial != null) {
-                                        plot.setFloor(floorMaterial, floorData);
+                                        plot.setFloorMaterial(floorMaterial, floorData);
                                     }
                                     if (borderMaterial != null) {
                                         plot.setBorder(borderMaterial, borderData);
                                     }
                                     long timeEnd = System.currentTimeMillis();
-                                    BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aPlot ");
-                                    BaseComponent textComponent2 = new TextComponent("§8#§7" + plot.getID());
-                                    BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
-                                    textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
+                                    BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
+                                    BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
+                                    BaseComponent textComponent3 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent3.replaceAll("%creation_time%", String.valueOf(timeEnd - timeStart)));
+                                    textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
                                     textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
                                     textComponent.addExtra(textComponent2);
                                     textComponent.addExtra(textComponent3);
                                     new Chat(textComponent).sendTo(p);
                                 }
                             } else {
-                                sender.sendMessage(VirtualRealty.PREFIX + "§cSize not recognized!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().sizeNotRecognised);
                                 return false;
                             }
                         } else {
@@ -275,15 +248,15 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 width = Integer.parseInt(args[2]);
                                 height = Integer.parseInt(args[3]);
                             } catch (IllegalArgumentException e) {
-                                sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                                 return false;
                             }
                             if (length > 500 || width > 500 || height > 500) {
-                                sender.sendMessage(VirtualRealty.PREFIX + "§cL, W and H hard-limit is 500!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().LWHHardLimit);
                                 return false;
                             }
                             if (PlotManager.isColliding(PlotUtil.getPlotRegion(location, Direction.byYaw(location.getYaw()), length, width, height))) {
-                                sender.sendMessage(VirtualRealty.PREFIX + "§cYou cant create new plot on the existing plot!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
                                 return false;
                             } else {
                                 Material floorMaterial = null;
@@ -292,11 +265,11 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     try {
                                         floorMaterial = VMaterial.getMaterial(args[4].split(":")[0].toUpperCase());
                                         if (floorMaterial == null) {
-                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
+                                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetFloorMaterial);
                                             return false;
                                         }
                                     } catch (IllegalArgumentException e) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get floor material with specified name!");
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetFloorMaterial);
                                         return false;
                                     }
                                     if (args[4].split(":").length == 2) {
@@ -309,31 +282,31 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     try {
                                         borderMaterial = VMaterial.getMaterial(args[5].split(":")[0].toUpperCase());
                                         if (borderMaterial == null) {
-                                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetBorderMaterial);
                                             return false;
                                         }
                                     } catch (IllegalArgumentException e) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get border material with specified name!");
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetBorderMaterial);
                                         return false;
                                     }
                                     if (args[5].split(":").length == 2) {
                                         borderData = Byte.parseByte(args[5].split(":")[1]);
                                     }
                                 }
-                                sender.sendMessage(VirtualRealty.PREFIX + "§aNot colliding. Creating plot..");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                                 long timeStart = System.currentTimeMillis();
                                 Plot plot = PlotManager.createPlot(location, length, width, height);
                                 if (floorMaterial != null) {
-                                    plot.setFloor(floorMaterial, floorData);
+                                    plot.setFloorMaterial(floorMaterial, floorData);
                                 }
                                 if (borderMaterial != null) {
                                     plot.setBorder(borderMaterial, borderData);
                                 }
                                 long timeEnd = System.currentTimeMillis();
-                                BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aPlot ");
-                                BaseComponent textComponent2 = new TextComponent("§8#§7" + plot.getID());
-                                BaseComponent textComponent3 = new TextComponent(" §acreated! §8(§7" + (timeEnd - timeStart) + " ms§8)");
-                                textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick to show detailed information about the plot! §8(§7ID: §f" + plot.getID() + "§8)")}));
+                                BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
+                                BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
+                                BaseComponent textComponent3 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent3.replaceAll("%creation_time%", String.valueOf(timeEnd - timeStart)));
+                                textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
                                 textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
                                 textComponent.addExtra(textComponent2);
                                 textComponent.addExtra(textComponent3);
@@ -349,16 +322,16 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     try {
                         plotID = Integer.parseInt(args[1]);
                     } catch (IllegalArgumentException e) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                         return false;
                     }
                     Plot plot = PlotManager.getPlot(plotID);
                     if (plot == null) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                         return false;
                     }
                     plot.remove();
-                    sender.sendMessage(VirtualRealty.PREFIX + "§aSuccessfully removed plot!");
+                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
                     break;
                 }
                 case "SET": {
@@ -368,7 +341,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             case "OWNEDBY": {
                                 if (!Permissions.hasPermission(sender, commandPermission, "set.ownedby")) return false;
                                 if (args.length < 4) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cSpecify username!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyUsername);
                                     return false;
                                 }
                                 int plotID;
@@ -376,66 +349,96 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 try {
                                     plotID = Integer.parseInt(args[1]);
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                                     return false;
                                 }
                                 try {
-                                    offlinePlayer = Bukkit.getOfflinePlayer(args[3]);
+                                    if (UUIDUtils.isValidUUID(args[3])) {
+                                        offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(args[3]));
+                                    } else {
+                                        offlinePlayer = Bukkit.getOfflinePlayer(args[3]);
+                                    }
+                                    if (offlinePlayer.getName() == null) {
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+                                        return false;
+                                    }
                                 } catch (NullPointerException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get player with specified username!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
                                     return false;
                                 }
                                 Plot plot = PlotManager.getPlot(plotID);
                                 if (plot == null) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                                     return false;
                                 }
+                                if (args.length >= 5) {
+                                    String dateFormat = args[4];
+                                    String timeFormat;
+                                    int year;
+                                    int month;
+                                    int dayOfMonth;
+                                    int hour = 0;
+                                    int minute = 0;
+                                    LocalDateTime localDateTime;
+                                    try {
+                                        year = Integer.parseInt(dateFormat.split("/")[2]);
+                                        month = Integer.parseInt(dateFormat.split("/")[1]);
+                                        dayOfMonth = Integer.parseInt(dateFormat.split("/")[0]);
+                                        if (args.length >= 6) {
+                                            timeFormat = args[5];
+                                            hour = Integer.parseInt(timeFormat.split(":")[0]);
+                                            minute = Integer.parseInt(timeFormat.split(":")[1]);
+                                        }
+                                        localDateTime = LocalDateTime.of(year, month, dayOfMonth, hour, minute);
+                                    } catch (IllegalArgumentException e) {
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().invalidDateProvided);
+                                        return false;
+                                    }
+                                    plot.setOwnedUntilDate(localDateTime);
+                                }
+                                if (sender instanceof RemoteConsoleCommandSender && args.length >= 7 && args[6].equalsIgnoreCase("assign")) {
+                                    plot.setAssignedBy("SHOP_PURCHASE");
+                                }
                                 plot.setOwnedBy(offlinePlayer.getUniqueId());
-                                sender.sendMessage(VirtualRealty.PREFIX + "§aPlot has been assigned to §f" + offlinePlayer.getName() + "!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().assignedTo.replaceAll("%assigned_to%", offlinePlayer.getName()));
                                 plot.update();
                                 break;
                             }
                             case "FLOORMATERIAL": {
                                 if (!Permissions.hasPermission(sender, commandPermission, "set.floormaterial")) return false;
                                 if (args.length < 4) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cSpecify material name!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyMaterialName);
                                     return false;
                                 }
                                 int plotID;
                                 try {
                                     plotID = Integer.parseInt(args[1]);
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                                     return false;
                                 }
                                 Material material;
                                 try {
                                     material = Material.matchMaterial(args[3].split(":")[0].toUpperCase());
                                     if (material == null) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetMaterial);
                                         return false;
                                     }
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetMaterial);
                                     return false;
                                 }
                                 Plot plot = PlotManager.getPlot(plotID);
                                 if (plot == null) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                                     return false;
                                 }
                                 byte data = 0;
                                 if (args[3].split(":").length == 2) {
                                     data = Byte.parseByte(args[3].split(":")[1]);
                                 }
-                                plot.setFloor(material, data);
-//                                if (args.length == 5 && (args[4].toLowerCase().startsWith("t"))) {
-//                                    plot.initializeFloor();
-//                                    sender.sendMessage(VirtualRealty.PREFIX + "§aNew floor material has been set and initialized!");
-//                                    plot.update();
-//                                    return false;
-//                                }
-                                sender.sendMessage(VirtualRealty.PREFIX + "§aNew floor material has been set!");
+                                plot.setFloorMaterial(material, data);
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().newFloorMaterialSet);
                                 plot.update();
                                 break;
                             }
@@ -443,30 +446,30 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                 if (!Permissions.hasPermission(sender, commandPermission, "set.bordermaterial"))
                                     return false;
                                 if (args.length < 4) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cSpecify material name!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyMaterialName);
                                     return false;
                                 }
                                 int plotID;
                                 try {
                                     plotID = Integer.parseInt(args[1]);
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                                     return false;
                                 }
                                 Material material;
                                 try {
                                     material = VMaterial.getMaterial(args[3].split(":")[0].toUpperCase());
                                     if (material == null) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetMaterial);
                                         return false;
                                     }
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get material with specified name!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetMaterial);
                                     return false;
                                 }
                                 Plot plot = PlotManager.getPlot(plotID);
                                 if (plot == null) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                                     return false;
                                 }
                                 byte data = 0;
@@ -474,21 +477,21 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     data = Byte.parseByte(args[3].split(":")[1]);
                                 }
                                 plot.setBorder(material, data);
-                                sender.sendMessage(VirtualRealty.PREFIX + "§aNew border material has been set!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().newBorderMaterialSet);
                                 plot.update();
                                 return false;
                             }
                             case "OWNERSHIPEXPIRES": {
                                 if (!Permissions.hasPermission(sender, commandPermission, "set.ownerexpires")) return false;
                                 if (args.length < 4) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cSpecify expiry date!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyExpiryDate);
                                     return false;
                                 }
                                 int plotID;
                                 try {
                                     plotID = Integer.parseInt(args[1]);
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                                     return false;
                                 }
                                 String dateFormat = args[3];
@@ -510,16 +513,16 @@ public class VirtualRealtyCommand implements CommandExecutor {
                                     }
                                     localDateTime = LocalDateTime.of(year, month, dayOfMonth, hour, minute);
                                 } catch (IllegalArgumentException e) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cInvalid date format provided!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().invalidDateProvided);
                                     return false;
                                 }
                                 Plot plot = PlotManager.getPlot(plotID);
                                 if (plot == null) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                                     return false;
                                 }
                                 plot.setOwnedUntilDate(localDateTime);
-                                sender.sendMessage(VirtualRealty.PREFIX + "§aOwned until date has been updated!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownedUntilUpdated);
                                 plot.update();
                                 break;
                             }
@@ -541,18 +544,26 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         try {
                             plotID = Integer.parseInt(args[1]);
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                             return false;
                         }
                         try {
-                            offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
+                            if (UUIDUtils.isValidUUID(args[2])) {
+                                offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(args[2]));
+                            } else {
+                                offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
+                            }
+                            if (offlinePlayer.getName() == null) {
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+                                return false;
+                            }
                         } catch (NullPointerException e) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get player with specified username!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
                             return false;
                         }
                         Plot plot = PlotManager.getPlot(plotID);
                         if (plot == null) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                             return false;
                         }
                         if (sender instanceof Player) {
@@ -563,7 +574,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             plot.setAssignedBy("SHOP_PURCHASE");
                         }
                         plot.setOwnedBy(offlinePlayer.getUniqueId());
-                        sender.sendMessage(VirtualRealty.PREFIX + "§aPlot has been assigned to §f" + offlinePlayer.getName() + " §aby §f" + sender.getName() + "!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().assignedToBy.replaceAll("%assigned_to%", offlinePlayer.getName()).replaceAll("%assigned_by%", sender.getName()));
                         plot.update();
                     }
                     break;
@@ -575,17 +586,17 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         try {
                             plotID = Integer.parseInt(args[1]);
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                             return false;
                         }
                         Plot plot = PlotManager.getPlot(plotID);
                         if (plot == null) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                             return false;
                         }
                         plot.setAssignedBy(null);
                         plot.setOwnedBy(null);
-                        sender.sendMessage(VirtualRealty.PREFIX + "§aPlot has been unassigned!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().unassigned);
                         plot.update();
                     }
                     break;
@@ -596,56 +607,33 @@ public class VirtualRealtyCommand implements CommandExecutor {
                     try {
                         plotID = Integer.parseInt(args[1]);
                     } catch (IllegalArgumentException e) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                         return false;
                     }
                     if (PlotManager.plots.isEmpty()) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cThere are no plots!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
                         return false;
                     }
-                    if (plotID < PlotManager.plots.get(0).getID()) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cMinimum plot ID is " + PlotManager.plots.get(0).getID() + "!");
+                    if (plotID < PlotManager.getPlotMinID()) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().minPlotID.replaceAll("%min_id%", String.valueOf(PlotManager.getPlotMinID())));
                         return false;
                     }
-                    if (plotID > PlotManager.plots.get(PlotManager.plots.size() - 1).getID()) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cMaximum plot ID is " + PlotManager.plots.get(PlotManager.plots.size() - 1).getID() + "!");
+                    if (plotID > PlotManager.getPlotMaxID()) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().maxPlotID.replaceAll("%max_id%", String.valueOf(PlotManager.getPlotMaxID())));
                         return false;
                     }
                     Plot plot = PlotManager.getPlot(plotID);
                     if (plot == null) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                         return false;
                     }
-                    LocalDateTime localDateTime = plot.getOwnedUntilDate();
-                    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
-                    sender.sendMessage(" ");
-                    sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-                    sender.sendMessage(" §7Plot ID §8§l‣ §f" + plot.getID());
-                    sender.sendMessage(" §7Owned By §8§l‣ §a" + (plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
-                    String assignedBy = "§cNot assigned";
-                    if (plot.getAssignedBy() != null) {
-                        switch (plot.getAssignedBy().toUpperCase()) {
-                            case "CONSOLE": {
-                                assignedBy = "§eConsole";
-                                break;
-                            }
-                            case "SHOP_PURCHASE": {
-                                assignedBy = "§eShop Purchase";
-                                break;
-                            }
-                            default: {
-                                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(plot.getAssignedBy()));
-                                assignedBy = (offlinePlayer.isOnline() ? "§a" : "§c") + offlinePlayer.getName();
-                            }
-                        }
-                    }
-                    printInfo(sender, assignedBy, dateTimeFormatter.format(localDateTime), plot);
+                    printInfo(sender, plot);
                     break;
                 }
                 case "TP": {
                     if (!Permissions.hasPermission(sender, commandPermission, "tp")) return false;
                     if (!(sender instanceof Player)) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cCommand only for players!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cmdOnlyPlayers);
                         return false;
                     }
                     if (args.length == 2) {
@@ -653,18 +641,18 @@ public class VirtualRealtyCommand implements CommandExecutor {
                         try {
                             plotID = Integer.parseInt(args[1]);
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                             return false;
                         }
                         Plot plot = PlotManager.getPlot(plotID);
                         if (plot == null) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                             return false;
                         }
                         Location loc = new Location(plot.getCreatedLocation().getWorld(), plot.getCenter().getBlockX(), plot.getCenter().getBlockY() + 1, plot.getCenter().getBlockZ());
                         loc.setY(loc.getWorld().getHighestBlockAt(loc.getBlockX(), loc.getBlockZ()).getY() + 1);
                         p.teleport(loc);
-                        sender.sendMessage(VirtualRealty.PREFIX + "§aYou have been teleported to the plot!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().teleportedToPlot);
                     }
                     break;
                 }
@@ -677,9 +665,38 @@ public class VirtualRealtyCommand implements CommandExecutor {
         return false;
     }
 
-    private static void printInfo(CommandSender sender, String assignedBy, String dateTime, Plot plot) {
+    private static void printInfo(CommandSender sender, Plot plot) {
+        LocalDateTime localDateTime = plot.getOwnedUntilDate();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        String assignedBy = VirtualRealty.getMessages().notAssigned;
+        if (plot.getAssignedBy() != null) {
+            switch (plot.getAssignedBy().toUpperCase()) {
+                case "CONSOLE": {
+                    assignedBy = VirtualRealty.getMessages().assignedByConsole;
+                    break;
+                }
+                case "SHOP_PURCHASE": {
+                    assignedBy = VirtualRealty.getMessages().assignedByShopPurchase;
+                    break;
+                }
+                default: {
+                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(plot.getAssignedBy()));
+                    assignedBy = (offlinePlayer.isOnline() ? "§a" : "§c") + offlinePlayer.getName();
+                }
+            }
+        }
+        sender.sendMessage(" ");
+        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
+        sender.sendMessage(" §7Plot ID §8§l‣ §f" + plot.getID());
+        sender.sendMessage(" §7Owned By §8§l‣ §a" + (plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
+        if (plot.getMembers().size() != 0) {
+            sender.sendMessage(" §7Members §8§l↴");
+            for (OfflinePlayer offlinePlayer : plot.getMembersPlayer()) {
+                sender.sendMessage(" §8§l⁍ §" + (offlinePlayer.isOnline() ? "a" : "c") + offlinePlayer.getName());
+            }
+        }
         sender.sendMessage(" §7Assigned By §8§l‣ §a" + assignedBy);
-        sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTime);
+        sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTimeFormatter.format(localDateTime));
         sender.sendMessage(" §7Size §8§l‣ §f" + plot.getPlotSize());
         sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
         sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());

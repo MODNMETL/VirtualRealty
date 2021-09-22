@@ -4,7 +4,7 @@ main: me.plytki.virtualrealty.VirtualRealty
 prefix: Virtual Realty
 authors: [ plytki ]
 api-version: 1.13
-description: Virtual Realty Plugin
+description: §7A plot creation and management plugin for Minecraft
 softdepend: [dynmap]
 commands:
   virtualrealty:
