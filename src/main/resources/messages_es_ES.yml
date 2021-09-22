@@ -1,0 +1,60 @@
+useNaturalNumbersOnly: §c¡Usa sólo números naturales!
+noPlotFound: §cNo se ha podido obtener el gráfico con el ID especificado
+notYourPlot: §c¡No es tu parcela!
+ownershipExpired: §c¡La propiedad de la parcela ha expirado!
+teleportedToPlot: §a¡Has sido teletransportado a la parcela!
+gamemodeFeatureDisabled: §c¡La función de modo de juego está desactivada!
+incorrectGamemode: §c¡Valor de modo de juego incorrecto!
+gamemodeDisabled: §cEste modo de juego está desactivado.
+cantSwitchGamemode: §c¡No puedes cambiar de modo de juego aquí!
+creativeIsEnabled: §c¡El modo creativo ya está habilitado!
+creativeIsDisabled: §c¡El modo creativo ya está desactivado!
+creativeEnabled: §aEl modo creativo está habilitado.
+creativeDisabled: §e¡El modo creativo ha sido desactivado!
+notStandingOnPlot: §c¡No estás parado en ninguna parcela!
+assignedByConsole: §eConsola
+assignedByShopPurchase: §eCompra en tienda
+noPlots: §c¡No hay parcelas!
+available: §cDisponible
+reloadCompleted: §a¡El plugin ha sido recargado!
+cantCreateOnExisting: §c¡No se puede crear una nueva parcela en una parcela existente!
+cantGetFloorMaterial: §c¡No se ha podido obtener el material del suelo con el nombre especificado!
+cantGetBorderMaterial: §c¡No se ha podido obtener el material del borde con el nombre especificado!
+cantGetMaterial: §c¡No se ha podido obtener el material con el nombre especificado!
+notCollidingCreating: §aNo colisiona. Creando parcela..
+clickToShowDetailedInfo: '§a§o¡Haz click para mostrar información detallada sobre la parcela! §8(§7ID: §f%plot_id%§8)'
+sizeNotRecognised: §c¡Tamaño no reconocido!
+LWHHardLimit: §c¡El limite máximo L, W y H es de 500!
+removedPlot: §a¡Se ha eliminado la parcela con éxito!
+specifyUsername: §c¡Especificar nombre de usuario!
+playerNotFoundWithUsername: §c¡No se ha podido encontrar al jugador con el nombre de usuario especificado!
+invalidDateProvided: §c¡Formato de fecha inválido proporcionado!
+assignedTo: §a¡La parcela ha sido asignada a §f%assigned_to%§a!
+specifyMaterialName: §c¡Especifique el nombre del material!
+specifyExpiryDate: §c¡Especifique la fecha de expiración!
+newFloorMaterialSet: §a¡Se ha establecido un nuevo material para el suelo!
+newBorderMaterialSet: §a¡Se ha establecido un nuevo material para los bordes!
+ownedUntilUpdated: §a¡La propiedad está actualizada hasta este momento!
+assignedToBy: §a¡La parcela ha sido asignada a §f%assigned_to% §apor §f%assigned_by%§a!
+notAssigned: §cNo asignado
+unassigned: §a¡La parcela ha sido desasignada!
+minPlotID: §c¡El ID de parcela mínimo es %min_id%!
+maxPlotID: §c¡El ID máximo de la parcela es %max_id%!
+cmdOnlyPlayers: §c¡Comando sólo para jugadores!
+enteredAvailablePlot: §2¡Has entrado en una parcela disponible!
+enteredOwnedPlot: §7¡Has entrado en la parcela de §2%owner%§7!
+leftAvailablePlot: §c¡Has salido de una parcela disponible!
+leftOwnedPlot: §7¡Has salido de la parcela de §2%owner%§7!
+cantInteract: §c¡No puedes interactuar aquí!
+cantBuildHere: §c¡No puedes construir aquí!
+cantRideOnPlot: §c¡No puedes montar entidades en la parcela de alguien más!
+creationPlotComponent1: '§a¡Parcela '
+creationPlotComponent2: §8#§7%plot_id%
+creationPlotComponent3: ' §aha sido creada! §8(§7%creation_time% ms§8)'
+cantAddYourself: §c¡No puedes añadirte tu mismo a la parecela!
+cantKickYourself: §cNo puedes salirte de la parcela.
+alreadyInMembers: §c¡Este jugador ya es miembro de la parcela!
+notInMembers: §c¡Este jugador no es miembro de la parcela!
+cantDoAnyDMG: §c¡No puedes hacer daño aquí!
+playerKick: §a¡El jugador §7%player% §aha sido expulsado de tu parcela!
+playerAdd: §a¡El jugador §7%player% §aha sido añadido a tu parcela!

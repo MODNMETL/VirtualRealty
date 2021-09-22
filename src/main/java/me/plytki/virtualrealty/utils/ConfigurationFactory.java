@@ -4,6 +4,7 @@ import eu.okaeri.configs.ConfigManager;
 import eu.okaeri.configs.serdes.commons.SerdesCommons;
 import eu.okaeri.configs.validator.okaeri.OkaeriValidator;
 import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer;
+import me.plytki.virtualrealty.configs.MessagesConfiguration;
 import me.plytki.virtualrealty.configs.PluginConfiguration;
 import me.plytki.virtualrealty.configs.SizesConfiguration;
 
@@ -33,5 +34,13 @@ public class ConfigurationFactory {
         });
     }
 
+    public MessagesConfiguration createMessagesConfiguration(File messagesConfigurationFile) {
+        return ConfigManager.create(MessagesConfiguration.class, (it) -> {
+            it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesCommons());
+            it.withBindFile(messagesConfigurationFile);
+            it.saveDefaults();
+            it.load(true);
+        });
+    }
 
 }

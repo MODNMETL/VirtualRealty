@@ -6,14 +6,6 @@ import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.enums.HighlightType;
 import org.bukkit.GameMode;
 
-import java.awt.*;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-
 @Header("################################################################")
 @Header("#                                                              #")
 @Header("#                       Virtual Realty                         #")
@@ -36,6 +28,9 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("Set player gamemode to change when they enter their plot")
     @CustomKey("enable-plot-gamemode")
     public boolean enablePlotGameMode = false;
+
+    @Comment("Set your wanted language (locale)")
+    public String locale = VirtualRealty.getInstance().availableLocales.contains(VirtualRealty.getLocale()) ? VirtualRealty.getLocale().toString() : "en_GB";
 
     @Comment("Set which gamemode players change to when they enter their plot")
     @CustomKey("default-plot-gamemode")

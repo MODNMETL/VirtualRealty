@@ -2,13 +2,15 @@ package me.plytki.virtualrealty;
 
 import me.plytki.virtualrealty.commands.PlotCommand;
 import me.plytki.virtualrealty.commands.VirtualRealtyCommand;
+import me.plytki.virtualrealty.configs.MessagesConfiguration;
 import me.plytki.virtualrealty.configs.PluginConfiguration;
 import me.plytki.virtualrealty.configs.SizesConfiguration;
 import me.plytki.virtualrealty.enums.PlotSize;
 import me.plytki.virtualrealty.exceptions.MaterialMatchException;
-import me.plytki.virtualrealty.listeners.PlotListener;
-import me.plytki.virtualrealty.listeners.PlotProtectionListener;
-import me.plytki.virtualrealty.listeners.WorldListener;
+import me.plytki.virtualrealty.listeners.plot.BorderListener;
+import me.plytki.virtualrealty.listeners.plot.PlotListener;
+import me.plytki.virtualrealty.listeners.plot.ProtectionListener;
+import me.plytki.virtualrealty.listeners.world.WorldListener;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.sql.SQL;
@@ -38,6 +40,9 @@ import java.util.concurrent.Callable;
 
 public final class VirtualRealty extends JavaPlugin {
 
+    public final Locale locale = Locale.getDefault();
+    public final List<Locale> availableLocales = new ArrayList<>(Arrays.asList(new Locale("en", "GB"), new Locale("es", "ES"), new Locale("pl", "PL")));
+
     //CORE
     private static VirtualRealty instance;
     public static final String PREFIX = "§a§lVR §8§l» §7";
@@ -50,10 +55,13 @@ public final class VirtualRealty extends JavaPlugin {
     public static File plotsSchemaFolder;
     public PluginConfiguration pluginConfiguration;
     public SizesConfiguration sizesConfiguration;
+    public MessagesConfiguration messagesConfiguration;
     private final File pluginConfigurationFile = new File(this.getDataFolder(), "config.yml");
     private final File sizesConfigurationFile = new File(this.getDataFolder(), "sizes.yml");
+    private final File languagesDirectory = new File(this.getDataFolder(), "messages");
 
     //DYNMAP API
+    public static boolean isDynmapPresent = false;
     public static DynmapAPI dapi = null;
     public static MarkerSet markerset = null;
     public static MarkerIcon markerIcon = null;
@@ -85,14 +93,8 @@ public final class VirtualRealty extends JavaPlugin {
         plotsFolder.mkdirs();
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
         plotsSchemaFolder.mkdirs();
-        try {
-            ConfigurationFactory configFactory = new ConfigurationFactory();
-            pluginConfiguration = configFactory.createPluginConfiguration(pluginConfigurationFile);
-            sizesConfiguration = configFactory.createSizesConfiguration(sizesConfigurationFile);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-            return;
-        }
+        spawnLocales();
+        reloadConfigs();
         registerMetrics();
         loadSizesConfiguration();
         connectToDatabase();
@@ -104,7 +106,7 @@ public final class VirtualRealty extends JavaPlugin {
         registerListeners();
         registerTasks();
         checkForOldSchemas();
-        debug("Server Version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
+        debug("Server version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
     }
 
     @Override
@@ -117,6 +119,39 @@ public final class VirtualRealty extends JavaPlugin {
     public static void debug(String debugMessage) {
         if (VirtualRealty.getPluginConfiguration().debugMode)
             VirtualRealty.getInstance().getLogger().warning("DEBUG-MODE > " + debugMessage);
+    }
+
+    public void spawnLocales() {
+        for (Locale availableLocale : availableLocales) {
+            if (availableLocale.toString().equalsIgnoreCase("en_GB")) {
+                File messagesConfigurationFile = new File(languagesDirectory, "messages_en_GB.yml");
+                ConfigurationFactory configFactory = new ConfigurationFactory();
+                configFactory.createMessagesConfiguration(messagesConfigurationFile);
+            } else {
+                File languageConfigurationFile = new File(languagesDirectory, "messages_" + availableLocale + ".yml");
+                if (!languageConfigurationFile.exists()) {
+                    saveResource("messages_" + availableLocale + ".yml", true);
+                    File file = new File(this.getDataFolder(), "messages_" + availableLocale + ".yml");
+                    try {
+                        FileUtils.moveFile(file, languageConfigurationFile);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    public void reloadConfigs() {
+        try {
+            ConfigurationFactory configFactory = new ConfigurationFactory();
+            pluginConfiguration = configFactory.createPluginConfiguration(pluginConfigurationFile);
+            File messagesConfigurationFile = new File(languagesDirectory, "messages_" + pluginConfiguration.locale + ".yml");
+            sizesConfiguration = configFactory.createSizesConfiguration(sizesConfigurationFile);
+            messagesConfiguration = configFactory.createMessagesConfiguration(messagesConfigurationFile);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
     }
 
     public static void checkForOldSchemas() {
@@ -136,6 +171,9 @@ public final class VirtualRealty extends JavaPlugin {
             @Override
             public void run() {
                 Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("dynmap");
+                if (plugin != null) {
+                    isDynmapPresent = true;
+                }
                 if (plugin != null && plugin.isEnabled()) {
                     dapi = (DynmapAPI) plugin;
                     if (dapi.markerAPIInitialized()) {
@@ -178,9 +216,10 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new PlotListener(), this);
-        getServer().getPluginManager().registerEvents(new PlotProtectionListener(), this);
-        getServer().getPluginManager().registerEvents(new WorldListener(), this);
+        new BorderListener(this).registerEvents();
+        new PlotListener(this).registerEvents();
+        new ProtectionListener(this).registerEvents();
+        new WorldListener(this).registerEvents();
         debug("Registered listeners");
     }
 
@@ -191,7 +230,7 @@ public final class VirtualRealty extends JavaPlugin {
 
     private void registerMetrics() {
         Metrics metrics = new Metrics(this, 12578);
-        metrics.addCustomChart(new SimplePie("used_database", () -> this.getConfig().getString("data-storage")));
+        metrics.addCustomChart(new SimplePie("used_database", () -> pluginConfiguration.dataModel.name()));
         metrics.addCustomChart(new AdvancedPie("created_plots", new Callable<Map<String, Integer>>() {
             @Override
             public Map<String, Integer> call() throws Exception {
@@ -303,6 +342,10 @@ public final class VirtualRealty extends JavaPlugin {
         return VirtualRealty.getInstance().sizesConfigurationFile;
     }
 
+    public static MessagesConfiguration getMessages() {
+        return getInstance().messagesConfiguration;
+    }
+
     public boolean checkLegacyVersions() {
         setPostVersions();
         for (String postVersion : postVersions) {
@@ -311,6 +354,10 @@ public final class VirtualRealty extends JavaPlugin {
             }
         }
         return false;
+    }
+
+    public static Locale getLocale() {
+        return getInstance().locale;
     }
 
     public void setPostVersions() {

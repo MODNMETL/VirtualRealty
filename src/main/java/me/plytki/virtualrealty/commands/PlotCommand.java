@@ -8,6 +8,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public class PlotCommand implements CommandExecutor {
 
@@ -31,6 +33,18 @@ public class PlotCommand implements CommandExecutor {
         }
         if (args.length == 1) {
             switch (args[0].toUpperCase()) {
+                case "ADD": {
+                    sender.sendMessage(" ");
+                    sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
+                    sender.sendMessage(" §a/plot add §8<§7player§8> §8<§7plot§8>");
+                    break;
+                }
+                case "KICK": {
+                    sender.sendMessage(" ");
+                    sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
+                    sender.sendMessage(" §a/plot kick §8<§7player§8> §8<§7plot§8>");
+                    break;
+                }
                 case "TP": {
                     sender.sendMessage(" ");
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
@@ -43,6 +57,15 @@ public class PlotCommand implements CommandExecutor {
                     sender.sendMessage(" §a/plot gm §8<§7gamemode§8>");
                     break;
                 }
+                case "INFO": {
+                    Plot plot = PlotManager.getPlot(p.getLocation());
+                    if (plot == null) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notStandingOnPlot);
+                        return false;
+                    }
+                    printInfo(sender, plot);
+                    break;
+                }
                 case "LIST": {
                     boolean hasPlot = false;
                     for (Plot plot : PlotManager.plots) {
@@ -51,34 +74,67 @@ public class PlotCommand implements CommandExecutor {
                             break;
                         }
                     }
-                    if (!hasPlot) {
+                    boolean isMember = false;
+                    for (Plot plot : PlotManager.plots) {
+                        if (plot.getMembers().contains(p.getUniqueId())) {
+                            isMember = true;
+                            break;
+                        }
+                    }
+                    if (!hasPlot && !isMember) {
                         sender.sendMessage(VirtualRealty.PREFIX + "§cYou don't have any plots!");
                         return false;
                     }
                     sender.sendMessage(" ");
                     sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
                     sender.sendMessage(" ");
-                    sender.sendMessage("§7§m                                                                                ");
-                    sender.sendMessage(" §7|   §a§l§oID§7  |  §a§l§oOwned Until§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
-                    for (Plot plot : PlotManager.plots) {
-                        if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(p.getUniqueId()) && plot.getOwnedUntilDate().isAfter(LocalDateTime.now())) {
-                            LocalDateTime localDateTime = plot.getOwnedUntilDate();
-                            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                            StringBuilder ownedBy = new StringBuilder();
-                            ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
-                            boolean isOwned = !ownedBy.toString().equals("§cAvailable");
-                            for (int i = ownedBy.length(); i < 16; i++) {
-                                ownedBy.append(" ");
+                    if (hasPlot) {
+                        sender.sendMessage("§7§m                                                                                ");
+                        sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned Until§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
+                        for (Plot plot : PlotManager.plots) {
+                            if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(p.getUniqueId())) {
+                                LocalDateTime localDateTime = plot.getOwnedUntilDate();
+                                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                                StringBuilder ownedBy = new StringBuilder();
+                                ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : VirtualRealty.getMessages().available));
+                                boolean isOwned = !ownedBy.toString().equals(VirtualRealty.getMessages().available);
+                                for (int i = ownedBy.length(); i < 16; i++) {
+                                    ownedBy.append(" ");
+                                }
+                                StringBuilder size = new StringBuilder(plot.getPlotSize().name());
+                                for (int i = size.length(); i < 6; i++) {
+                                    size.append(" ");
+                                }
+                                BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8   §f" + plot.getCenter().toSimpleString());
+                                sender.sendMessage(textComponent.toLegacyText());
                             }
-                            StringBuilder size = new StringBuilder(plot.getPlotSize().name());
-                            for (int i = size.length(); i < 6; i++) {
-                                size.append(" ");
-                            }
-                            BaseComponent textComponent = new TextComponent(" §f" + plot.getID() + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8   §f" + size + "§8   §f" + plot.getCenter().toSimpleString());
-                            sender.sendMessage(textComponent.toLegacyText());
                         }
+                        sender.sendMessage("§7§m                                                                                ");
                     }
-                    sender.sendMessage("§7§m                                                                                ");
+                    if (isMember) {
+                        sender.sendMessage(" ");
+                        sender.sendMessage("§7                            §fMember of §8§l↴");
+                        sender.sendMessage(" ");
+                        sender.sendMessage("§7§m                                                                                ");
+                        sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
+                        for (Plot plot : PlotManager.plots) {
+                            if (plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(p.getUniqueId()) && plot.getMembers().contains(p.getUniqueId())) {
+                                StringBuilder ownedBy = new StringBuilder();
+                                ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : VirtualRealty.getMessages().available));
+                                boolean isOwned = !ownedBy.toString().equals(VirtualRealty.getMessages().available);
+                                for (int i = ownedBy.length(); i < 16; i++) {
+                                    ownedBy.append(" ");
+                                }
+                                StringBuilder size = new StringBuilder(plot.getPlotSize().name());
+                                for (int i = size.length(); i < 6; i++) {
+                                    size.append(" ");
+                                }
+                                BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8  §f" + (isOwned ? " " : "") + ownedBy + "§8 §f" + size + "§8   §f" + plot.getCenter().toSimpleString());
+                                sender.sendMessage(textComponent.toLegacyText());
+                            }
+                        }
+                        sender.sendMessage("§7§m                                                                                ");
+                    }
                     break;
                 }
                 default: {
@@ -88,38 +144,120 @@ public class PlotCommand implements CommandExecutor {
         }
         if (args.length >= 2) {
             switch (args[0].toUpperCase()) {
+                case "ADD": {
+                    if (args.length == 3) {
+                        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
+                        if (offlinePlayer.getName() == null) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+                            return false;
+                        }
+                        int plotID;
+                        try {
+                            plotID = Integer.parseInt(args[2]);
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
+                            return false;
+                        }
+                        Plot plot = PlotManager.getPlot(plotID);
+                        if (plot == null) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
+                            return false;
+                        }
+                        if (!(plot.getOwnedBy() != null && plot.getOwnedBy().equals(p.getUniqueId()))) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
+                            return false;
+                        }
+                        if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                            return false;
+                        }
+                        if (plot.getOwnedBy().equals(offlinePlayer.getUniqueId())) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantAddYourself);
+                            return false;
+                        }
+                        if (plot.getMembers().contains(offlinePlayer.getUniqueId())) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().alreadyInMembers);
+                            return false;
+                        }
+                        plot.addMember(offlinePlayer.getUniqueId());
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerAdd.replaceAll("%player%", offlinePlayer.getName()));
+                        return false;
+                    }
+                    break;
+                }
+                case "KICK": {
+                    if (args.length == 3) {
+                        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
+                        if (offlinePlayer.getName() == null) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+                            return false;
+                        }
+                        int plotID;
+                        try {
+                            plotID = Integer.parseInt(args[2]);
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
+                            return false;
+                        }
+                        Plot plot = PlotManager.getPlot(plotID);
+                        if (plot == null) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
+                            return false;
+                        }
+                        if (!(plot.getOwnedBy() != null && plot.getOwnedBy().equals(p.getUniqueId()))) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
+                            return false;
+                        }
+                        if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                            return false;
+                        }
+                        if (plot.getOwnedBy().equals(offlinePlayer.getUniqueId())) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickYourself);
+                            return false;
+                        }
+                        if (!plot.getMembers().contains(offlinePlayer.getUniqueId())) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notInMembers);
+                            return false;
+                        }
+                        plot.removeMember(offlinePlayer.getUniqueId());
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerKick.replaceAll("%player%", offlinePlayer.getName()));
+                        return false;
+                    }
+                    break;
+                }
                 case "TP": {
                     if (args.length == 2) {
                         int plotID;
                         try {
                             plotID = Integer.parseInt(args[1]);
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cUse only natural numbers!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                             return false;
                         }
                         Plot plot = PlotManager.getPlot(plotID);
                         if (plot == null) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cCouldn't get plot with specified ID!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                             return false;
                         }
                         if (!(plot.getOwnedBy() != null && plot.getOwnedBy().equals(p.getUniqueId()))) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cIt's not your plot!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
                             return false;
                         }
                         if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cYour ownership has expired!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                             return false;
                         }
                         Location loc = new Location(plot.getCreatedLocation().getWorld(), plot.getCenter().getBlockX(), plot.getCenter().getBlockY() + 1, plot.getCenter().getBlockZ());
                         loc.setY(loc.getWorld().getHighestBlockAt(loc.getBlockX(), loc.getBlockZ()).getY() + 1);
                         p.teleport(loc);
-                        sender.sendMessage(VirtualRealty.PREFIX + "§aYou have been teleported to the plot!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().teleportedToPlot);
                     }
                     break;
                 }
                 case "GM": {
                     if (!VirtualRealty.getPluginConfiguration().enablePlotGameMode || VirtualRealty.getPluginConfiguration().forcePlotGameMode) {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cGamemode feature is disabled!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeFeatureDisabled);
                         return false;
                     }
                     GameMode gameMode;
@@ -131,14 +269,14 @@ public class PlotCommand implements CommandExecutor {
                         try {
                             gameModeID = Integer.parseInt(args[1]);
                         } catch (IllegalArgumentException ex) {
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cIncorrect gamemode vaule!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectGamemode);
                             return false;
                         }
                     }
                     if (!(gameModeID != 1 && gameModeID != 2)) {
                         gameMode = GameMode.getByValue(Integer.parseInt(args[1]));
                     } else {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cUse only numbers from 1 to 2!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeDisabled);
                         return false;
                     }
 
@@ -146,34 +284,34 @@ public class PlotCommand implements CommandExecutor {
                     if (plot != null) {
                         if (plot.getOwnedBy() == null || (plot.getOwnedBy() != null && !plot.getOwnedBy().equals(p.getUniqueId()))) {
                             if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
-                                sender.sendMessage(VirtualRealty.PREFIX + "§cYour ownership has expired!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                                 return false;
                             }
-                            sender.sendMessage(VirtualRealty.PREFIX + "§cYou can't switch gamemode here!");
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantSwitchGamemode);
                         } else {
                             if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
-                                sender.sendMessage(VirtualRealty.PREFIX + "§cYour ownership has expired!");
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                             } else {
                                 if (plot.getSelectedGameMode().equals(gameMode)) {
                                     if (plot.getSelectedGameMode().equals(GameMode.CREATIVE)) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cPlot Creative-Mode is already enabled!");
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeIsEnabled);
                                     } else {
-                                        sender.sendMessage(VirtualRealty.PREFIX + "§cPlot Creative-Mode is already disabled!");
+                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeIsDisabled);
                                     }
                                     return false;
                                 }
                                 plot.setSelectedGameMode(gameMode);
                                 p.setGameMode(plot.getSelectedGameMode());
                                 if (plot.getSelectedGameMode().equals(GameMode.CREATIVE)) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§aPlot Creative-Mode has been enabled!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeEnabled);
                                 } else {
-                                    sender.sendMessage(VirtualRealty.PREFIX + "§ePlot Creative-Mode has been disabled!");
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeDisabled);
                                 }
 
                             }
                         }
                     } else {
-                        sender.sendMessage(VirtualRealty.PREFIX + "§cYou can't switch gamemode here!");
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantSwitchGamemode);
                     }
                     break;
                 }
@@ -188,8 +326,54 @@ public class PlotCommand implements CommandExecutor {
     private static void printHelp(CommandSender sender) {
         sender.sendMessage(" ");
         sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
+        sender.sendMessage(" §a/plot add §8- §7Adds a member");
+        sender.sendMessage(" §a/plot kick §8- §7Kicks a member");
         sender.sendMessage(" §a/plot list §8- §7Shows your plots");
+        sender.sendMessage(" §a/plot info §8- §7Shows plot info");
         sender.sendMessage(" §a/plot gm §8- §7Changes gamemode");
+    }
+
+    private static void printInfo(CommandSender sender, Plot plot) {
+        LocalDateTime localDateTime = plot.getOwnedUntilDate();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+//        String assignedBy = VirtualRealty.getMessages().notAssigned;
+//        if (plot.getAssignedBy() != null) {
+//            switch (plot.getAssignedBy().toUpperCase()) {
+//                case "CONSOLE": {
+//                    assignedBy = VirtualRealty.getMessages().assignedByConsole;
+//                    break;
+//                }
+//                case "SHOP_PURCHASE": {
+//                    assignedBy = VirtualRealty.getMessages().assignedByShopPurchase;
+//                    break;
+//                }
+//                default: {
+//                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(plot.getAssignedBy()));
+//                    assignedBy = (offlinePlayer.isOnline() ? "§a" : "§c") + offlinePlayer.getName();
+//                }
+//            }
+//        }
+        sender.sendMessage(" ");
+        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
+        sender.sendMessage(" §7Plot ID §8§l‣ §f" + plot.getID());
+        sender.sendMessage(" §7Owned By §8§l‣ §a" + (plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
+        if (plot.getMembers().size() != 0) {
+            sender.sendMessage(" §7Members §8§l↴");
+            for (OfflinePlayer offlinePlayer : plot.getMembersPlayer()) {
+                sender.sendMessage(" §8§l⁍ §" + (offlinePlayer.isOnline() ? "a" : "c") + offlinePlayer.getName());
+            }
+        }
+        //sender.sendMessage(" §7Assigned By §8§l‣ §a" + assignedBy);
+        sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTimeFormatter.format(localDateTime));
+        sender.sendMessage(" §7Size §8§l‣ §f" + plot.getPlotSize());
+        sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
+        sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
+        sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
+        //sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterial().name());
+        //sender.sendMessage(" §7Border Material §8§l‣ §f" + plot.getBorderMaterial().name());
+        //sender.sendMessage(" §7Pos 1 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getBottomLeftCorner().toString());
+        //sender.sendMessage(" §7Pos 2 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getTopRightCorner().toString());
+        //sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());
     }
 
 }
