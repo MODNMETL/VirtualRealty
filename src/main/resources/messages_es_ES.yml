@@ -58,3 +58,5 @@ notInMembers: §c¡Este jugador no es miembro de la parcela!
 cantDoAnyDMG: §c¡No puedes hacer daño aquí!
 playerKick: §a¡El jugador §7%player% §aha sido expulsado de tu parcela!
 playerAdd: §a¡El jugador §7%player% §aha sido añadido a tu parcela!
+gamemodeSwitched: §aEl modo de juego ya está seleccionado.
+gamemodeAlreadySelected: §cEste modo de juego ya está seleccionado.

@@ -152,6 +152,11 @@ public class Plot {
         return ownedBy != null && ownedBy.equals(player.getUniqueId());
     }
 
+    public boolean hasPlotMembership(Player player) {
+        if (members.contains(player.getUniqueId())) return true;
+        return ownedBy != null && ownedBy.equals(player.getUniqueId());
+    }
+
     public boolean isOwnershipExpired() {
         return ownedUntilDate.isBefore(LocalDateTime.now());
     }

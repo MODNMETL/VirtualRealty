@@ -60,3 +60,5 @@ notInMembers: §cTen gracz nie jest członkiem twojej działki!
 cantDoAnyDMG: §cNie możesz tutaj zdawać żadnych obrażeń!
 playerKick: §aGracz §7%player% §azostał wyrzucony z działki!
 playerAdd: §aGracz §7%player% §azostał dodany do działki!
+gamemodeSwitched: §aTwój tryb gry się zmienił!
+gamemodeAlreadySelected: §cTen tryb gry jest już wybrany!

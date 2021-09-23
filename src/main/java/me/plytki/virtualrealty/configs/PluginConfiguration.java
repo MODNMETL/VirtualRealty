@@ -36,9 +36,9 @@ public class PluginConfiguration extends OkaeriConfig {
     @CustomKey("default-plot-gamemode")
     public String plotGameMode = "SURVIVAL";
 
-    @Comment("Set forced change to plot gamemode when players enter their plot")
-    @CustomKey("force-plot-gamemode")
-    public boolean forcePlotGameMode = false;
+    @Comment("Lock gamemode to plot default when player enters their plot (disables '/plot gm' command)")
+    @CustomKey("lock-plot-gamemode")
+    public boolean lockPlotGameMode = false;
 
     public GameMode getGameMode() {
         try {
