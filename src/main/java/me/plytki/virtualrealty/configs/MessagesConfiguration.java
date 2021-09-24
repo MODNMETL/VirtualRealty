@@ -13,10 +13,6 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String incorrectGamemode = "§cIncorrect gamemode value!";
     public String gamemodeDisabled = "§cThis gamemode is disabled!";
     public String cantSwitchGamemode = "§cYou can't switch gamemode here!";
-    public String creativeIsEnabled = "§cPlot Creative-Mode is already enabled!";
-    public String creativeIsDisabled = "§cPlot Creative-Mode is already disabled!";
-    public String creativeEnabled = "§aPlot Creative-Mode has been enabled!";
-    public String creativeDisabled = "§ePlot Creative-Mode has been disabled!";
     public String notStandingOnPlot = "§cYou aren't standing on any plot!";
     public String assignedByConsole = "§eConsole";
     public String assignedByShopPurchase = "§eShop Purchase";
@@ -67,5 +63,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String cantDoAnyDMG = "§cYou can't do any damage here!";
     public String playerKick = "§aPlayer §7%player% §ahas been kicked out of your plot!";
     public String playerAdd = "§aPlayer §7%player% §ahas been added to your plot!";
+    public String gamemodeSwitched = "§aYour gamemode has changed!";
+    public String gamemodeAlreadySelected = "§cThis gamemode is already selected!";
 
 }

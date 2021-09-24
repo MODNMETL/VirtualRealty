@@ -256,7 +256,7 @@ public class PlotCommand implements CommandExecutor {
                     break;
                 }
                 case "GM": {
-                    if (!VirtualRealty.getPluginConfiguration().enablePlotGameMode || VirtualRealty.getPluginConfiguration().forcePlotGameMode) {
+                    if (VirtualRealty.getPluginConfiguration().lockPlotGameMode) {
                         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeFeatureDisabled);
                         return false;
                     }
@@ -273,41 +273,31 @@ public class PlotCommand implements CommandExecutor {
                             return false;
                         }
                     }
-                    if (!(gameModeID != 1 && gameModeID != 2)) {
+                    GameMode defaultGamemode = VirtualRealty.getInstance().getServer().getDefaultGameMode();
+                    GameMode configGamemode = VirtualRealty.getPluginConfiguration().getGameMode();
+                    if (!(gameModeID != configGamemode.getValue() && gameModeID != defaultGamemode.getValue())) {
                         gameMode = GameMode.getByValue(Integer.parseInt(args[1]));
                     } else {
                         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeDisabled);
                         return false;
                     }
-
                     Plot plot = PlotManager.getBorderedPlot(p.getLocation());
                     if (plot != null) {
-                        if (plot.getOwnedBy() == null || (plot.getOwnedBy() != null && !plot.getOwnedBy().equals(p.getUniqueId()))) {
-                            if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
-                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
-                                return false;
-                            }
+                        if (!plot.hasPlotMembership(p)) {
                             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantSwitchGamemode);
                         } else {
-                            if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+                            if (plot.isOwnershipExpired()) {
                                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                             } else {
-                                if (plot.getSelectedGameMode().equals(gameMode)) {
-                                    if (plot.getSelectedGameMode().equals(GameMode.CREATIVE)) {
-                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeIsEnabled);
-                                    } else {
-                                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeIsDisabled);
-                                    }
+                                if (p.getGameMode().equals(gameMode)) {
+                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeAlreadySelected);
                                     return false;
                                 }
-                                plot.setSelectedGameMode(gameMode);
-                                p.setGameMode(plot.getSelectedGameMode());
-                                if (plot.getSelectedGameMode().equals(GameMode.CREATIVE)) {
-                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeEnabled);
-                                } else {
-                                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().creativeDisabled);
+                                if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(p.getUniqueId())) {
+                                    plot.setSelectedGameMode(gameMode);
                                 }
-
+                                p.setGameMode(gameMode);
+                                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeSwitched);
                             }
                         }
                     } else {

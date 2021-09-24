@@ -13,8 +13,8 @@ import me.plytki.virtualrealty.listeners.plot.ProtectionListener;
 import me.plytki.virtualrealty.listeners.world.WorldListener;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
+import me.plytki.virtualrealty.registry.VirtualPlaceholders;
 import me.plytki.virtualrealty.sql.SQL;
-import me.plytki.virtualrealty.tasks.PlotExpireTask;
 import me.plytki.virtualrealty.utils.ConfigurationFactory;
 import me.plytki.virtualrealty.utils.SchematicUtil;
 import me.plytki.virtualrealty.utils.UpdateChecker;
@@ -35,6 +35,7 @@ import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -94,6 +95,7 @@ public final class VirtualRealty extends JavaPlugin {
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
         plotsSchemaFolder.mkdirs();
         spawnLocales();
+        reformatConfig();
         reloadConfigs();
         registerMetrics();
         loadSizesConfiguration();
@@ -106,6 +108,10 @@ public final class VirtualRealty extends JavaPlugin {
         registerListeners();
         registerTasks();
         checkForOldSchemas();
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")){
+            new VirtualPlaceholders(this).register();
+            debug("Registered new placeholders");
+        }
         debug("Server version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
     }
 
@@ -224,8 +230,7 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     private void registerTasks() {
-        tasks.add(new PlotExpireTask().runTaskTimer(this, 20 * 30, 20 * 30));
-        debug("Registered tasks");
+        //debug("Registered tasks");
     }
 
     private void registerMetrics() {
@@ -366,6 +371,26 @@ public final class VirtualRealty extends JavaPlugin {
         postVersions.add("1.15");
         postVersions.add("1.14");
         postVersions.add("1.13");
+    }
+
+    public void reformatConfig() {
+        File configFile = new File(this.getDataFolder(), "config.yml");
+        File newFile = new File(this.getDataFolder(), "config.yml");
+        if (configFile.exists()) {
+            try {
+                List<String> lines = FileUtils.readLines(configFile, StandardCharsets.UTF_8);
+                for (int i = 0; i < lines.size(); i++) {
+                    if (lines.get(i).startsWith("force-plot-gamemode:")) {
+                        lines.set(i, lines.get(i).replaceAll("force-plot-gamemode:", "lock-plot-gamemode:"));
+                    }
+                }
+                FileUtils.writeLines(newFile, lines);
+                FileUtils.deleteQuietly(configFile);
+                newFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void checkConfig() throws IOException {

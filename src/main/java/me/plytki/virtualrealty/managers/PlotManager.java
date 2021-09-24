@@ -176,7 +176,6 @@ public class PlotManager {
         marker.setFillStyle(opacity, color);
         marker.setLineStyle(2, 0.8, 0x474747);
         marker.setMarkerSet(VirtualRealty.markerset);
-        //VirtualRealty.markerset.createMarker(String.valueOf(plot.getID()), ownedBy, plot.getCreatedWorld(), plot.getCenter().getBlockX(), plot.getCenter().getBlockY(), plot.getCenter().getBlockZ(), VirtualRealty.markerIcon, true);
     }
 
     public static void removeDynMapMarker(Plot plot) {
