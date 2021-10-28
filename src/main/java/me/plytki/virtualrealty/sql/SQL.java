@@ -87,12 +87,8 @@ public class SQL {
                 connection.close();
                 statement.close();
                 connect();
-                createStatement();
             } else if(connection.isClosed()) {
                 connect();
-                if(statement.isClosed()) {
-                    createStatement();
-                }
             }
             lastQuery = System.currentTimeMillis();
         } catch (SQLException e) {

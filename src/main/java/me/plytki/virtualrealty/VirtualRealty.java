@@ -375,7 +375,7 @@ public final class VirtualRealty extends JavaPlugin {
 
     public void reformatConfig() {
         File configFile = new File(this.getDataFolder(), "config.yml");
-        File newFile = new File(this.getDataFolder(), "config.yml");
+        File newFile = new File(this.getDataFolder(), "config.yml.new");
         if (configFile.exists()) {
             try {
                 List<String> lines = FileUtils.readLines(configFile, StandardCharsets.UTF_8);
@@ -387,6 +387,9 @@ public final class VirtualRealty extends JavaPlugin {
                 FileUtils.writeLines(newFile, lines);
                 FileUtils.deleteQuietly(configFile);
                 newFile.createNewFile();
+                File newConfigFile = new File(this.getDataFolder(), "config.yml");
+                FileUtils.copyFile(newFile, newConfigFile);
+                FileUtils.deleteQuietly(newFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }

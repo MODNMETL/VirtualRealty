@@ -39,7 +39,7 @@ public class ProtectionListener extends VirtualListener {
             Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
             if (plot != null) {
                 if (plot.hasPermissionToPlot(player)) {
-                    if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+                    if (plot.isOwnershipExpired()) {
                         e.setCancelled(true);
                         player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                     }
@@ -140,17 +140,17 @@ public class ProtectionListener extends VirtualListener {
         }
     }
 
-    @EventHandler
-    public void onPlotEnter(PlayerMoveEvent e) {
-        Player player = e.getPlayer();
-        Plot plot = PlotManager.getPlot(e.getTo());
-        if (plot != null && e.getPlayer().isInsideVehicle()) {
-            if (!plot.hasPermissionToPlot(player)) {
-                e.getPlayer().getVehicle().eject();
-                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantRideOnPlot);
-            }
-        }
-    }
+//    @EventHandler
+//    public void onPlotEnter(PlayerMoveEvent e) {
+//        Player player = e.getPlayer();
+//        Plot plot = PlotManager.getPlot(e.getTo());
+//        if (plot != null && e.getPlayer().isInsideVehicle()) {
+//            if (!plot.hasPermissionToPlot(player)) {
+//                e.getPlayer().getVehicle().eject();
+//                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantRideOnPlot);
+//            }
+//        }
+//    }
 
     @EventHandler
     public void onTreeGrow(StructureGrowEvent e) {

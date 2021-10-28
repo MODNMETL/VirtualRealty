@@ -719,7 +719,8 @@ public class Plot {
         builder.append(this.createdLocation.getYaw() + ";");
         builder.append(this.createdLocation.getPitch() + ";");
         try {
-            SQL.getStatement().execute("INSERT INTO `vr_plots` (`ID`, `ownedBy`, `members`, `assignedBy`, `ownedUntilDate`," +
+            SQL.getStatement().execute("INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
+                    "` (`ID`, `ownedBy`, `members`, `assignedBy`, `ownedUntilDate`," +
                     " `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`) " +
                     "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "','" + getMembersString() + "', '" + this.assignedBy + "', " +
                     "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + ":" + this.floorData + "', '" + this.borderMaterial + ":" + this.borderData + "'," +
@@ -731,9 +732,17 @@ public class Plot {
 
     public void update() {
         try {
-            SQL.getStatement().execute("UPDATE `vr_plots` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', `members`='" + getMembersString() + "', `assignedBy`='" + this.assignedBy + "'," +
-                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "', `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "', `borderMaterial`='" + this.borderMaterial + ":" + this.borderData + "'," +
-                    " `plotSize`='" + this.plotSize + "', `length`='" + this.length + "', `width`='" + this.width + "', `height`='" + this.height + "'" +
+            SQL.getStatement().execute("UPDATE `" +
+                    VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
+                    "` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "'," +
+                    " `members`='" + getMembersString() + "', `assignedBy`='" + this.assignedBy + "'," +
+                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "'," +
+                    " `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "'," +
+                    " `borderMaterial`='" + this.borderMaterial + ":" + this.borderData + "'," +
+                    " `plotSize`='" + this.plotSize + "'," +
+                    " `length`='" + this.length + "'," +
+                    " `width`='" + this.width + "'," +
+                    " `height`='" + this.height + "'" +
                     " WHERE `ID`='" + this.ID + "'");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -744,7 +753,7 @@ public class Plot {
         this.unloadPlot();
         PlotManager.removeDynMapMarker(this);
         try {
-            SQL.getStatement().execute("DELETE FROM `vr_plots` WHERE `ID` = '" + ID + "';");
+            SQL.getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
         } catch (SQLException e) {
             e.printStackTrace();
         }
