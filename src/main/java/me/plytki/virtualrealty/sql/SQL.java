@@ -3,6 +3,7 @@ package me.plytki.virtualrealty.sql;
 import me.plytki.virtualrealty.VirtualRealty;
 import me.plytki.virtualrealty.configs.PluginConfiguration;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -17,18 +18,26 @@ public class SQL {
 
     public static void connect() {
         try {
-            if (VirtualRealty.getPluginConfiguration().dataModel == PluginConfiguration.DataModel.H2) {
-                Class.forName("me.plytki.virtualrealty.utils.h2.Driver");
-                connection = DriverManager.getConnection("jdbc:h2:" + VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data");
-//                Class.forName("org.sqlite.JDBC");
-//                File dataDir = new File(VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data");
-//                if (!dataDir.exists()) {
-//                    dataDir.mkdirs();
-//                }
-//                connection = DriverManager.getConnection("jdbc:sqlite:" + VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data.db");
-            } else {
-                Class.forName("com.mysql.jdbc.Driver");
-                connection = DriverManager.getConnection("jdbc:mysql://" + VirtualRealty.getPluginConfiguration().mysql.hostname + ":" + VirtualRealty.getPluginConfiguration().mysql.port + "/" + VirtualRealty.getPluginConfiguration().mysql.database + "?useSSL=" + VirtualRealty.getPluginConfiguration().mysql.useSSL + "&autoReconnect=true", VirtualRealty.getPluginConfiguration().mysql.user, VirtualRealty.getPluginConfiguration().mysql.password);
+            switch (VirtualRealty.getPluginConfiguration().dataModel) {
+                case H2: {
+                    Class.forName("me.plytki.virtualrealty.utils.h2.Driver");
+                    connection = DriverManager.getConnection("jdbc:h2:" + VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data");
+                    break;
+                }
+                case SQLITE: {
+                    Class.forName("org.sqlite.JDBC");
+                    File dataDir = new File(VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data");
+                    if (!dataDir.exists()) {
+                        dataDir.mkdirs();
+                    }
+                    connection = DriverManager.getConnection("jdbc:sqlite:" + VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data.db");
+                    break;
+                }
+                case MYSQL: {
+                    Class.forName("com.mysql.jdbc.Driver");
+                    connection = DriverManager.getConnection("jdbc:mysql://" + VirtualRealty.getPluginConfiguration().mysql.hostname + ":" + VirtualRealty.getPluginConfiguration().mysql.port + "/" + VirtualRealty.getPluginConfiguration().mysql.database + "?useSSL=" + VirtualRealty.getPluginConfiguration().mysql.useSSL + "&autoReconnect=true", VirtualRealty.getPluginConfiguration().mysql.user, VirtualRealty.getPluginConfiguration().mysql.password);
+                    break;
+                }
             }
             createStatement();
         } catch (SQLException | ClassNotFoundException ex) {
@@ -46,10 +55,7 @@ public class SQL {
 
     public static void closeConnection() {
         try {
-            if (statement != null) {
-                if (VirtualRealty.getPluginConfiguration().dataModel.equals(PluginConfiguration.DataModel.H2)) {
-                    statement.execute("SHUTDOWN");
-                }
+            if (statement != null && !statement.isClosed()) {
                 statement.close();
             }
             if (connection != null)
@@ -62,7 +68,7 @@ public class SQL {
 
     public static void createTables() {
         try {
-            SQL.getStatement().execute("CREATE TABLE IF NOT EXISTS `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` (`ID` INT(12) NOT NULL, `ownedBy` VARCHAR(36) NOT NULL, `members` TEXT, `assignedBy` VARCHAR(36) NOT NULL, `ownedUntilDate` DATETIME NOT NULL, `floorMaterial` VARCHAR(32) NOT NULL, `borderMaterial` VARCHAR(32) NOT NULL, `plotSize` VARCHAR(32) NOT NULL, `length` INT(24) NOT NULL, `width` INT(24) NOT NULL, `height` INT(24) NOT NULL, `createdLocation` TEXT(500) NOT NULL, PRIMARY KEY(`ID`))");
+            statement.execute("CREATE TABLE IF NOT EXISTS `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` (`ID` INT(12) NOT NULL, `ownedBy` VARCHAR(36) NOT NULL, `members` TEXT, `assignedBy` VARCHAR(36) NOT NULL, `ownedUntilDate` DATETIME NOT NULL, `floorMaterial` VARCHAR(32) NOT NULL, `borderMaterial` VARCHAR(32) NOT NULL, `plotSize` VARCHAR(32) NOT NULL, `length` INT(24) NOT NULL, `width` INT(24) NOT NULL, `height` INT(24) NOT NULL, `createdLocation` TEXT(500) NOT NULL, `created` DATETIME, `modified` DATETIME, PRIMARY KEY(`ID`))");
             updateTables();
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -70,12 +76,22 @@ public class SQL {
     }
     public static void updateTables() {
         try {
-            SQL.getStatement().execute("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD `borderMaterial` VARCHAR(32) AFTER `floorMaterial`;");
+            statement.execute("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD `borderMaterial` VARCHAR(32) AFTER `floorMaterial`;");
         } catch (SQLException ignored) {
 
         }
         try {
-            SQL.getStatement().execute("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD `members` TEXT AFTER `ownedBy`;");
+            statement.execute("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD `members` TEXT AFTER `ownedBy`;");
+        } catch (SQLException ignored) {
+
+        }
+        try {
+            statement.execute("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD `created` DATETIME AFTER `createdLocation`;");
+        } catch (SQLException ignored) {
+
+        }
+        try {
+            statement.execute("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD `modified` DATETIME AFTER `created`;");
         } catch (SQLException ignored) {
 
         }
@@ -95,6 +111,15 @@ public class SQL {
             e.printStackTrace();
         }
         return statement;
+    }
+
+
+    public static void setConnection(Connection connection) {
+        SQL.connection = connection;
+    }
+
+    public static void setStatement(Statement statement) {
+        SQL.statement = statement;
     }
 
 }

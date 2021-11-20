@@ -31,7 +31,7 @@ import java.util.UUID;
 
 public class VirtualRealtyCommand implements CommandExecutor {
 
-    private static final Permission commandPermission = new Permission("virtualrealty.vrplot");
+    private static final Permission commandPermission = new Permission(VirtualRealty.GLOBAL_PERMISSION.getName() + ".vrplot");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
@@ -153,6 +153,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
                             }
                         }
                         PlotManager.loadPlots();
+                        VirtualRealty.getInstance().reloadFlags();
                         VirtualRealty.getInstance().loadSizesConfiguration();
                     } catch (Exception exception) {
                         exception.printStackTrace();

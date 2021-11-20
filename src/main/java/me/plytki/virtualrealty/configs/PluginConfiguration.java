@@ -122,7 +122,7 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("H2 - Local database (Automatically started with our plugin)")
     @Comment("MYSQL - External database")
     @CustomKey("data-model")
-    public DataModel dataModel = DataModel.H2;
+    public DataModel dataModel = DataModel.SQLITE;
 
     @Comment("Data required to connect to the database")
     @Comment("The plotsTableName section is the name of the VR data table in the database")
@@ -135,6 +135,7 @@ public class PluginConfiguration extends OkaeriConfig {
     public MySQL mysql = new MySQL("localhost", 3306, "db", "root", "passwd", true, "vr_plots");
 
     public enum DataModel {
+        SQLITE,
         H2,
         MYSQL
     }

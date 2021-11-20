@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -45,6 +46,7 @@ public class Plot {
     private BlockVector3 borderTopRightCorner;
     private GameMode selectedGameMode;
     private String createdWorld;
+    private Instant modified;
 
     @Override
     public String toString() {
@@ -69,6 +71,7 @@ public class Plot {
         this.createdDirection = Direction.byYaw(location.getYaw());
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
         this.createdWorld = location.getWorld().getName();
+        this.modified = Instant.now();
         initialize();
         initializeCorners();
         if (VirtualRealty.markerset != null) {
@@ -94,6 +97,7 @@ public class Plot {
         this.createdDirection = Direction.byYaw(location.getYaw());
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
         this.createdWorld = location.getWorld().getName();
+        this.modified = Instant.now();
         initialize();
         initializeCorners();
         if (VirtualRealty.markerset != null) {
@@ -193,6 +197,7 @@ public class Plot {
         this.ownedBy = ownedBy;
         members.remove(ownedBy);
         updateMarker();
+        modified();
     }
 
     public String getAssignedBy() {
@@ -201,6 +206,7 @@ public class Plot {
 
     public void setAssignedBy(String assignedBy) {
         this.assignedBy = assignedBy;
+        modified();
     }
 
     public LocalDateTime getOwnedUntilDate() {
@@ -210,6 +216,7 @@ public class Plot {
     public void setOwnedUntilDate(LocalDateTime ownedUntilDate) {
         this.ownedUntilDate = ownedUntilDate;
         updateMarker();
+        modified();
     }
 
     public PlotSize getPlotSize() {
@@ -252,6 +259,7 @@ public class Plot {
         this.floorMaterial = floorMaterial;
         this.floorData = data;
         initializeFloor();
+        modified();
     }
 
     public Location getCreatedLocation() {
@@ -261,6 +269,7 @@ public class Plot {
     public void setBorderMaterial(Material borderMaterial, byte data) {
         this.borderMaterial = borderMaterial;
         this.borderData = data;
+        modified();
     }
 
     public Material getBorderMaterial() {
@@ -329,6 +338,7 @@ public class Plot {
 
     public void addMember(UUID uuid) {
         members.add(uuid);
+        modified();
     }
 
     public void removeMember(UUID uuid) {
@@ -363,6 +373,7 @@ public class Plot {
         } else {
             floorBlock.setType(floorMaterial);
         }
+        modified();
     }
 
     private void initializeFloor() {
@@ -574,6 +585,7 @@ public class Plot {
                 borderBlock.setType(material);
             }
         }
+        modified();
     }
 
     public void prepareBlocks(Location location) {
@@ -721,10 +733,10 @@ public class Plot {
         try {
             SQL.getStatement().execute("INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
                     "` (`ID`, `ownedBy`, `members`, `assignedBy`, `ownedUntilDate`," +
-                    " `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`) " +
+                    " `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`, `created`, `modified`) " +
                     "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "','" + getMembersString() + "', '" + this.assignedBy + "', " +
                     "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + ":" + this.floorData + "', '" + this.borderMaterial + ":" + this.borderData + "'," +
-                    " '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" + this.height + "', '" + builder + "')");
+                    " '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" + this.height + "', '" + builder + "', '" + Timestamp.from(Instant.now()) + "', '" + Timestamp.from(Instant.now()) + "')");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -742,7 +754,8 @@ public class Plot {
                     " `plotSize`='" + this.plotSize + "'," +
                     " `length`='" + this.length + "'," +
                     " `width`='" + this.width + "'," +
-                    " `height`='" + this.height + "'" +
+                    " `height`='" + this.height + "'," +
+                    " `modified`='" + (this.modified != null ? Timestamp.from(this.modified) : Timestamp.from(Instant.now())) + "'" +
                     " WHERE `ID`='" + this.ID + "'");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -774,6 +787,10 @@ public class Plot {
 
     public void updateMarker() {
         PlotManager.resetPlotMarker(this);
+    }
+
+    public void modified() {
+        this.modified = Instant.now();
     }
 
 }

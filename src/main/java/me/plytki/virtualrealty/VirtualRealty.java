@@ -5,11 +5,12 @@ import me.plytki.virtualrealty.commands.VirtualRealtyCommand;
 import me.plytki.virtualrealty.configs.MessagesConfiguration;
 import me.plytki.virtualrealty.configs.PluginConfiguration;
 import me.plytki.virtualrealty.configs.SizesConfiguration;
+import me.plytki.virtualrealty.enums.Flag;
 import me.plytki.virtualrealty.enums.PlotSize;
 import me.plytki.virtualrealty.exceptions.MaterialMatchException;
 import me.plytki.virtualrealty.listeners.plot.BorderListener;
 import me.plytki.virtualrealty.listeners.plot.PlotListener;
-import me.plytki.virtualrealty.listeners.plot.ProtectionListener;
+import me.plytki.virtualrealty.listeners.ProtectionListener;
 import me.plytki.virtualrealty.listeners.world.WorldListener;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
@@ -26,6 +27,7 @@ import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -36,6 +38,9 @@ import org.dynmap.markers.MarkerSet;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -50,6 +55,7 @@ public final class VirtualRealty extends JavaPlugin {
     public static ArrayList<BukkitTask> tasks = new ArrayList<>();
     private static final ArrayList<String> postVersions = new ArrayList<>();
     public static boolean isLegacy = false;
+    public static final Permission GLOBAL_PERMISSION = new Permission("virtualrealty");
 
     //FILES
     public static File plotsFolder;
@@ -104,10 +110,12 @@ public final class VirtualRealty extends JavaPlugin {
         if (pluginConfiguration.dynmapMarkers) {
             registerDynmap();
         }
+        reloadFlags();
         registerCommands();
         registerListeners();
         registerTasks();
         checkForOldSchemas();
+        convertOldDatabase();
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")){
             new VirtualPlaceholders(this).register();
             debug("Registered new placeholders");
@@ -120,6 +128,10 @@ public final class VirtualRealty extends JavaPlugin {
         PlotManager.plots.forEach(Plot::update);
         tasks.forEach(BukkitTask::cancel);
         SQL.closeConnection();
+        if (pluginConfiguration.dataModel == PluginConfiguration.DataModel.H2) {
+            pluginConfiguration.dataModel = PluginConfiguration.DataModel.SQLITE;
+        }
+        pluginConfiguration.save();
     }
 
     public static void debug(String debugMessage) {
@@ -148,6 +160,27 @@ public final class VirtualRealty extends JavaPlugin {
         }
     }
 
+    public void convertOldDatabase() {
+        File oldDatabase = new File(VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data.mv.db");
+        if (oldDatabase.exists()) {
+            try {
+                SQL.closeConnection();
+                Connection connection = DriverManager.getConnection("jdbc:sqlite:" + VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data.db");
+                SQL.setConnection(connection);
+                Statement statement = connection.createStatement();
+                SQL.setStatement(statement);
+                statement.execute("CREATE TABLE IF NOT EXISTS `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` (`ID` INT(12) NOT NULL, `ownedBy` VARCHAR(36) NOT NULL, `members` TEXT, `assignedBy` VARCHAR(36) NOT NULL, `ownedUntilDate` DATETIME NOT NULL, `floorMaterial` VARCHAR(32) NOT NULL, `borderMaterial` VARCHAR(32) NOT NULL, `plotSize` VARCHAR(32) NOT NULL, `length` INT(24) NOT NULL, `width` INT(24) NOT NULL, `height` INT(24) NOT NULL, `createdLocation` TEXT(500) NOT NULL, `created` DATETIME, `modified` DATETIME, PRIMARY KEY(`ID`))");
+                for (Plot plot : PlotManager.plots) {
+                    plot.insert();
+                }
+                FileUtils.deleteQuietly(oldDatabase);
+                debug("H2 database converted successfully to SQLITE");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void reloadConfigs() {
         try {
             ConfigurationFactory configFactory = new ConfigurationFactory();
@@ -157,6 +190,18 @@ public final class VirtualRealty extends JavaPlugin {
             messagesConfiguration = configFactory.createMessagesConfiguration(messagesConfigurationFile);
         } catch (Exception exception) {
             exception.printStackTrace();
+        }
+    }
+
+    public void reloadFlags() {
+        if (pluginConfiguration.allowOutPlotBuild) {
+            for (Flag.World value : Flag.World.values()) {
+                value.setAllowed(true);
+            }
+        } else {
+            for (Flag.World value : Flag.World.values()) {
+                value.setAllowed(false);
+            }
         }
     }
 
@@ -391,7 +436,7 @@ public final class VirtualRealty extends JavaPlugin {
                 FileUtils.copyFile(newFile, newConfigFile);
                 FileUtils.deleteQuietly(newFile);
             } catch (IOException e) {
-                e.printStackTrace();
+
             }
         }
     }
