@@ -27,6 +27,7 @@ public class PlotListener extends VirtualListener {
 
     @EventHandler
     public void onPlotMove(PlayerMoveEvent e) {
+        if (e.isCancelled()) return;
         Player player = e.getPlayer();
         Location to = e.getTo();
         Plot plot = PlotManager.getPlot(to);
@@ -35,17 +36,18 @@ public class PlotListener extends VirtualListener {
             String enterPlotString = VirtualRealty.getMessages().enteredAvailablePlot;
             if (plot.getOwnedBy() != null) {
                 offlinePlayer = Bukkit.getOfflinePlayer(plot.getOwnedBy());
-                enterPlotString = VirtualRealty.getMessages().enteredOwnedPlot.replaceAll("%owner%", offlinePlayer.getName());
+                enterPlotString = VirtualRealty.getMessages().enteredOwnedPlot.replaceAll("%owner%", offlinePlayer.getName()).replaceAll("%plot_id%", plot.getID() + "");
             }
             if (!enteredPlot.containsKey(player)) {
                 enteredPlot.put(player, new AbstractMap.SimpleEntry<>(plot, true));
+                Plot newPlot = enteredPlot.get(player).getKey();
                 if (VirtualRealty.getPluginConfiguration().enablePlotGameMode) {
-                    if (plot.getOwnedBy().equals(player.getUniqueId())) {
-                        if (plot.getSelectedGameMode() != VirtualRealty.getInstance().getServer().getDefaultGameMode() || plot.getSelectedGameMode() != VirtualRealty.getPluginConfiguration().getGameMode()) {
-                            plot.setSelectedGameMode(VirtualRealty.getPluginConfiguration().getGameMode());
+                    if (newPlot.getOwnedBy() != null && newPlot.getOwnedBy().equals(player.getUniqueId())) {
+                        if (newPlot.getSelectedGameMode() != VirtualRealty.getInstance().getServer().getDefaultGameMode() || newPlot.getSelectedGameMode() != VirtualRealty.getPluginConfiguration().getGameMode()) {
+                            newPlot.setSelectedGameMode(VirtualRealty.getPluginConfiguration().getGameMode());
                         }
-                        player.setGameMode(plot.getSelectedGameMode());
-                    } else if (plot.getMembers().contains(player.getUniqueId())) {
+                        player.setGameMode(newPlot.getSelectedGameMode());
+                    } else if (newPlot.getMembers().contains(player.getUniqueId())) {
                         player.setGameMode(VirtualRealty.getPluginConfiguration().getGameMode());
                     }
                 }
@@ -61,7 +63,7 @@ public class PlotListener extends VirtualListener {
                 if (!enteredPlot.get(player).getValue()) {
                     enteredPlot.replace(player, new AbstractMap.SimpleEntry<>(plot, true));
                     if (VirtualRealty.getPluginConfiguration().enablePlotGameMode) {
-                            player.setGameMode(VirtualRealty.getPluginConfiguration().getGameMode());
+                        player.setGameMode(VirtualRealty.getPluginConfiguration().getGameMode());
                     }
                 }
             }
@@ -72,7 +74,7 @@ public class PlotListener extends VirtualListener {
                     String leavePlotString = VirtualRealty.getMessages().leftAvailablePlot;
                     if (enteredPlot.get(player).getKey().getOwnedBy() != null) {
                         offlinePlayer = Bukkit.getOfflinePlayer(enteredPlot.get(player).getKey().getOwnedBy());
-                        leavePlotString = VirtualRealty.getMessages().leftOwnedPlot.replaceAll("%owner%", offlinePlayer.getName());
+                        leavePlotString = VirtualRealty.getMessages().leftOwnedPlot.replaceAll("%owner%", offlinePlayer.getName()).replaceAll("%plot_id%", enteredPlot.get(player).getKey().getID() + "");
                         if (VirtualRealty.getPluginConfiguration().enablePlotGameMode) {
                             if (enteredPlot.get(player).getKey().hasPlotMembership(player)) {
                                 player.setGameMode(Bukkit.getServer().getDefaultGameMode());

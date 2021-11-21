@@ -8,11 +8,9 @@ import me.plytki.virtualrealty.objects.Plot;
 import me.plytki.virtualrealty.objects.math.BlockVector2;
 import me.plytki.virtualrealty.objects.math.BlockVector3;
 import me.plytki.virtualrealty.sql.SQL;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.dynmap.markers.AreaMarker;
-import org.dynmap.markers.Marker;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +29,7 @@ public class PlotManager {
     public static void loadPlots() {
         plots.clear();
         try {
-            ResultSet rs = SQL.getStatement().executeQuery("SELECT * FROM `vr_plots`");
+            ResultSet rs = SQL.getStatement().executeQuery("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "`");
             while (rs.next()) {
                 plots.add(new Plot(rs));
             }

@@ -240,11 +240,11 @@ public class PlotCommand implements CommandExecutor {
                             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                             return false;
                         }
-                        if (!(plot.getOwnedBy() != null && plot.getOwnedBy().equals(p.getUniqueId()))) {
+                        if (!plot.hasPlotMembership(p)) {
                             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
                             return false;
                         }
-                        if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+                        if (plot.isOwnershipExpired()) {
                             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                             return false;
                         }
@@ -321,6 +321,7 @@ public class PlotCommand implements CommandExecutor {
         sender.sendMessage(" §a/plot list §8- §7Shows your plots");
         sender.sendMessage(" §a/plot info §8- §7Shows plot info");
         sender.sendMessage(" §a/plot gm §8- §7Changes gamemode");
+        sender.sendMessage(" §a/plot tp §8- §7Teleports to the plot");
     }
 
     private static void printInfo(CommandSender sender, Plot plot) {

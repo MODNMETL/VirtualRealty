@@ -1,9 +1,11 @@
-package me.plytki.virtualrealty.listeners.plot;
+package me.plytki.virtualrealty.listeners;
 
 import me.plytki.virtualrealty.VirtualRealty;
+import me.plytki.virtualrealty.enums.Flag;
 import me.plytki.virtualrealty.listeners.VirtualListener;
 import me.plytki.virtualrealty.managers.PlotManager;
 import me.plytki.virtualrealty.objects.Plot;
+import me.plytki.virtualrealty.utils.ProtectionUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -13,10 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.*;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.ExplosionPrimeEvent;
-import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -35,17 +34,24 @@ public class ProtectionListener extends VirtualListener {
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (e.getClickedBlock() != null && e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType().isInteractable()) {
+        if (e.getClickedBlock() != null && (e.getAction() == Action.RIGHT_CLICK_BLOCK || (e.getAction() == Action.LEFT_CLICK_BLOCK && e.getClickedBlock().getType().isInteractable()))) {
             Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
             if (plot != null) {
                 if (plot.hasPermissionToPlot(player)) {
-                    if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+                    if (plot.isOwnershipExpired()) {
                         e.setCancelled(true);
                         player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
                     }
                 } else {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                }
+            } else {
+                if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.BLOCK_PLACE)) {
+                    if (!Flag.World.BLOCK_PLACE.isAllowed()) {
+                        e.setCancelled(true);
+                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    }
                 }
             }
         }
@@ -65,6 +71,13 @@ public class ProtectionListener extends VirtualListener {
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
             }
+        } else {
+            if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.BLOCK_PLACE)) {
+                if (!Flag.World.BLOCK_PLACE.isAllowed()) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                }
+            }
         }
     }
 
@@ -81,6 +94,13 @@ public class ProtectionListener extends VirtualListener {
             } else {
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+            }
+        } else {
+            if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.BLOCK_BREAK)) {
+                if (!Flag.World.BLOCK_BREAK.isAllowed()) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                }
             }
         }
     }
@@ -120,14 +140,23 @@ public class ProtectionListener extends VirtualListener {
     @EventHandler
     public void onIgniteEvent(BlockIgniteEvent e) {
         Player player = e.getPlayer();
-        if (e.getIgnitingBlock() != null) {
-            Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
-            if (plot != null) {
-                if (plot.isOwnershipExpired()) {
-                    e.setCancelled(true);
-                    return;
+        if (player != null) {
+            if (e.getIgnitingBlock() != null) {
+                Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
+                if (plot != null) {
+                    if (plot.isOwnershipExpired()) {
+                        e.setCancelled(true);
+                        return;
+                    }
+                    e.setCancelled(!plot.hasPermissionToPlot(player));
+                } else {
+                    if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.IGNITE)) {
+                        if (!Flag.World.IGNITE.isAllowed()) {
+                            e.setCancelled(true);
+                            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                        }
+                    }
                 }
-                e.setCancelled(!plot.hasPermissionToPlot(player));
             }
         }
     }
@@ -137,20 +166,24 @@ public class ProtectionListener extends VirtualListener {
         Plot plot = PlotManager.getBorderedPlot(e.getEntity().getLocation());
         if (plot != null) {
             e.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onPlotEnter(PlayerMoveEvent e) {
-        Player player = e.getPlayer();
-        Plot plot = PlotManager.getPlot(e.getTo());
-        if (plot != null && e.getPlayer().isInsideVehicle()) {
-            if (!plot.hasPermissionToPlot(player)) {
-                e.getPlayer().getVehicle().eject();
-                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantRideOnPlot);
+        } else {
+            if (!Flag.World.EXPLOSION_PRIME.isAllowed()) {
+                e.setCancelled(true);
             }
         }
     }
+
+//    @EventHandler
+//    public void onPlotEnter(PlayerMoveEvent e) {
+//        Player player = e.getPlayer();
+//        Plot plot = PlotManager.getPlot(e.getTo());
+//        if (plot != null && e.getPlayer().isInsideVehicle()) {
+//            if (!plot.hasPermissionToPlot(player)) {
+//                e.getPlayer().getVehicle().eject();
+//                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantRideOnPlot);
+//            }
+//        }
+//    }
 
     @EventHandler
     public void onTreeGrow(StructureGrowEvent e) {
@@ -250,6 +283,13 @@ public class ProtectionListener extends VirtualListener {
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
             }
+        } else {
+            if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.ARMOR_STAND_MANIPULATION)) {
+                if (!Flag.World.ARMOR_STAND_MANIPULATION.isAllowed()) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                }
+            }
         }
     }
 
@@ -267,6 +307,13 @@ public class ProtectionListener extends VirtualListener {
                 } else {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                }
+            } else {
+                if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.ITEM_FRAME_DESTROY)) {
+                    if (!Flag.World.ITEM_FRAME_ROTATE.isAllowed()) {
+                        e.setCancelled(true);
+                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    }
                 }
             }
         }
@@ -287,6 +334,13 @@ public class ProtectionListener extends VirtualListener {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
                 }
+            } else {
+                if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.ITEM_FRAME_ROTATE)) {
+                    if (!Flag.World.ITEM_FRAME_ROTATE.isAllowed()) {
+                        e.setCancelled(true);
+                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    }
+                }
             }
         }
     }
@@ -296,7 +350,7 @@ public class ProtectionListener extends VirtualListener {
     public void onEntityDamage(EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Player) {
             Player player = (Player) e.getDamager();
-            Plot plot = PlotManager.getPlot(player.getLocation());
+            Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
             if (plot != null) {
                 if (plot.hasPermissionToPlot(player)) {
                     if (plot.isOwnershipExpired()) {
@@ -306,6 +360,13 @@ public class ProtectionListener extends VirtualListener {
                 } else {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
+                }
+            } else {
+                if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.ENTITY_DAMAGE)) {
+                    if (!Flag.World.ENTITY_DAMAGE.isAllowed()) {
+                        e.setCancelled(true);
+                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    }
                 }
             }
         }
@@ -321,6 +382,13 @@ public class ProtectionListener extends VirtualListener {
                     if (!plot.hasPermissionToPlot(player)) {
                         e.getDamager().remove();
                         e.setCancelled(true);
+                    }
+                } else {
+                    if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.ENTITY_DAMAGE)) {
+                        if (!Flag.World.ENTITY_DAMAGE.isAllowed()) {
+                            e.setCancelled(true);
+                            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                        }
                     }
                 }
             }
