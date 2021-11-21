@@ -119,7 +119,7 @@ public class PluginConfiguration extends OkaeriConfig {
     public boolean plotSound = true;
 
     @Comment("Type of data recording")
-    @Comment("H2 - Local database (Automatically started with our plugin)")
+    @Comment("SQLITE - Local database")
     @Comment("MYSQL - External database")
     @CustomKey("data-model")
     public DataModel dataModel = DataModel.SQLITE;

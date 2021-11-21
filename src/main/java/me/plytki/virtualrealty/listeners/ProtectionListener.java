@@ -140,19 +140,21 @@ public class ProtectionListener extends VirtualListener {
     @EventHandler
     public void onIgniteEvent(BlockIgniteEvent e) {
         Player player = e.getPlayer();
-        if (e.getIgnitingBlock() != null) {
-            Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
-            if (plot != null) {
-                if (plot.isOwnershipExpired()) {
-                    e.setCancelled(true);
-                    return;
-                }
-                e.setCancelled(!plot.hasPermissionToPlot(player));
-            } else {
-                if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.IGNITE)) {
-                    if (!Flag.World.IGNITE.isAllowed()) {
+        if (player != null) {
+            if (e.getIgnitingBlock() != null) {
+                Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
+                if (plot != null) {
+                    if (plot.isOwnershipExpired()) {
                         e.setCancelled(true);
-                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                        return;
+                    }
+                    e.setCancelled(!plot.hasPermissionToPlot(player));
+                } else {
+                    if (!ProtectionUtil.hasPermissionToWorld(player, Flag.World.IGNITE)) {
+                        if (!Flag.World.IGNITE.isAllowed()) {
+                            e.setCancelled(true);
+                            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                        }
                     }
                 }
             }
