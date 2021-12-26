@@ -53,7 +53,7 @@ public final class VirtualRealty extends JavaPlugin {
     private static VirtualRealty instance;
     public static final String PREFIX = "§a§lVR §8§l» §7";
     public static ArrayList<BukkitTask> tasks = new ArrayList<>();
-    private static final ArrayList<String> postVersions = new ArrayList<>();
+    private static final ArrayList<String> preVersions = new ArrayList<>();
     public static boolean isLegacy = false;
     public static final Permission GLOBAL_PERMISSION = new Permission("virtualrealty");
 
@@ -76,7 +76,7 @@ public final class VirtualRealty extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        if (!checkLegacyVersions()) {
+        if (checkLegacyVersions()) {
             isLegacy = true;
         }
         String[] updateCheck = UpdateChecker.getUpdate();
@@ -398,8 +398,8 @@ public final class VirtualRealty extends JavaPlugin {
 
     public boolean checkLegacyVersions() {
         setPostVersions();
-        for (String postVersion : postVersions) {
-            if (Bukkit.getBukkitVersion().toLowerCase().contains(postVersion.toLowerCase())) {
+        for (String preVersion : preVersions) {
+            if (Bukkit.getBukkitVersion().toLowerCase().contains(preVersion.toLowerCase())) {
                 return true;
             }
         }
@@ -411,11 +411,11 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public void setPostVersions() {
-        postVersions.add("1.17");
-        postVersions.add("1.16");
-        postVersions.add("1.15");
-        postVersions.add("1.14");
-        postVersions.add("1.13");
+        preVersions.add("1.12");
+        preVersions.add("1.11");
+        preVersions.add("1.10");
+        preVersions.add("1.9");
+        preVersions.add("1.8");
     }
 
     public void reformatConfig() {

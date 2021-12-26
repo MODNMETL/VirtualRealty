@@ -9,6 +9,7 @@ import me.plytki.virtualrealty.utils.ProtectionUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -22,6 +23,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.world.StructureGrowEvent;
+import org.bukkit.util.Vector;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +36,7 @@ public class ProtectionListener extends VirtualListener {
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (e.getClickedBlock() != null && (e.getAction() == Action.RIGHT_CLICK_BLOCK || (e.getAction() == Action.LEFT_CLICK_BLOCK && e.getClickedBlock().getType().isInteractable()))) {
+        if (e.getClickedBlock() != null && (e.getAction() == Action.RIGHT_CLICK_BLOCK || (e.getAction() == Action.LEFT_CLICK_BLOCK && (!VirtualRealty.isLegacy && e.getClickedBlock().getType().isInteractable())))) {
             Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
             if (plot != null) {
                 if (plot.hasPermissionToPlot(player)) {
@@ -107,23 +109,42 @@ public class ProtectionListener extends VirtualListener {
 
     @EventHandler
     public void onBlockMove(BlockPistonExtendEvent e) {
-        if (e.getBlocks().isEmpty()) {
-            Location fromLocation = e.getBlock().getLocation();
-            Location toLocation = e.getBlock().getLocation();
-            toLocation.add(e.getDirection().getDirection());
-            Plot fromPlot = PlotManager.getBorderedPlot(fromLocation);
-            Plot toPlot = PlotManager.getBorderedPlot(toLocation);
-            if (toPlot != null) {
-                if (fromPlot == null) {
-                    e.setCancelled(true);
-                } else if (fromPlot.getID() != toPlot.getID()) {
-                    e.setCancelled(true);
+        if (VirtualRealty.isLegacy) {
+            if (e.getBlocks().isEmpty()) {
+                Location fromLocation = e.getBlock().getLocation();
+                Location toLocation = e.getBlock().getLocation();
+                toLocation.add(getDirection(e.getDirection()));
+                Plot fromPlot = PlotManager.getBorderedPlot(fromLocation);
+                Plot toPlot = PlotManager.getBorderedPlot(toLocation);
+                if (toPlot != null) {
+                    if (fromPlot == null) {
+                        e.setCancelled(true);
+                    } else if (fromPlot.getID() != toPlot.getID()) {
+                        e.setCancelled(true);
+                    }
+                }
+            } else {
+                for (Block block : e.getBlocks()) {
+                    Location fromLocation = block.getLocation();
+                    Location toLocation = block.getLocation();
+                    toLocation.add(getDirection(e.getDirection()));
+                    Plot fromPlot = PlotManager.getBorderedPlot(fromLocation);
+                    Plot toPlot = PlotManager.getBorderedPlot(toLocation);
+                    if (toPlot != null) {
+                        if (fromPlot == null) {
+                            e.setCancelled(true);
+                        } else if (fromPlot.getID() != toPlot.getID()) {
+                            e.setCancelled(true);
+                        } else {
+                            e.setCancelled(true);
+                        }
+                    }
                 }
             }
         } else {
-            for (Block block : e.getBlocks()) {
-                Location fromLocation = block.getLocation();
-                Location toLocation = block.getLocation();
+            if (e.getBlocks().isEmpty()) {
+                Location fromLocation = e.getBlock().getLocation();
+                Location toLocation = e.getBlock().getLocation();
                 toLocation.add(e.getDirection().getDirection());
                 Plot fromPlot = PlotManager.getBorderedPlot(fromLocation);
                 Plot toPlot = PlotManager.getBorderedPlot(toLocation);
@@ -134,9 +155,36 @@ public class ProtectionListener extends VirtualListener {
                         e.setCancelled(true);
                     }
                 }
+            } else {
+                for (Block block : e.getBlocks()) {
+                    Location fromLocation = block.getLocation();
+                    Location toLocation = block.getLocation();
+                    toLocation.add(e.getDirection().getDirection());
+                    Plot fromPlot = PlotManager.getBorderedPlot(fromLocation);
+                    Plot toPlot = PlotManager.getBorderedPlot(toLocation);
+                    if (toPlot != null) {
+                        if (fromPlot == null) {
+                            e.setCancelled(true);
+                        } else if (fromPlot.getID() != toPlot.getID()) {
+                            e.setCancelled(true);
+                        } else {
+                            e.setCancelled(true);
+                        }
+                    }
+                }
             }
         }
     }
+
+    public Vector getDirection(BlockFace blockFace) {
+        Vector direction = new Vector(blockFace.getModX(), blockFace.getModY(), blockFace.getModZ());
+        if (blockFace.getModX() != 0 || blockFace.getModY() != 0 || blockFace.getModZ() != 0) {
+            direction.normalize();
+        }
+
+        return direction;
+    }
+
     @EventHandler
     public void onIgniteEvent(BlockIgniteEvent e) {
         Player player = e.getPlayer();
@@ -241,14 +289,16 @@ public class ProtectionListener extends VirtualListener {
     public void onProjectileHit(ProjectileHitEvent e) {
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot != null) {
-            if (!(e.getEntity().getShooter() instanceof Player && plot.getOwnedBy() != null && plot.getOwnedBy().equals(((Player)e.getEntity().getShooter()).getUniqueId()))) {
-                Player player = (Player) e.getEntity().getShooter();
-                if (plot.hasPermissionToPlot(player)) {
-                    if (plot.isOwnershipExpired()) {
+            if (e.getEntity().getShooter() instanceof Player) {
+                if (!(plot.getOwnedBy() != null && plot.getOwnedBy().equals(((Player) e.getEntity().getShooter()).getUniqueId()))) {
+                    Player player = (Player) e.getEntity().getShooter();
+                    if (plot.hasPermissionToPlot(player)) {
+                        if (plot.isOwnershipExpired()) {
+                            e.getEntity().remove();
+                        }
+                    } else {
                         e.getEntity().remove();
                     }
-                } else {
-                    e.getEntity().remove();
                 }
             }
         }
