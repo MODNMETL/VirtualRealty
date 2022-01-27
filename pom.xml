@@ -4,18 +4,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>me.plytki</groupId>
-    <artifactId>VirtualRealty</artifactId>
-    <version>1.7.1</version>
+    <groupId>com.modnmetl</groupId>
+    <artifactId>virtualrealty</artifactId>
+    <version>1.8.0</version>
     <packaging>jar</packaging>
 
-    <name>VirtualRealty</name>
-
     <description>A plot creation and management plugin for Minecraft</description>
+
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>build</id>
+            <build>
+                <directory>../target</directory>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
@@ -51,14 +59,11 @@
                     <relocations>
                         <relocation>
                             <pattern>org.bstats</pattern>
-                            <shadedPattern>me.plytki.virtualrealty.utils</shadedPattern>
-                        </relocation><relocation>
-                            <pattern>org.apache.commons.io</pattern>
-                            <shadedPattern>me.plytki.virtualrealty.utils</shadedPattern>
+                            <shadedPattern>com.modnmetl.virtualrealty.utils</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>org.h2</pattern>
-                            <shadedPattern>me.plytki.virtualrealty.utils.h2</shadedPattern>
+                            <pattern>org.apache.commons.io</pattern>
+                            <shadedPattern>com.modnmetl.virtualrealty.utils</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -136,12 +141,12 @@
             <version>1.13.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.200</version>
-            <scope>compile</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.h2database</groupId>-->
+<!--            <artifactId>h2</artifactId>-->
+<!--            <version>1.4.200</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
@@ -185,6 +190,12 @@
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
             <version>2.10.9</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.modnmetl</groupId>
+            <artifactId>virtualrealty-premium</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
