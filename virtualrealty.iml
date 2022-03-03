@@ -18,7 +18,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/test" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -38,7 +37,6 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.dynmap:dynmap-api:2.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.bukkit:bukkit:1.4.7-R1.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: me.clip:placeholderapi:2.10.9" level="project" />
-    <orderEntry type="module" module-name="virtualrealty-premium" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.modnmetl:VirtualRealty:1.8.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.modnmetl:virtualrealty-premium:1.8.0" level="project" />
   </component>
 </module>
