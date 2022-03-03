@@ -186,7 +186,8 @@ public final class VirtualRealty extends JavaPlugin {
                     dataSource.getConnection().close();
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         ConfigurationFactory configurationFactory = new ConfigurationFactory();
         configurationFactory.updatePluginConfiguration(pluginConfigurationFile);
         FileUtils.deleteQuietly(loaderFile);
@@ -215,7 +216,7 @@ public final class VirtualRealty extends JavaPlugin {
             Files.copy(in, Paths.get(loaderFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
         }
         URL jarUrl = loaderFile.toURI().toURL();
-        loader = new CustomClassLoader(new URL[]{ jarUrl }, getClassLoader());
+        loader = new CustomClassLoader(new URL[]{jarUrl}, getClassLoader());
         try {
             Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, loader);
             premium = clazz.newInstance();
@@ -271,11 +272,11 @@ public final class VirtualRealty extends JavaPlugin {
                                 if (in != null && in.available() > 0) {
                                     markerIcon = dapi.getMarkerAPI().createMarkerIcon("virtualrealty_main_icon", "Plots", in);
                                 }
+                            } else {
+                                markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
                             }
-                            else {
-                                 markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
-                            }
-                        } catch (IOException ignored) {}
+                        } catch (IOException ignored) {
+                        }
                         VirtualRealty.debug("Registering plots markers..");
                         for (Plot plot : PlotManager.getPlots()) {
                             PlotManager.resetPlotMarker(plot);
@@ -285,7 +286,7 @@ public final class VirtualRealty extends JavaPlugin {
                     }
                 }
             }
-        }.runTaskTimer(this, 20, 20*5);
+        }.runTaskTimer(this, 20, 20 * 5);
     }
 
     private void registerCommands() {
@@ -310,7 +311,8 @@ public final class VirtualRealty extends JavaPlugin {
             Class<?> draftListener = Class.forName("com.modnmetl.virtualrealty.listeners.premium.DraftListener", true, loader);
             panelListener.getConstructors()[0].newInstance(this);
             draftListener.getConstructors()[0].newInstance(this);
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {}
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {
+        }
         debug("Registered listeners");
     }
 
