@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 public class VMaterial {
 
     public static Material getMaterial(int materialID) throws MaterialMatchException {
-        if (VirtualRealty.isLegacy) {
+        if (VirtualRealty.legacyVersion) {
             try {
                 Method m = Material.class.getDeclaredMethod("getMaterial", int.class);
                 m.setAccessible(true);

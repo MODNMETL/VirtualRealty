@@ -24,7 +24,7 @@ public class Chat {
     public void sendTo(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            if (VirtualRealty.isLegacy) {
+            if (VirtualRealty.legacyVersion) {
                 try {
                     Method m = Player.class.getDeclaredMethod("sendMessage", BaseComponent.class);
                     m.setAccessible(true);

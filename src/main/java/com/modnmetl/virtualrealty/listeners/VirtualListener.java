@@ -9,9 +9,6 @@ public class VirtualListener implements Listener {
 
     public VirtualListener(VirtualRealty plugin) {
         this.plugin = plugin;
-    }
-
-    public void registerEvents() {
         this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
     }
 

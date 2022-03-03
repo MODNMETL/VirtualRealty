@@ -1,164 +1,185 @@
 package com.modnmetl.virtualrealty.objects;
 
+import com.modnmetl.virtualrealty.configs.PluginConfiguration;
 import com.modnmetl.virtualrealty.enums.Direction;
-import com.modnmetl.virtualrealty.enums.Permission;
+import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
 import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.managers.PlotManager;
-import com.modnmetl.virtualrealty.sql.SQL;
-import com.modnmetl.virtualrealty.utils.SchematicUtil;
+import com.modnmetl.virtualrealty.objects.region.Cuboid;
+import com.modnmetl.virtualrealty.sql.Database;
+import com.modnmetl.virtualrealty.utils.EnumUtils;
+import com.modnmetl.virtualrealty.utils.data.OldSchematicUtil;
+import com.modnmetl.virtualrealty.utils.data.SchematicUtil;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.objects.math.BlockVector3;
-import org.apache.commons.io.FileUtils;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 
+@Getter
+@Setter
 public class Plot {
+
+    public static final LocalDateTime MAX_DATE = LocalDateTime.of(2999, 12, 31, 0, 0);
+    public static final DateTimeFormatter PLOT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    public static final DateTimeFormatter SHORT_PLOT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     private int ID;
     private UUID ownedBy;
-    private Set<UUID> members;
+    public final LinkedList<PlotMember> members;
+    public final Set<RegionPermission> nonMemberPermissions;
     private String assignedBy;
     private LocalDateTime ownedUntilDate;
     private PlotSize plotSize;
-    private int length;
-    private int width;
-    private int height;
-    private Material floorMaterial;
-    private byte floorData;
-    private Material borderMaterial;
-    private byte borderData;
-    private Location createdLocation;
-    private Direction createdDirection;
-    private BlockVector3 bottomLeftCorner;
-    private BlockVector3 topRightCorner;
-    private BlockVector3 borderBottomLeftCorner;
-    private BlockVector3 borderTopRightCorner;
+    private final int length, width, height;
+    private Material floorMaterial, borderMaterial;
+    private byte floorData, borderData;
+    private final Location createdLocation;
+    private final Direction createdDirection;
+    private BlockVector3 bottomLeftCorner, topRightCorner, borderBottomLeftCorner, borderTopRightCorner;
     private GameMode selectedGameMode;
-    private String createdWorld;
+    private final String createdWorld;
     private Instant modified;
+    private LocalDateTime createdAt;
 
-    @Override
-    public String toString() {
-        return "{ ID: " + ID + ", ownedBy: " + ownedBy + "}";
-    }
-
-    public Plot(Location location, Material floorMaterial, Material borderMaterial, PlotSize plotSize) {
-        this.ID = PlotManager.plots.isEmpty() ? 10000 : PlotManager.getPlotMaxID() + 1;
+    public Plot(Location location, Material floorMaterial, Material borderMaterial, PlotSize plotSize, int length, int width, int height, boolean natural) {
+        this.ID =  PlotManager.getPlots().isEmpty() ? 10000 : PlotManager.getPlotMaxID() + 1;
         this.ownedBy = null;
-        this.members = new HashSet<>();
+        this.members = new LinkedList<>();
+        this.nonMemberPermissions = new HashSet<>(VirtualRealty.getPermissions().getDefaultNonMemberPlotPerms());
         this.assignedBy = null;
-        this.ownedUntilDate = LocalDateTime.of(2999, 12, 31, 0, 0);
+        this.ownedUntilDate = MAX_DATE;
         this.floorMaterial = floorMaterial;
         this.floorData = 0;
         this.borderMaterial = borderMaterial;
         this.borderData = 0;
-        this.plotSize = plotSize;
-        this.length = plotSize.getLength();
-        this.width = plotSize.getWidth();
-        this.height = plotSize.getHeight();
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
-        this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
+        this.selectedGameMode = VirtualRealty.getPluginConfiguration().getDefaultPlotGamemode();
         this.createdWorld = location.getWorld().getName();
         this.modified = Instant.now();
-        initialize();
-        initializeCorners();
-        if (VirtualRealty.markerset != null) {
-            PlotManager.resetPlotMarker(this);
-        }
-    }
-
-    public Plot(Location location, Material floorMaterial, Material borderMaterial, int length, int width, int height) {
-        this.ID =  PlotManager.plots.isEmpty() ? 10000 : PlotManager.getPlotMaxID() + 1;
-        this.ownedBy = null;
-        this.members = new HashSet<>();
-        this.assignedBy = null;
-        this.ownedUntilDate = LocalDateTime.of(2999, 12, 31, 0, 0);
-        this.floorMaterial = floorMaterial;
-        this.floorData = 0;
-        this.borderMaterial = borderMaterial;
-        this.borderData = 0;
-        this.plotSize = PlotSize.CUSTOM;
+        this.createdAt = LocalDateTime.now();
+        this.plotSize = plotSize;
         this.length = length;
         this.width = width;
         this.height = height;
-        this.createdLocation = location;
-        this.createdDirection = Direction.byYaw(location.getYaw());
-        this.selectedGameMode = VirtualRealty.getPluginConfiguration().getGameMode();
-        this.createdWorld = location.getWorld().getName();
-        this.modified = Instant.now();
-        initialize();
-        initializeCorners();
+        initialize(natural);
         if (VirtualRealty.markerset != null) {
             PlotManager.resetPlotMarker(this);
         }
     }
 
-
+    @SneakyThrows
     public Plot(ResultSet rs) {
-        try {
-            this.ID = rs.getInt("ID");
-            this.ownedBy = rs.getString("ownedBy").isEmpty() ? null : UUID.fromString(rs.getString("ownedBy"));
-            this.members = new HashSet<>();
-            String membersString = rs.getString("members");
-            if (membersString != null && !membersString.isEmpty()) {
-                String[] membersArray = membersString.substring(0, membersString.length() - 1).split(";");
-                for (String s : membersArray) {
-                    members.add(UUID.fromString(s));
-                }
+        this.ID = rs.getInt("ID");
+        this.ownedBy = rs.getString("ownedBy").isEmpty() ? null : UUID.fromString(rs.getString("ownedBy"));
+        this.members = new LinkedList<>();
+        Set<RegionPermission> plotPermissions = new HashSet<>();
+        if (!rs.getString("nonMemberPermissions").isEmpty()) {
+            for (String s : rs.getString("nonMemberPermissions").split("¦")) {
+                plotPermissions.add(RegionPermission.valueOf(s.toUpperCase()));
             }
-            this.assignedBy = rs.getString("assignedBy").equalsIgnoreCase("null") ? null : rs.getString("assignedBy");
+        }
+        this.nonMemberPermissions = plotPermissions;
+        this.assignedBy = rs.getString("assignedBy").equalsIgnoreCase("null") ? null : rs.getString("assignedBy");
+        DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder().parseCaseInsensitive().append(DateTimeFormatter.ISO_LOCAL_DATE).appendLiteral(' ').append(DateTimeFormatter.ISO_LOCAL_TIME).toFormatter();
+        if (VirtualRealty.getPluginConfiguration().dataModel == PluginConfiguration.DataModel.SQLITE) {
+            this.ownedUntilDate = LocalDateTime.parse(rs.getString("ownedUntilDate"), dateTimeFormatter);
+            if (rs.getString("created") != null)
+                this.createdAt = LocalDateTime.parse(rs.getString("created"), dateTimeFormatter);
+        } else {
             this.ownedUntilDate = rs.getTimestamp("ownedUntilDate").toLocalDateTime();
-            this.floorMaterial = Material.getMaterial(rs.getString("floorMaterial").split(":")[0]);
-            this.floorData = rs.getString("floorMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("floorMaterial").split(":")[1]);
-            if (rs.getString("borderMaterial") != null) {
-                this.borderMaterial = Material.getMaterial(rs.getString("borderMaterial").split(":")[0]);
-                this.borderData = rs.getString("borderMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("borderMaterial").split(":")[1]);
-            }
-            this.plotSize = PlotSize.valueOf(rs.getString("plotSize"));
-            this.length = rs.getInt("length");
-            this.width = rs.getInt("width");
-            this.height = rs.getInt("height");
-            ArrayList<String> location = new ArrayList<>(Arrays.asList(rs.getString("createdLocation").subSequence(0, rs.getString("createdLocation").length() - 1).toString().split(";")));
-            Location createLocation = new Location(Bukkit.getWorld(location.get(0)), Double.parseDouble(location.get(1)), Double.parseDouble(location.get(2)), Double.parseDouble(location.get(3)), Float.parseFloat(location.get(4)), Float.parseFloat(location.get(5)));
-            this.createdLocation = rs.getString("createdLocation").isEmpty() ? null : createLocation;
-            this.createdDirection = Direction.byYaw(createdLocation.getYaw());
-            this.selectedGameMode = GameMode.CREATIVE;
-            this.createdWorld = location.get(0);
-            if (floorMaterial == null) {
-                floorMaterial = plotSize.getFloorMaterial();
-                floorData = plotSize.getFloorData();
-            }
-            if (borderMaterial == null) {
-                borderMaterial = plotSize.getBorderMaterial();
-                borderData = plotSize.getBorderData();
-            }
-            initializeCorners();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            if (rs.getTimestamp("created") != null)
+                this.createdAt = rs.getTimestamp("created").toLocalDateTime();
+        }
+        this.floorMaterial = Material.getMaterial(rs.getString("floorMaterial").split(":")[0]);
+        this.floorData = rs.getString("floorMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("floorMaterial").split(":")[1]);
+        if (rs.getString("borderMaterial") != null) {
+            this.borderMaterial = Material.getMaterial(rs.getString("borderMaterial").split(":")[0]);
+            this.borderData = rs.getString("borderMaterial").split(":").length == 1 ? 0 : Byte.parseByte(rs.getString("borderMaterial").split(":")[1]);
+        }
+        this.plotSize = PlotSize.valueOf(rs.getString("plotSize"));
+        this.length = rs.getInt("length");
+        this.width = rs.getInt("width");
+        this.height = rs.getInt("height");
+        ArrayList<String> location = new ArrayList<>(Arrays.asList(rs.getString("createdLocation").subSequence(0, rs.getString("createdLocation").length() - 1).toString().split(";")));
+        Location createLocation = new Location(Bukkit.getWorld(location.get(0)), Double.parseDouble(location.get(1)), Double.parseDouble(location.get(2)), Double.parseDouble(location.get(3)), Float.parseFloat(location.get(4)), Float.parseFloat(location.get(5)));
+        this.createdLocation = rs.getString("createdLocation").isEmpty() ? null : createLocation;
+        this.createdDirection = Direction.byYaw(createdLocation.getYaw());
+        if (!rs.getString("selectedGameMode").isEmpty() && EnumUtils.isValidEnum(GameMode.class, rs.getString("selectedGameMode"))) {
+            this.selectedGameMode = GameMode.valueOf(rs.getString("selectedGameMode"));
+        } else {
+            this.selectedGameMode = VirtualRealty.getPluginConfiguration().getDefaultPlotGamemode();
+        }
+        this.createdWorld = location.get(0);
+        if (floorMaterial == null) {
+            floorMaterial = plotSize.getFloorMaterial();
+            floorData = plotSize.getFloorData();
+        }
+        if (borderMaterial == null) {
+            borderMaterial = plotSize.getBorderMaterial();
+            borderData = plotSize.getBorderData();
+        }
+        prepareCorners();
+    }
+
+    public boolean hasMembershipAccess(UUID uuid) {
+        PlotMember member = getMember(uuid);
+        if (member != null || (ownedBy != null && getPlotOwner().getUniqueId() == uuid)) return true;
+        return false;
+    }
+
+    public void togglePermission(RegionPermission plotPermission) {
+        modified();
+        if (nonMemberPermissions.contains(plotPermission)) {
+            nonMemberPermissions.remove(plotPermission);
+        } else {
+            nonMemberPermissions.add(plotPermission);
         }
     }
 
-    public boolean hasPermissionToPlot(Player player) {
-        if (player.hasPermission(Permission.PLOT_BUILD.getPermission())) return true;
-        if (members.contains(player.getUniqueId())) return true;
-        return ownedBy != null && ownedBy.equals(player.getUniqueId());
+    public boolean hasPermission(RegionPermission plotPermission) {
+        return nonMemberPermissions.contains(plotPermission);
     }
 
-    public boolean hasPlotMembership(Player player) {
-        if (members.contains(player.getUniqueId())) return true;
-        return ownedBy != null && ownedBy.equals(player.getUniqueId());
+    public void addPermission(RegionPermission plotPermission) {
+        nonMemberPermissions.add(plotPermission);
+    }
+
+    public void removePermission(RegionPermission plotPermission) {
+        nonMemberPermissions.remove(plotPermission);
+    }
+
+    public PlotMember getMember(UUID uuid) {
+        for (PlotMember member : members) {
+            if (member.getUuid().equals(uuid)) {
+                return member;
+            }
+        }
+        return null;
+    }
+
+    public void addMember(UUID uuid) {
+        PlotMember plotMember = new PlotMember(uuid, this);
+        members.add(plotMember);
+        plotMember.insert();
+    }
+
+    public void removeMember(PlotMember plotMember) {
+        members.remove(plotMember);
+        plotMember.delete();
     }
 
     public boolean isOwnershipExpired() {
@@ -181,135 +202,62 @@ public class Plot {
         return Math.max(this.getBorderBottomLeftCorner().getBlockZ(), this.borderTopRightCorner.getBlockZ());
     }
 
-    public int getID() {
-        return ID;
-    }
-
-    public void setID(int ID) {
-        this.ID = ID;
-    }
-
-    public UUID getOwnedBy() {
-        return ownedBy;
-    }
-
     public void setOwnedBy(UUID ownedBy) {
+        modified();
         this.ownedBy = ownedBy;
-        members.remove(ownedBy);
+        PlotMember plotMember = getMember(ownedBy);
+        if (plotMember != null) {
+            removeMember(plotMember);
+        }
         updateMarker();
-        modified();
-    }
-
-    public String getAssignedBy() {
-        return assignedBy;
-    }
-
-    public void setAssignedBy(String assignedBy) {
-        this.assignedBy = assignedBy;
-        modified();
-    }
-
-    public LocalDateTime getOwnedUntilDate() {
-        return ownedUntilDate;
     }
 
     public void setOwnedUntilDate(LocalDateTime ownedUntilDate) {
+        modified();
         this.ownedUntilDate = ownedUntilDate;
         updateMarker();
-        modified();
-    }
-
-    public PlotSize getPlotSize() {
-        return plotSize;
-    }
-
-    public void setPlotSize(PlotSize plotSize) {
-        this.plotSize = plotSize;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public Material getFloorMaterial() {
-        return floorMaterial;
     }
 
     public void setFloorMaterial(Material floorMaterial, byte data) {
+        modified();
         this.floorMaterial = floorMaterial;
         this.floorData = data;
         initializeFloor();
-        modified();
     }
 
-    public Location getCreatedLocation() {
-        return createdLocation;
+    private void initializeFloor() {
+        for (Block floorBlock : getFloorBlocks()) {
+            floorBlock.setType(this.floorMaterial);
+            if (VirtualRealty.legacyVersion) {
+                try {
+                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                    m2.setAccessible(true);
+                    m2.invoke(floorBlock, this.floorData);
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public void setBorderMaterial(Material borderMaterial, byte data) {
-        this.borderMaterial = borderMaterial;
-        this.borderData = data;
         modified();
-    }
-
-    public Material getBorderMaterial() {
-        return borderMaterial;
-    }
-
-    public void setCreatedLocation(Location createdLocation) {
-        this.createdLocation = createdLocation;
-    }
-
-    public BlockVector3 getBottomLeftCorner() {
-        return bottomLeftCorner;
-    }
-
-    public void setBottomLeftCorner(BlockVector3 bottomLeftCorner) {
-        this.bottomLeftCorner = bottomLeftCorner;
-    }
-
-    public BlockVector3 getTopRightCorner() {
-        return topRightCorner;
-    }
-
-    public void setTopRightCorner(BlockVector3 topRightCorner) {
-        this.topRightCorner = topRightCorner;
-    }
-
-    public BlockVector3 getBorderBottomLeftCorner() {
-        return borderBottomLeftCorner;
-    }
-
-    public void setBorderBottomLeftCorner(BlockVector3 borderBottomLeftCorner) {
-        this.borderBottomLeftCorner = borderBottomLeftCorner;
-    }
-
-    public BlockVector3 getBorderTopRightCorner() {
-        return borderTopRightCorner;
-    }
-
-    public void setBorderTopRightCorner(BlockVector3 borderTopRightCorner) {
-        this.borderTopRightCorner = borderTopRightCorner;
+        this.borderMaterial = borderMaterial;
+        this. borderData = data;
+        for (Block borderBlock : getBorderBlocks()) {
+            if (VirtualRealty.legacyVersion) {
+                borderBlock.setType(borderMaterial);
+                try {
+                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
+                    m2.setAccessible(true);
+                    m2.invoke(borderBlock, data);
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                borderBlock.setType(borderMaterial);
+            }
+        }
     }
 
     public BlockVector3 getBorderedCenter() {
@@ -320,11 +268,11 @@ public class Plot {
         return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld()).getCenterVector();
     }
 
-    public GameMode getSelectedGameMode() {
-        return selectedGameMode;
+    public org.bukkit.World getCreatedWorld() {
+        return Bukkit.getWorld(createdWorld);
     }
 
-    public String getCreatedWorld() {
+    public String getCreatedWorldString() {
         return createdWorld;
     }
 
@@ -332,96 +280,16 @@ public class Plot {
         return ownedBy == null ? null : Bukkit.getOfflinePlayer(ownedBy);
     }
 
-    public void setSelectedGameMode(GameMode selectedGameMode) {
-        this.selectedGameMode = selectedGameMode;
-    }
-
-    public void addMember(UUID uuid) {
-        members.add(uuid);
-        modified();
-    }
-
-    public void removeMember(UUID uuid) {
-        members.remove(uuid);
-    }
-
-    public Set<UUID> getMembers() {
-        return members;
-    }
-
-    public Set<OfflinePlayer> getMembersPlayer() {
+    public Set<OfflinePlayer> getPlayerMembers() {
         Set<OfflinePlayer> offlinePlayers = new HashSet<>();
-        for (UUID member : members) {
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(member);
+        for (PlotMember member : members) {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(member.getUuid());
             offlinePlayers.add(offlinePlayer);
         }
         return offlinePlayers;
     }
 
-    private void setFloorBlock(Block floorBlock) {
-        if (VirtualRealty.isLegacy) {
-            try {
-                Method m = Block.class.getDeclaredMethod("setType", Material.class);
-                m.setAccessible(true);
-                m.invoke(floorBlock, this.floorMaterial);
-                Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
-                m2.setAccessible(true);
-                m2.invoke(floorBlock, this.floorData);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            floorBlock.setType(floorMaterial);
-        }
-        modified();
-    }
-
-    private void initializeFloor() {
-        Location location = createdLocation;
-        Direction direction = Direction.byYaw(location.getYaw());
-        switch(direction) {
-            case SOUTH: {
-                for (int x = location.getBlockX() - width + 1; x < location.getBlockX() + 1; x++) {
-                    for (int z = location.getBlockZ(); z < location.getBlockZ() + length; z++) {
-                        Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        setFloorBlock(floorBlock);
-                    }
-                }
-                break;
-            }
-            case WEST: {
-                for (int x = location.getBlockX() - length + 1; x < location.getBlockX() + 1; x++) {
-                    for (int z = location.getBlockZ() - width + 1; z < location.getBlockZ() + 1; z++) {
-                        Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        setFloorBlock(floorBlock);
-                    }
-                }
-                break;
-            }
-            case NORTH: {
-                for (int x = location.getBlockX(); x < location.getBlockX() + width; x++) {
-                    for (int z = location.getBlockZ() - length + 1; z < location.getBlockZ() + 1; z++) {
-                        Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        setFloorBlock(floorBlock);
-                    }
-                }
-                break;
-            }
-            case EAST: {
-                 for (int x = location.getBlockX(); x < location.getBlockX() + length; x++) {
-                    for (int z = location.getBlockZ(); z < location.getBlockZ() + width; z++) {
-                        Block floorBlock = location.getWorld().getBlockAt(x, location.getBlockY(), z);
-                        setFloorBlock(floorBlock);
-                    }
-                }
-                break;
-            }
-            default:
-                throw new IllegalStateException("Unexpected value: " + direction);
-        }
-    }
-
-    public void initializeCorners() {
+    public void prepareCorners() {
         Location location = createdLocation;
         Direction direction = Direction.byYaw(location.getYaw());
         Location location1;
@@ -466,8 +334,12 @@ public class Plot {
         this.borderTopRightCorner = BlockVector3.at(border2.getBlockX(), border2.getBlockY(), border2.getBlockZ());
     }
 
-    public void initialize() {
-        prepareBlocks(createdLocation);
+    public void initialize(boolean natural) {
+        long time = System.currentTimeMillis();
+        prepareCorners();
+        if (plotSize == PlotSize.AREA) return;
+        prepareBlocks(createdLocation, natural);
+        VirtualRealty.debug("Plot initialize time: " + (System.currentTimeMillis() - time) + " ms");
     }
 
     public Set<Block> getBorderBlocks() {
@@ -568,27 +440,7 @@ public class Plot {
         return blocks;
     }
 
-    public void setBorder(Material material, byte data) {
-        borderMaterial = material;
-        borderData = data;
-        for (Block borderBlock : getBorderBlocks()) {
-            if (VirtualRealty.isLegacy) {
-                borderBlock.setType(material);
-                try {
-                    Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
-                    m2.setAccessible(true);
-                    m2.invoke(borderBlock, data);
-                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                borderBlock.setType(material);
-            }
-        }
-        modified();
-    }
-
-    public void prepareBlocks(Location location) {
+    public void prepareBlocks(Location location, boolean natural) {
         Direction direction = Direction.byYaw(location.getYaw());
         Location location1;
         Location location2;
@@ -618,13 +470,14 @@ public class Plot {
                 break;
             }
         }
+        if (natural) return;
         for (Block floorBlock : getFloorBlocks()) {
             for (int y = location.getBlockY() + height; y > location.getBlockY() - 1; y--) {
                 Block airBlock = location.getWorld().getBlockAt(floorBlock.getX(), y, floorBlock.getZ());
-                airBlock.setType(Material.AIR);
+                airBlock.setType(Material.AIR, false);
             }
             floorBlock.setType(floorMaterial);
-            if (VirtualRealty.isLegacy) {
+            if (VirtualRealty.legacyVersion) {
                 try {
                     Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
                     m2.setAccessible(true);
@@ -672,7 +525,7 @@ public class Plot {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
                     Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
-                    if (VirtualRealty.isLegacy) {
+                    if (VirtualRealty.legacyVersion) {
                         borderBlock.setType(plotSize.getBorderMaterial());
                         try {
                             Method m2 = Block.class.getDeclaredMethod("setData", byte.class);
@@ -690,107 +543,108 @@ public class Plot {
     }
 
     public void unloadPlot() {
-        switch (createdDirection) {
-            case SOUTH: {
-                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                        createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1));
-                break;
+        if (SchematicUtil.isOldSerialization(ID)) {
+            Location location = null;
+            switch (createdDirection) {
+                case SOUTH: {
+                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
+                    break;
+                }
+                case WEST: {
+                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width);
+                    break;
+                }
+                case NORTH: {
+                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length);
+                    break;
+                }
+                case EAST: {
+                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
+                    break;
+                }
             }
-            case WEST: {
-                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                        createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width));
-                break;
-            }
-            case NORTH: {
-                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                        createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length));
-                break;
-            }
-            case EAST: {
-                SchematicUtil.paste(ID, new Location(createdLocation.getWorld(),
-                        createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1));
-                break;
-            }
+            OldSchematicUtil.paste(ID, location);
+        } else {
+            long time = System.currentTimeMillis();
+            SchematicUtil.paste(ID);
+            VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms");
         }
     }
 
-    public String getMembersString() {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (UUID member : members) {
-            stringBuilder.append(member.toString()).append(";");
-        }
-        return stringBuilder.toString();
+    private void modified() {
+        modified = Instant.now();
     }
 
+    @SneakyThrows
     public void insert() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(this.createdLocation.getWorld().getName() + ";");
-        builder.append(this.createdLocation.getX() + ";");
-        builder.append(this.createdLocation.getY() + ";");
-        builder.append(this.createdLocation.getZ() + ";");
-        builder.append(this.createdLocation.getYaw() + ";");
-        builder.append(this.createdLocation.getPitch() + ";");
-        try {
-            SQL.getStatement().execute("INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
-                    "` (`ID`, `ownedBy`, `members`, `assignedBy`, `ownedUntilDate`," +
-                    " `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`, `created`, `modified`) " +
-                    "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "','" + getMembersString() + "', '" + this.assignedBy + "', " +
-                    "'" + Timestamp.valueOf(this.ownedUntilDate) + "', '" + this.floorMaterial + ":" + this.floorData + "', '" + this.borderMaterial + ":" + this.borderData + "'," +
-                    " '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" + this.height + "', '" + builder + "', '" + Timestamp.from(Instant.now()) + "', '" + Timestamp.from(Instant.now()) + "')");
-        } catch (SQLException e) {
-            e.printStackTrace();
+        String serializedLocation =
+                        this.createdLocation.getWorld().getName() + ";" +
+                        this.createdLocation.getX() + ";" +
+                        this.createdLocation.getY() + ";" +
+                        this.createdLocation.getZ() + ";" +
+                        this.createdLocation.getYaw() + ";" +
+                        this.createdLocation.getPitch() + ";";
+        StringBuilder permissions = new StringBuilder();
+        for (RegionPermission permission : this.nonMemberPermissions) {
+            permissions.append(permission.name()).append("¦");
         }
+        Database.getInstance().getStatement().execute("INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
+                "` (`ID`, `ownedBy`, `nonMemberPermissions`, `assignedBy`, `ownedUntilDate`, `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`, `created`, `modified`, `selectedGameMode`) " +
+                "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', '" + permissions + "', '" + this.assignedBy + "', '" + Timestamp.valueOf(this.ownedUntilDate) + "', '" +
+                this.floorMaterial + ":" + this.floorData + "', '" + this.borderMaterial + ":" + this.borderData + "', '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" +
+                this.height + "', '" + serializedLocation + "', '" + Timestamp.from(Instant.now()) + "', '" + Timestamp.from(Instant.now()) + "', '" + this.selectedGameMode.name()
+                + "')");
     }
 
+    @SneakyThrows
     public void update() {
-        try {
-            SQL.getStatement().execute("UPDATE `" +
-                    VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
-                    "` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "'," +
-                    " `members`='" + getMembersString() + "', `assignedBy`='" + this.assignedBy + "'," +
-                    " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "'," +
-                    " `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "'," +
-                    " `borderMaterial`='" + this.borderMaterial + ":" + this.borderData + "'," +
-                    " `plotSize`='" + this.plotSize + "'," +
-                    " `length`='" + this.length + "'," +
-                    " `width`='" + this.width + "'," +
-                    " `height`='" + this.height + "'," +
-                    " `modified`='" + (this.modified != null ? Timestamp.from(this.modified) : Timestamp.from(Instant.now())) + "'" +
-                    " WHERE `ID`='" + this.ID + "'");
-        } catch (SQLException e) {
-            e.printStackTrace();
+        StringBuilder permissions = new StringBuilder();
+        for (RegionPermission permission : this.nonMemberPermissions) {
+            permissions.append(permission.name()).append("¦");
         }
+        Database.getInstance().getStatement().execute("UPDATE `" +
+                VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
+                "` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "'," +
+                " `nonMemberPermissions`='" + permissions + "'," +
+                " `assignedBy`='" + this.assignedBy + "'," +
+                " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "'," +
+                " `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "'," +
+                " `borderMaterial`='" + this.borderMaterial + ":" + this.borderData + "'," +
+                " `plotSize`='" + this.plotSize + "'," +
+                " `length`='" + this.length + "'," +
+                " `width`='" + this.width + "'," +
+                " `height`='" + this.height + "'," +
+                " `modified`='" + (this.modified != null ? Timestamp.from(this.modified) : Timestamp.from(Instant.now())) + "'," +
+                " `selectedGameMode`='" + this.selectedGameMode.name() + "'" +
+                " WHERE `ID`='" + this.ID + "'");
     }
 
     public void remove() {
         this.unloadPlot();
+        for (PlotMember member : this.getMembers()) {
+            removeMember(member);
+        }
         PlotManager.removeDynMapMarker(this);
         try {
-            SQL.getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
+            Database.getInstance().getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        int id = ID;
-        File file = new File(VirtualRealty.plotsSchemaFolder, "plot" + id + ".region");
-        if (file.exists())
-            FileUtils.deleteQuietly(file);
-        PlotManager.plots.remove(this);
+        SchematicUtil.deletePlotFile(ID);
+        PlotManager.removePlotFromList(this);
     }
 
     public Direction getCreatedDirection() {
         return createdDirection;
     }
 
-    public void setCreatedDirection(Direction createdDirection) {
-        this.createdDirection = createdDirection;
-    }
-
     public void updateMarker() {
         PlotManager.resetPlotMarker(this);
     }
 
-    public void modified() {
-        this.modified = Instant.now();
+    @Override
+    public String toString() {
+        return "{ ID: " + ID + ", ownedBy: " + ownedBy + "}";
     }
 
 }

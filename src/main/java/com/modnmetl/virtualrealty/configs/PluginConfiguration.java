@@ -1,95 +1,82 @@
 package com.modnmetl.virtualrealty.configs;
 
-import com.modnmetl.virtualrealty.enums.HighlightType;
+import com.modnmetl.virtualrealty.enums.dynmap.HighlightType;
+import com.modnmetl.virtualrealty.enums.ServerVersion;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
 import com.modnmetl.virtualrealty.VirtualRealty;
+import lombok.NoArgsConstructor;
 import org.bukkit.GameMode;
 
-@Header("################################################################")
-@Header("#                                                              #")
-@Header("#                       Virtual Realty                         #")
-@Header("#                                                              #")
-@Header("################################################################")
-@Names(strategy = NameStrategy.IDENTITY, modifier = NameModifier.TO_LOWER_CASE)
+@Header("-------------------------------------------------------------- #")
+@Header("                                                               #")
+@Header("                        Virtual Realty                         #")
+@Header("                                                               #")
+@Header("-------------------------------------------------------------- #")
+@Names(strategy = NameStrategy.HYPHEN_CASE, modifier = NameModifier.TO_LOWER_CASE)
 public class PluginConfiguration extends OkaeriConfig {
 
-    @Comment(" ")
-    @Comment("-------------------------")
-    @Comment("Don't change this value!")
-    @CustomKey("config-version")
-    public String configVersion = VirtualRealty.getInstance().getDescription().getVersion();
+    @Comment("Changing this value will break your plugin!")
+    @CustomKey("initial-version")
+    public String initServerVersion = VirtualRealty.legacyVersion ? ServerVersion.LEGACY.toString() : ServerVersion.MODERN.toString();
 
-    @Comment("-------------------------")
-    @Comment("Debug mode (Dev only)")
-    @CustomKey("debug-mode")
+    @Comment("Debug mode")
     public boolean debugMode = false;
 
-    @CustomKey("LICENSE-KEY")
-    public String licenseKey = "";
+    @Comment("Here you put your license details")
+    public License license = new License();
+
+    @Names(strategy = NameStrategy.IDENTITY)
+    public static class License extends OkaeriConfig {
+
+        public String key = "";
+        public String email = "";
+
+    }
 
     @Comment("Set player gamemode to change when they enter their plot")
-    @CustomKey("enable-plot-gamemode")
-    public boolean enablePlotGameMode = false;
+    public boolean enablePlotGamemode = false;
 
     @Comment("Set your wanted language (locale)")
-    public String locale = VirtualRealty.getInstance().availableLocales.contains(VirtualRealty.getLocale()) ? VirtualRealty.getLocale().toString() : "en_GB";
+    public String locale = "en_GB";
 
     @Comment("Set which gamemode players change to when they enter their plot")
     @CustomKey("default-plot-gamemode")
-    public String plotGameMode = "SURVIVAL";
+    public String plotGamemode = "SURVIVAL";
 
     @Comment("Lock gamemode to plot default when player enters their plot (disables '/plot gm' command)")
-    @CustomKey("lock-plot-gamemode")
-    public boolean lockPlotGameMode = false;
+    public boolean lockPlotGamemode = false;
 
-    public GameMode getGameMode() {
+    public GameMode getDefaultPlotGamemode() {
         try {
-            return GameMode.valueOf(plotGameMode);
+            return GameMode.valueOf(plotGamemode);
         } catch (Exception e) {
             VirtualRealty.getInstance().getLogger().warning("Couldn't parse plot-gamemode from config.yml\nUsing default: SURVIVAL");
             return GameMode.SURVIVAL;
         }
     }
 
-    @Comment("Allow players to build outside of their plots")
-    @CustomKey("allow-outplot-build")
-    public boolean allowOutPlotBuild = true;
-
     @Comment("Enables dynmap plots highlighting")
     @CustomKey("enable-dynmap-markers")
     public boolean dynmapMarkers = false;
 
     @Comment("Choose which type of plots should be highlighted on Dynmap page | Choose from: { ALL, AVAILABLE, OWNED }")
-    @CustomKey("dynmap-type")
     public HighlightType dynmapType = HighlightType.ALL;
 
     @CustomKey("dynmap-markers")
-    public MarkerColor dynmapMarkersColor = new MarkerColor(new MarkerColor.Available("#80eb34", .3), new MarkerColor.Owned("#ffbf00", .45));
+    public MarkerColor dynmapMarkersColor = new MarkerColor();
 
     @Names(strategy = NameStrategy.IDENTITY)
     public static class MarkerColor extends OkaeriConfig {
 
-        public Available available;
-
-        public Owned owned;
-
-        public MarkerColor(Available available, Owned owned) {
-            this.available = available;
-            this.owned = owned;
-        }
+        public Available available = new Available();
+        public Owned owned = new MarkerColor.Owned();
 
         @Names(strategy = NameStrategy.IDENTITY)
         public static class Available extends OkaeriConfig {
 
-            public String color;
-
-            public double opacity;
-
-            public Available(String color, double opacity) {
-                this.color = color;
-                this.opacity = opacity;
-            }
+            public String color = "#80eb34";
+            public double opacity = .3;
 
             public int getHexColor() {
                 return Integer.decode("0x" + color.replaceAll("#", ""));
@@ -100,14 +87,8 @@ public class PluginConfiguration extends OkaeriConfig {
         @Names(strategy = NameStrategy.IDENTITY)
         public static class Owned extends OkaeriConfig {
 
-            public String color;
-
-            public double opacity;
-
-            public Owned(String color, double opacity) {
-                this.color = color;
-                this.opacity = opacity;
-            }
+            public String color = "#ffbf00";
+            public double opacity = .45;
 
             public int getHexColor() {
                 return Integer.decode("0x" + color.replaceAll("#", ""));
@@ -135,7 +116,7 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("2. Change data in VR config")
     @Comment("3. Rename database tables using phpMyAdmin for example")
     @CustomKey("mysql")
-    public MySQL mysql = new MySQL("localhost", 3306, "db", "root", "passwd", true, "vr_plots");
+    public MySQL mysql = new MySQL();
 
     public enum DataModel {
         SQLITE,
@@ -143,32 +124,17 @@ public class PluginConfiguration extends OkaeriConfig {
     }
 
     @Names(strategy = NameStrategy.IDENTITY)
+    @NoArgsConstructor
     public static class MySQL extends OkaeriConfig {
 
-        @Variable("VR_MYSQL_HOSTNAME")
-        public String hostname;
-        @Variable("VR_MYSQL_PORT")
-        public int port;
-        @Variable("VR_MYSQL_DATABASE")
-        public String database;
-        @Variable("VR_MYSQL_USER")
-        public String user;
-        @Variable("VR_MYSQL_PASSWORD")
-        public String password;
-        @Variable("VR_MYSQL_USE_SSL")
-        public boolean useSSL;
-        @Variable("VR_MYSQL_USERS_TABLE_NAME")
-        public String plotsTableName;
+        public String hostname = "localhost";
+        public int port = 3306;
+        public String database = "db";
+        public String user = "root";
+        public String password = "passwd";
+        public String plotsTableName = "vr_plots";
+        public String plotMembersTableName = "vr_plot_members";
 
-        public MySQL(String hostname, int port, String database, String user, String password, boolean useSSL, String plotsTableName) {
-            this.hostname = hostname;
-            this.port = port;
-            this.database = database;
-            this.user = user;
-            this.password = password;
-            this.useSSL = useSSL;
-            this.plotsTableName = plotsTableName;
-        }
     }
 
 }

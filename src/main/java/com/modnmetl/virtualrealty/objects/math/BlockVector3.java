@@ -1,6 +1,7 @@
 package com.modnmetl.virtualrealty.objects.math;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 
 public class BlockVector3 extends BlockVector2 {
 
@@ -19,8 +20,12 @@ public class BlockVector3 extends BlockVector2 {
         return new BlockVector3(x, y, z);
     }
 
-    public static BlockVector3 locationToVector(Location location) {
+    public static BlockVector3 toVector(Location location) {
         return new BlockVector3(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    }
+
+    public Location toLocation(World world) {
+        return new Location(world, x, y, z);
     }
 
     public int getBlockX() {
@@ -46,6 +51,7 @@ public class BlockVector3 extends BlockVector2 {
     public void setZ(int z) {
         this.z = z;
     }
+
 
     @Override
     public String toString() {

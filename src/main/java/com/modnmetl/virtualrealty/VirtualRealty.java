@@ -1,33 +1,36 @@
 package com.modnmetl.virtualrealty;
 
-import com.modnmetl.virtualrealty.commands.PlotCommand;
-import com.modnmetl.virtualrealty.commands.VirtualRealtyCommand;
-import com.modnmetl.virtualrealty.configs.MessagesConfiguration;
-import com.modnmetl.virtualrealty.configs.PluginConfiguration;
-import com.modnmetl.virtualrealty.configs.SizesConfiguration;
-import com.modnmetl.virtualrealty.enums.Flag;
+import com.modnmetl.virtualrealty.commands.CommandManager;
+import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
+import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
+import com.modnmetl.virtualrealty.configs.*;
 import com.modnmetl.virtualrealty.enums.PlotSize;
+import com.modnmetl.virtualrealty.enums.ServerVersion;
 import com.modnmetl.virtualrealty.exceptions.MaterialMatchException;
-import com.modnmetl.virtualrealty.listeners.plot.BorderListener;
-import com.modnmetl.virtualrealty.listeners.plot.PlotListener;
-import com.modnmetl.virtualrealty.listeners.world.WorldListener;
+import com.modnmetl.virtualrealty.listeners.player.PlayerActionListener;
+import com.modnmetl.virtualrealty.listeners.protection.BorderProtectionListener;
+import com.modnmetl.virtualrealty.listeners.PlotEntranceListener;
+import com.modnmetl.virtualrealty.listeners.protection.PlotProtectionListener;
+import com.modnmetl.virtualrealty.listeners.protection.WorldProtectionListener;
 import com.modnmetl.virtualrealty.managers.PlotManager;
+import com.modnmetl.virtualrealty.managers.PlotMemberManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.premiumloader.PremiumLoader;
 import com.modnmetl.virtualrealty.registry.VirtualPlaceholders;
-import com.modnmetl.virtualrealty.sql.SQL;
-import com.modnmetl.virtualrealty.utils.ConfigurationFactory;
-import com.modnmetl.virtualrealty.utils.SchematicUtil;
+import com.modnmetl.virtualrealty.sql.Database;
+import com.modnmetl.virtualrealty.utils.configuration.ConfigurationFactory;
+import com.modnmetl.virtualrealty.utils.loader.CustomClassLoader;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
-import com.modnmetl.virtualrealty.listeners.ProtectionListener;
 import com.modnmetl.virtualrealty.utils.UpdateChecker;
+import com.zaxxer.hikari.HikariDataSource;
+import de.tr7zw.nbtapi.utils.VersionChecker;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,26 +40,35 @@ import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 
+import javax.sql.DataSource;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.logging.Level;
 
 public final class VirtualRealty extends JavaPlugin {
 
-    public final Locale locale = Locale.getDefault();
-    public final List<Locale> availableLocales = new ArrayList<>(Arrays.asList(new Locale("en", "GB"), new Locale("es", "ES"), new Locale("pl", "PL")));
+    public Locale locale = Locale.getDefault();
 
     //CORE
     private static VirtualRealty instance;
+    private static ClassLoader loader;
     public static final String PREFIX = "§a§lVR §8§l» §7";
-    public static ArrayList<BukkitTask> tasks = new ArrayList<>();
-    private static final ArrayList<String> preVersions = new ArrayList<>();
-    public static boolean isLegacy = false;
+    public static LinkedList<BukkitTask> tasks = new LinkedList<>();
+    private static final LinkedList<String> preVersions = new LinkedList<>();
+    public static boolean legacyVersion = false;
+    public static ServerVersion currentServerVersion = ServerVersion.MODERN;
     public static final Permission GLOBAL_PERMISSION = new Permission("virtualrealty");
+    private static Object premium;
+    public static boolean upToDate;
+    public static String latestVersion;
 
     //FILES
     public static File plotsFolder;
@@ -64,9 +76,14 @@ public final class VirtualRealty extends JavaPlugin {
     public PluginConfiguration pluginConfiguration;
     public SizesConfiguration sizesConfiguration;
     public MessagesConfiguration messagesConfiguration;
+    public PermissionsConfiguration permissionsConfiguration;
     private final File pluginConfigurationFile = new File(this.getDataFolder(), "config.yml");
     private final File sizesConfigurationFile = new File(this.getDataFolder(), "sizes.yml");
+    private final File permissionsConfigurationFile = new File(this.getDataFolder(), "permissions.yml");
     private final File languagesDirectory = new File(this.getDataFolder(), "messages");
+    private final File databaseFolder = new File(this.getDataFolder().getAbsolutePath(), File.separator + "data" + File.separator);
+    private final File databaseFile = new File(databaseFolder, "data.db");
+    private File loaderFile;
 
     //DYNMAP API
     public static boolean isDynmapPresent = false;
@@ -77,150 +94,155 @@ public final class VirtualRealty extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        loader = getClassLoader();
+        VersionChecker.hideOk = true;
         if (checkLegacyVersions()) {
-            isLegacy = true;
+            legacyVersion = true;
+            currentServerVersion = ServerVersion.LEGACY;
+        }
+        databaseFolder.mkdirs();
+        plotsFolder = new File(getInstance().getDataFolder().getAbsolutePath(), "plots");
+        plotsFolder.mkdirs();
+        plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
+        plotsSchemaFolder.mkdirs();
+        reloadConfigs();
+        this.locale = new Locale(pluginConfiguration.locale.split("_")[0], pluginConfiguration.locale.split("_")[1]);
+        configureMessages();
+        if (ServerVersion.valueOf(pluginConfiguration.initServerVersion) == ServerVersion.LEGACY && currentServerVersion == ServerVersion.MODERN) {
+            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
+            this.getLogger().severe(" You cannot migrate existing legacy plots (1.8-1.12) to a non-legacy server version (1.13 and higher)");
+            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
+            this.getPluginLoader().disablePlugin(this);
+            return;
+        }
+        if (ServerVersion.valueOf(pluginConfiguration.initServerVersion) == ServerVersion.MODERN && currentServerVersion == ServerVersion.LEGACY) {
+            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
+            this.getLogger().severe(" You cannot migrate existing non-legacy plots (1.13 and higher) to a legacy server version (1.8-1.12)");
+            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
+            this.getPluginLoader().disablePlugin(this);
+            return;
         }
         String[] updateCheck = UpdateChecker.getUpdate();
         if (updateCheck != null) {
             if (!updateCheck[0].equals(this.getDescription().getVersion())) {
+                upToDate = false;
+                latestVersion = updateCheck[0];
                 this.getLogger().info("A newer version is available!");
                 this.getLogger().info("The current version you use: " + this.getDescription().getVersion());
                 this.getLogger().info("Latest version available: " + updateCheck[0]);
                 this.getLogger().info("Download link: https://www.spigotmc.org/resources/virtual-realty.95599/");
             } else {
+                upToDate = true;
+                latestVersion = this.getDescription().getVersion();
                 this.getLogger().info("Plugin is up to date!");
             }
         }
-        try {
-            checkConfig();
-            checkSizesConfig();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        plotsFolder = new File(getInstance().getDataFolder().getAbsolutePath(), "plots");
-        plotsFolder.mkdirs();
-        plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
-        plotsSchemaFolder.mkdirs();
-        spawnLocales();
-        reformatConfig();
-        reloadConfigs();
-        if (!pluginConfiguration.licenseKey.isEmpty()) {
-            //LOAD premium
+        if (!pluginConfiguration.license.key.isEmpty() && !pluginConfiguration.license.email.isEmpty()) {
+            try {
+                runLoader(new URL("http://license.mineproxy.com/virtualrealty/premium"), pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion());
+            } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                getLogger().log(Level.WARNING, "Loading of premium features failed.");
+            }
         }
         registerMetrics();
         loadSizesConfiguration();
-        connectToDatabase();
+        try {
+            connectToDatabase();
+        } catch (SQLException e) {
+            getLogger().log(Level.WARNING, "Failed to connect to MySQL database.");
+            this.getPluginLoader().disablePlugin(this);
+            return;
+        }
         PlotManager.loadPlots();
+        PlotMemberManager.loadMembers();
         if (pluginConfiguration.dynmapMarkers) {
             registerDynmap();
         }
-        reloadFlags();
         registerCommands();
         registerListeners();
-        registerTasks();
-        checkForOldSchemas();
-        //convertOldDatabase();
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")){
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new VirtualPlaceholders(this).register();
             debug("Registered new placeholders");
         }
         debug("Server version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
-        try {
-            Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader");
-            new PremiumLoader();
-        } catch (ClassNotFoundException ignored) {
-
-        }
     }
 
     @Override
     public void onDisable() {
-        PlotManager.plots.forEach(Plot::update);
+        try {
+            Method method = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, getCustomClassLoader()).getMethod("onDisable");
+            method.setAccessible(true);
+            method.invoke(premium);
+        } catch (Exception ignored) {
+        }
+        PlotManager.getPlots().forEach(Plot::update);
         tasks.forEach(BukkitTask::cancel);
-        SQL.closeConnection();
-        pluginConfiguration.save();
+        try {
+            DataSource dataSource;
+            if (getDatabase() != null && (dataSource = getDatabase().getDataSource()) != null && dataSource.getConnection() != null) {
+                if (VirtualRealty.getPluginConfiguration().dataModel == PluginConfiguration.DataModel.MYSQL) {
+                    ((HikariDataSource) dataSource).close();
+                } else {
+                    dataSource.getConnection().close();
+                }
+            }
+        } catch (SQLException ignored) {}
+        ConfigurationFactory configurationFactory = new ConfigurationFactory();
+        configurationFactory.updatePluginConfiguration(pluginConfigurationFile);
+        FileUtils.deleteQuietly(loaderFile);
     }
+
 
     public static void debug(String debugMessage) {
         if (VirtualRealty.getPluginConfiguration().debugMode)
-            VirtualRealty.getInstance().getLogger().warning("DEBUG-MODE > " + debugMessage);
+            VirtualRealty.getInstance().getLogger().warning("DEBUG > " + debugMessage);
     }
 
-    public void spawnLocales() {
-        for (Locale availableLocale : availableLocales) {
-            if (availableLocale.toString().equalsIgnoreCase("en_GB")) {
-                File messagesConfigurationFile = new File(languagesDirectory, "messages_en_GB.yml");
-                ConfigurationFactory configFactory = new ConfigurationFactory();
-                configFactory.createMessagesConfiguration(messagesConfigurationFile);
-            } else {
-                File languageConfigurationFile = new File(languagesDirectory, "messages_" + availableLocale + ".yml");
-                if (!languageConfigurationFile.exists()) {
-                    saveResource("messages_" + availableLocale + ".yml", true);
-                    File file = new File(this.getDataFolder(), "messages_" + availableLocale + ".yml");
-                    try {
-                        FileUtils.moveFile(file, languageConfigurationFile);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+    private void runLoader(URL url, String licenseKey, String licenseEmail, String pluginVersion) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        url = new URL(url.toString() + "?license=" + licenseKey + "&email=" + licenseEmail + "&version=" + pluginVersion);
+        debug("Injecting premium..");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setConnectTimeout(1200);
+        httpConn.setReadTimeout(5000);
+        int responseCode = httpConn.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            debug("Authentication error");
+            return;
         }
+        try (InputStream in = httpConn.getInputStream()) {
+            loaderFile = File.createTempFile(String.valueOf(Arrays.asList(new Random().nextInt(9), new Random().nextInt(9), new Random().nextInt(9))), ".tmp");
+            FileUtils.deleteQuietly(loaderFile);
+            Files.copy(in, Paths.get(loaderFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+        }
+        URL jarUrl = loaderFile.toURI().toURL();
+        loader = new CustomClassLoader(new URL[]{ jarUrl }, getClassLoader());
+        try {
+            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, loader);
+            premium = clazz.newInstance();
+            Class.forName("com.modnmetl.virtualrealty.utils.PanelUtil", true, loader);
+        } catch (Exception ignored) {
+            debug("Premium injection failed");
+            return;
+        }
+        debug("Premium injected");
     }
 
-//    public void convertOldDatabase() {
-//        File oldDatabase = new File(VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data.mv.db");
-//        if (oldDatabase.exists()) {
-//            try {
-//                SQL.closeConnection();
-//                Connection connection = DriverManager.getConnection("jdbc:sqlite:" + VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + "\\data\\data.db");
-//                SQL.setConnection(connection);
-//                Statement statement = connection.createStatement();
-//                SQL.setStatement(statement);
-//                statement.execute("CREATE TABLE IF NOT EXISTS `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` (`ID` INT(12) NOT NULL, `ownedBy` VARCHAR(36) NOT NULL, `members` TEXT, `assignedBy` VARCHAR(36) NOT NULL, `ownedUntilDate` DATETIME NOT NULL, `floorMaterial` VARCHAR(32) NOT NULL, `borderMaterial` VARCHAR(32) NOT NULL, `plotSize` VARCHAR(32) NOT NULL, `length` INT(24) NOT NULL, `width` INT(24) NOT NULL, `height` INT(24) NOT NULL, `createdLocation` TEXT(500) NOT NULL, `created` DATETIME, `modified` DATETIME, PRIMARY KEY(`ID`))");
-//                for (Plot plot : PlotManager.plots) {
-//                    plot.insert();
-//                }
-//                FileUtils.deleteQuietly(oldDatabase);
-//                debug("H2 database converted successfully to SQLITE");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
+    public void configureMessages() {
+        File messagesConfigurationFile = new File(languagesDirectory, "messages_" + locale.toString() + ".yml");
+        ConfigurationFactory configFactory = new ConfigurationFactory();
+        configFactory.loadMessagesConfiguration(messagesConfigurationFile);
+    }
 
     public void reloadConfigs() {
         try {
             ConfigurationFactory configFactory = new ConfigurationFactory();
-            pluginConfiguration = configFactory.createPluginConfiguration(pluginConfigurationFile);
+            pluginConfiguration = configFactory.loadPluginConfiguration(pluginConfigurationFile);
             File messagesConfigurationFile = new File(languagesDirectory, "messages_" + pluginConfiguration.locale + ".yml");
-            sizesConfiguration = configFactory.createSizesConfiguration(sizesConfigurationFile);
-            messagesConfiguration = configFactory.createMessagesConfiguration(messagesConfigurationFile);
+            sizesConfiguration = configFactory.loadSizesConfiguration(sizesConfigurationFile);
+            permissionsConfiguration = configFactory.loadPermissionsConfiguration(permissionsConfigurationFile);
+            messagesConfiguration = configFactory.loadMessagesConfiguration(messagesConfigurationFile);
         } catch (Exception exception) {
             exception.printStackTrace();
-        }
-    }
-
-    public void reloadFlags() {
-        if (pluginConfiguration.allowOutPlotBuild) {
-            for (Flag.World value : Flag.World.values()) {
-                value.setAllowed(true);
-            }
-        } else {
-            for (Flag.World value : Flag.World.values()) {
-                value.setAllowed(false);
-            }
-        }
-    }
-
-    public static void checkForOldSchemas() {
-        for (Plot plot : PlotManager.plots) {
-            File f = new File(VirtualRealty.plotsSchemaFolder, "plot" + plot.getID() + ".schem");
-            if (f.exists()) {
-                List<String> data = SchematicUtil.oldLoad(plot.getID());
-                FileUtils.deleteQuietly(f);
-                SchematicUtil.save(plot.getID(), data.toArray(new String[0]));
-                debug("Converted Plot #" + plot.getID() + " | File: " + f.getName());
-            }
         }
     }
 
@@ -246,17 +268,16 @@ public final class VirtualRealty extends JavaPlugin {
                         try {
                             if (dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon") == null) {
                                 InputStream in = this.getClass().getResourceAsStream("/ploticon.png");
-                                if (in.available() > 0) {
+                                if (in != null && in.available() > 0) {
                                     markerIcon = dapi.getMarkerAPI().createMarkerIcon("virtualrealty_main_icon", "Plots", in);
                                 }
                             }
                             else {
                                  markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
                             }
-                        }
-                        catch (IOException ex) {}
+                        } catch (IOException ignored) {}
                         VirtualRealty.debug("Registering plots markers..");
-                        for (Plot plot : PlotManager.plots) {
+                        for (Plot plot : PlotManager.getPlots()) {
                             PlotManager.resetPlotMarker(plot);
                         }
                         VirtualRealty.debug("Registered plots markers");
@@ -267,76 +288,99 @@ public final class VirtualRealty extends JavaPlugin {
         }.runTaskTimer(this, 20, 20*5);
     }
 
-
     private void registerCommands() {
-        this.getCommand("plot").setExecutor(new PlotCommand());
-        this.getCommand("virtualrealty").setExecutor(new VirtualRealtyCommand());
+        Objects.requireNonNull(this.getCommand("plot")).setExecutor(new PlotCommand());
+        Objects.requireNonNull(this.getCommand("virtualrealty")).setExecutor(new VirtualRealtyCommand());
+        Objects.requireNonNull(this.getCommand("plot")).setTabCompleter(new CommandManager());
+        Objects.requireNonNull(this.getCommand("virtualrealty")).setTabCompleter(new CommandManager());
+        SubCommand.registerSubCommands(new String[]{"visual", "item"}, VirtualRealtyCommand.class);
+        SubCommand.registerSubCommands(new String[]{"panel", "draft", "stake"}, PlotCommand.class);
+        SubCommand.registerSubCommands(new String[]{"assign", "create", "info", "list", "reload", "remove", "set", "tp", "unassign"}, VirtualRealtyCommand.class);
+        SubCommand.registerSubCommands(new String[]{"add", "gm", "info", "kick", "list", "tp"}, PlotCommand.class);
     }
 
     private void registerListeners() {
-        new BorderListener(this).registerEvents();
-        new PlotListener(this).registerEvents();
-        new ProtectionListener(this).registerEvents();
-        new WorldListener(this).registerEvents();
+        new BorderProtectionListener(this);
+        new PlotProtectionListener(this);
+        new WorldProtectionListener(this);
+        new PlotEntranceListener(this);
+        new PlayerActionListener(this);
+        try {
+            Class<?> panelListener = Class.forName("com.modnmetl.virtualrealty.listeners.premium.PanelListener", true, loader);
+            Class<?> draftListener = Class.forName("com.modnmetl.virtualrealty.listeners.premium.DraftListener", true, loader);
+            panelListener.getConstructors()[0].newInstance(this);
+            draftListener.getConstructors()[0].newInstance(this);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {}
         debug("Registered listeners");
-    }
-
-    private void registerTasks() {
-        //debug("Registered tasks");
     }
 
     private void registerMetrics() {
         Metrics metrics = new Metrics(this, 14066);
         metrics.addCustomChart(new SimplePie("used_database", () -> pluginConfiguration.dataModel.name()));
-        metrics.addCustomChart(new AdvancedPie("created_plots", new Callable<Map<String, Integer>>() {
-            @Override
-            public Map<String, Integer> call() throws Exception {
-                Map<String, Integer> valueMap = new HashMap<String, Integer>();
-                int smallPlots = 0;
-                int mediumPlots = 0;
-                int largePlots = 0;
-                int customPlots = 0;
-                for (Plot plot : PlotManager.plots) {
-                    switch (plot.getPlotSize()) {
-                        case SMALL: {
-                            smallPlots++;
-                            break;
-                        }
-                        case MEDIUM: {
-                            mediumPlots++;
-                            break;
-                        }
-                        case LARGE: {
-                            largePlots++;
-                            break;
-                        }
-                        case CUSTOM: {
-                            customPlots++;
-                            break;
-                        }
-                        default:
-                            throw new IllegalStateException("Unexpected value: " + plot.getPlotSize());
+        metrics.addCustomChart(new AdvancedPie("created_plots", () -> {
+            Map<String, Integer> valueMap = new HashMap<>();
+            int smallPlots = 0;
+            int mediumPlots = 0;
+            int largePlots = 0;
+            int customPlots = 0;
+            int areas = 0;
+            for (Plot plot : PlotManager.getPlots()) {
+                switch (plot.getPlotSize()) {
+                    case SMALL: {
+                        smallPlots++;
+                        break;
                     }
+                    case MEDIUM: {
+                        mediumPlots++;
+                        break;
+                    }
+                    case LARGE: {
+                        largePlots++;
+                        break;
+                    }
+                    case CUSTOM: {
+                        customPlots++;
+                        break;
+                    }
+                    case AREA: {
+                        areas++;
+                        break;
+                    }
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + plot.getPlotSize());
                 }
-                valueMap.put("SMALL", smallPlots);
-                valueMap.put("MEDIUM", mediumPlots);
-                valueMap.put("LARGE", largePlots);
-                valueMap.put("CUSTOM", customPlots);
-                return valueMap;
             }
+            valueMap.put("SMALL", smallPlots);
+            valueMap.put("MEDIUM", mediumPlots);
+            valueMap.put("LARGE", largePlots);
+            valueMap.put("CUSTOM", customPlots);
+            valueMap.put("AREA", areas);
+            return valueMap;
         }));
         debug("Registered metrics");
     }
 
-    private void connectToDatabase() {
-        SQL.connect();
-        SQL.createTables();
+    private void connectToDatabase() throws SQLException {
+        Database database = null;
+        if (pluginConfiguration.dataModel == PluginConfiguration.DataModel.SQLITE) {
+            database = new Database(databaseFile);
+        }
+        if (pluginConfiguration.dataModel == PluginConfiguration.DataModel.MYSQL) {
+            database = new Database(
+                    VirtualRealty.getPluginConfiguration().mysql.hostname,
+                    VirtualRealty.getPluginConfiguration().mysql.port,
+                    VirtualRealty.getPluginConfiguration().mysql.user,
+                    VirtualRealty.getPluginConfiguration().mysql.password,
+                    VirtualRealty.getPluginConfiguration().mysql.database
+            );
+        }
+        Database.setInstance(database);
         debug("Connected to database");
     }
 
     public void loadSizesConfiguration() {
         for (PlotSize plotSize : PlotSize.values()) {
-            if (plotSize == PlotSize.CUSTOM) return;
+            if (plotSize == PlotSize.CUSTOM) continue;
             SizesConfiguration.PlotSizes.Size classSize = null;
             switch (plotSize) {
                 case SMALL: {
@@ -351,22 +395,26 @@ public final class VirtualRealty extends JavaPlugin {
                     classSize = sizesConfiguration.plotSizes.LARGE;
                     break;
                 }
+                case AREA: {
+                    plotSize.setLength(sizesConfiguration.plotSizes.AREA.length);
+                    plotSize.setWidth(sizesConfiguration.plotSizes.AREA.width);
+                    plotSize.setHeight(sizesConfiguration.plotSizes.AREA.height);
+                    return;
+                }
             }
             Material floorMaterial;
             try {
                 floorMaterial = VMaterial.catchMaterial(classSize.floorMaterial.toUpperCase());
             } catch (MaterialMatchException e) {
-                floorMaterial = VirtualRealty.isLegacy ? Material.GRASS : Material.GRASS_BLOCK;
+                floorMaterial = VirtualRealty.legacyVersion ? Material.GRASS : Material.GRASS_BLOCK;
                 e.printStackTrace();
-                //throw new MaterialMatchException("Couldn't parse floor-material from sizes.yml | Using default: " + (VirtualRealty.isLegacy ? Material.GRASS : Material.GRASS_BLOCK));
             }
             Material borderMaterial;
             try {
                 borderMaterial = VMaterial.catchMaterial(classSize.borderMaterial.toUpperCase());
             } catch (MaterialMatchException e) {
-                borderMaterial = VirtualRealty.isLegacy ? Material.getMaterial("STEP") : Material.STONE_BRICK_SLAB;
+                borderMaterial = VirtualRealty.legacyVersion ? Material.getMaterial("STEP") : Material.STONE_BRICK_SLAB;
                 e.printStackTrace();
-                //throw new MaterialMatchException("Couldn't parse border-material from sizes.yml | Using default: " + (VirtualRealty.isLegacy ? Material.getMaterial("STEP") : Material.STONE_BRICK_SLAB));
             }
             plotSize.setFloorMaterial(floorMaterial);
             plotSize.setFloorData(classSize.floorData);
@@ -381,6 +429,10 @@ public final class VirtualRealty extends JavaPlugin {
 
     public static VirtualRealty getInstance() {
         return instance;
+    }
+
+    public static ClassLoader getCustomClassLoader() {
+        return loader;
     }
 
     public static PluginConfiguration getPluginConfiguration() {
@@ -403,6 +455,10 @@ public final class VirtualRealty extends JavaPlugin {
         return getInstance().messagesConfiguration;
     }
 
+    public static PermissionsConfiguration getPermissions() {
+        return getInstance().permissionsConfiguration;
+    }
+
     public boolean checkLegacyVersions() {
         setPostVersions();
         for (String preVersion : preVersions) {
@@ -417,151 +473,16 @@ public final class VirtualRealty extends JavaPlugin {
         return getInstance().locale;
     }
 
-    public void setPostVersions() {
+    public static Database getDatabase() {
+        return Database.getInstance();
+    }
+
+    private void setPostVersions() {
         preVersions.add("1.12");
         preVersions.add("1.11");
         preVersions.add("1.10");
         preVersions.add("1.9");
         preVersions.add("1.8");
-    }
-
-    public void reformatConfig() {
-        File configFile = new File(this.getDataFolder(), "config.yml");
-        File newFile = new File(this.getDataFolder(), "config.yml.new");
-        if (configFile.exists()) {
-            try {
-                List<String> lines = FileUtils.readLines(configFile, StandardCharsets.UTF_8);
-                for (int i = 0; i < lines.size(); i++) {
-                    if (lines.get(i).startsWith("force-plot-gamemode:")) {
-                        lines.set(i, lines.get(i).replaceAll("force-plot-gamemode:", "lock-plot-gamemode:"));
-                    }
-                }
-                FileUtils.writeLines(newFile, lines);
-                FileUtils.deleteQuietly(configFile);
-                newFile.createNewFile();
-                File newConfigFile = new File(this.getDataFolder(), "config.yml");
-                FileUtils.copyFile(newFile, newConfigFile);
-                FileUtils.deleteQuietly(newFile);
-            } catch (IOException e) {
-
-            }
-        }
-    }
-
-    public void checkConfig() throws IOException {
-        File oldConfigFile = new File(this.getDataFolder(), "config.yml");
-        if (!oldConfigFile.exists()) return;
-        String version = null;
-        boolean isOldVersion = true;
-        boolean updateConfigVersion = false;
-        FileReader fileReader = new FileReader(this.pluginConfigurationFile);
-        BufferedReader reader = new BufferedReader(fileReader);
-        String latestLine;
-        while((latestLine = reader.readLine()) != null) {
-            if (latestLine.contains("config-version")) {
-                version = latestLine.replaceAll("config-version: ", "");
-                isOldVersion = false;
-            }
-        }
-        fileReader.close();
-        reader.close();
-        if (version == null) {
-            System.err.println(" ");
-            this.getLogger().warning("Config has been reset due to major config changes!");
-            this.getLogger().warning("Old config has been renamed to config.yml.old");
-            this.getLogger().warning("Please update your config file!");
-            System.err.println(" ");
-        } else if (!version.equalsIgnoreCase(VirtualRealty.getInstance().getDescription().getVersion())) {
-            updateConfigVersion = true;
-            this.getLogger().info("Config has been updated!");
-        }
-
-        // save old config file
-        if (isOldVersion) {
-            File newConfigFile = new File(this.getDataFolder().getAbsolutePath(), "config.yml.old");
-            if (newConfigFile.exists()) {
-                newConfigFile.delete();
-            }
-            FileUtils.copyFile(oldConfigFile, newConfigFile);
-            oldConfigFile.delete();
-        }
-
-//         update config version
-        if (updateConfigVersion) {
-            List<String> lines = new ArrayList<>();
-            LineIterator iterator = FileUtils.lineIterator(oldConfigFile);
-            while (iterator.hasNext()) {
-                String line = iterator.next();
-                lines.add(line);
-            }
-            for (String line : new ArrayList<>(lines)) {
-                if (line.contains("config-version")) {
-                    int index = lines.indexOf(line);
-                    lines.set(index, "config-version: " + VirtualRealty.getInstance().getDescription().getVersion());
-                }
-            }
-            File newConfigFile = new File(this.getDataFolder().getAbsolutePath(), "config.yml");
-            FileUtils.deleteQuietly(newConfigFile);
-            FileUtils.writeLines(newConfigFile, lines);
-            newConfigFile.createNewFile();
-        }
-    }
-
-    public void checkSizesConfig() throws IOException {
-        File oldConfigFile = new File(this.getDataFolder(), "sizes.yml");
-        if (!oldConfigFile.exists()) return;
-        String version = null;
-        boolean isOldVersion = true;
-        boolean updateConfigVersion = false;
-        BufferedReader reader = new BufferedReader(new FileReader(this.sizesConfigurationFile));
-        String latestLine;
-        while((latestLine = reader.readLine()) != null) {
-            if (latestLine.contains("config-version")) {
-                version = latestLine.replaceAll("config-version: ", "");
-                isOldVersion = false;
-            }
-        }
-        reader.close();
-        if (version == null) {
-            System.err.println(" ");
-            this.getLogger().warning("Config has been reset due to major config changes!");
-            this.getLogger().warning("Old config has been renamed to sizes.yml.old");
-            this.getLogger().warning("Please update your config file!");
-            System.err.println(" ");
-        } else if (!version.equalsIgnoreCase(VirtualRealty.getInstance().getDescription().getVersion())) {
-            updateConfigVersion = true;
-            this.getLogger().info("Plot sizes config has been updated!");
-        }
-
-        // save old config file
-        if (isOldVersion) {
-            File newConfigFile = new File(this.getDataFolder().getAbsolutePath(), "sizes.yml.old");
-            if (newConfigFile.exists()) {
-                newConfigFile.delete();
-            }
-            FileUtils.copyFile(oldConfigFile, newConfigFile);
-            oldConfigFile.delete();
-        }
-
-        // update config version
-        if (updateConfigVersion) {
-            List<String> lines = new ArrayList<>();
-            LineIterator iterator = FileUtils.lineIterator(oldConfigFile);
-            while (iterator.hasNext()) {
-                String line = iterator.next();
-                lines.add(line);
-            }
-            for (String line : new ArrayList<>(lines)) {
-                if (line.contains("config-version")) {
-                    int index = lines.indexOf(line);
-                    lines.set(index, "config-version: " + VirtualRealty.getInstance().getDescription().getVersion());
-                }
-            }
-            File newConfigFile = new File(this.getDataFolder().getAbsolutePath(), "sizes.yml");
-            FileUtils.deleteQuietly(newConfigFile);
-            FileUtils.writeLines(newConfigFile, lines);
-            newConfigFile.createNewFile();
-        }
     }
 
 }
