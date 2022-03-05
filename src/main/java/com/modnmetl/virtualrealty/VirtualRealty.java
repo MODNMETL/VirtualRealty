@@ -54,9 +54,8 @@ import java.util.logging.Level;
 
 public final class VirtualRealty extends JavaPlugin {
 
-    public Locale locale = Locale.getDefault();
-
     //CORE
+    public Locale locale = Locale.getDefault();
     private static VirtualRealty instance;
     private static ClassLoader loader;
     public static final String PREFIX = "§a§lVR §8§l» §7";
