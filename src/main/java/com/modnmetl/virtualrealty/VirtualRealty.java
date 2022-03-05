@@ -311,8 +311,7 @@ public final class VirtualRealty extends JavaPlugin {
             panelListener.getConstructors()[0].newInstance(this);
             draftListener.getConstructors()[0].newInstance(this);
             stakeListener.getConstructors()[0].newInstance(this);
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {
-        }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {}
         debug("Registered listeners");
     }
 
