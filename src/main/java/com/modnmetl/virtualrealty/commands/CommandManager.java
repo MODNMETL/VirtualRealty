@@ -209,7 +209,9 @@ public class CommandManager implements TabCompleter {
                 }
                 case "ITEM": {
                     if (args.length > 1) {
-                        int backwardsArgs = 3;
+                        boolean isNatural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
+                        args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--natural")).toArray(String[]::new);
+                        int backwardsArgs = 3 + (isNatural ? 2 : 0);
                         if (args.length == 2) {
                             for (PlotSize value : PlotSize.values()) {
                                 if (args[1].isEmpty()) {
@@ -228,7 +230,7 @@ public class CommandManager implements TabCompleter {
                             switch (plotSize) {
                                 case AREA:
                                 case CUSTOM: {
-                                    backwardsArgs = 0;
+                                    backwardsArgs = (isNatural ? 2 : 0);
                                     if (args.length == 3 && args[2].isEmpty()) {
                                         tabCompleter.add(String.valueOf(plotSize.getLength()));
                                         return tabCompleter;
@@ -249,6 +251,7 @@ public class CommandManager implements TabCompleter {
                                 }
                             }
                             if (args.length == 6-backwardsArgs) {
+                                tabCompleter.add("default");
                                 for (Material value : Material.values()) {
                                     if (!value.isSolid()) continue;
                                     if (args[5 - backwardsArgs].isEmpty()) {
@@ -259,6 +262,7 @@ public class CommandManager implements TabCompleter {
                                 }
                             }
                             if (args.length == 7-backwardsArgs) {
+                                tabCompleter.add("default");
                                 for (Material value : Material.values()) {
                                     if (!value.isSolid()) continue;
                                     if (args[6 - backwardsArgs].isEmpty()) {
@@ -307,14 +311,16 @@ public class CommandManager implements TabCompleter {
                     }
                 }
             }
+            @NotNull String[] finalArgs = args;
+            @NotNull String[] finalArgs1 = args;
             switch (args[0].toUpperCase(Locale.ROOT)) {
                 case "KICK":
                 case "ADD": {
                     if (args.length == 2) {
                         PlotManager.getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
-                            if (args[1].isEmpty()) {
+                            if (finalArgs[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
-                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(args[0].toLowerCase())) {
+                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs[0].toLowerCase())) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             }
                         });
@@ -334,9 +340,9 @@ public class CommandManager implements TabCompleter {
                 case "TP": {
                     if (args.length == 2) {
                         PlotManager.getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
-                            if (args[1].isEmpty()) {
+                            if (finalArgs1[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
-                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(args[0].toLowerCase())) {
+                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs1[0].toLowerCase())) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             }
                         });

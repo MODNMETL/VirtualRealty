@@ -1,12 +1,14 @@
 package com.modnmetl.virtualrealty.commands.plot;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.logging.Level;
 
 public class PlotCommand implements CommandExecutor {
 
@@ -47,11 +49,19 @@ public class PlotCommand implements CommandExecutor {
             Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.plot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getCustomClassLoader());
             clazz.getConstructors()[0].newInstance(sender, command, label, args);
         } catch (Exception e) {
-            if (displayError) {
-                e.printStackTrace();
-            }
             if(!(e instanceof InvocationTargetException)) {
                 printHelp(sender);
+                return false;
+            }
+
+            if (displayError) {
+                e.printStackTrace();
+            } else {
+                if (e.getCause() instanceof FailedCommandExecution) return false;
+                sender.sendMessage("§cAn error occurred while executing the command.");
+                sender.sendMessage("§cCheck console for details.");
+                VirtualRealty.getInstance().getLogger().log(Level.SEVERE, "Failed command execution | Command Sender: " + sender.getName());
+                VirtualRealty.getInstance().getLogger().log(Level.SEVERE, "To print more details add \"--error\" argument at the end of the command.");
             }
         }
         return false;

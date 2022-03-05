@@ -110,6 +110,12 @@ public class MessagesConfiguration extends OkaeriConfig {
             " "
     );
 
+    public String stakeCancelled = "§cStake cancelled.";
+    public List<String> stakeConfirmation = Arrays.asList(
+            "§7You are about to stake your claim to the plot shown, once done you cannot undo.",
+            "§7Type §aYES §7to proceed."
+    );
+
     //Other
     public String visualBoundaryDisplayed = "§aThe visual boundary was displayed.";
     public String visualBoundaryActive = "§cThe visual boundary is already active for this region.";

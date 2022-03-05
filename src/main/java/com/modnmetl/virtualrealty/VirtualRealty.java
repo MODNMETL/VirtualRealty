@@ -149,7 +149,7 @@ public final class VirtualRealty extends JavaPlugin {
         try {
             connectToDatabase();
         } catch (SQLException e) {
-            getLogger().log(Level.WARNING, "Failed to connect to MySQL database.");
+            getLogger().log(Level.WARNING, "Failed to connect to the database.");
             this.getPluginLoader().disablePlugin(this);
             return;
         }
@@ -309,8 +309,10 @@ public final class VirtualRealty extends JavaPlugin {
         try {
             Class<?> panelListener = Class.forName("com.modnmetl.virtualrealty.listeners.premium.PanelListener", true, loader);
             Class<?> draftListener = Class.forName("com.modnmetl.virtualrealty.listeners.premium.DraftListener", true, loader);
+            Class<?> stakeListener = Class.forName("com.modnmetl.virtualrealty.listeners.premium.StakeConfirmationListener", true, loader);
             panelListener.getConstructors()[0].newInstance(this);
             draftListener.getConstructors()[0].newInstance(this);
+            stakeListener.getConstructors()[0].newInstance(this);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {
         }
         debug("Registered listeners");
