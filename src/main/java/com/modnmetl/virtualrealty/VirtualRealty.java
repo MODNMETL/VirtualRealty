@@ -252,10 +252,9 @@ public final class VirtualRealty extends JavaPlugin {
             @Override
             public void run() {
                 Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("dynmap");
-                if (plugin != null) {
-                    isDynmapPresent = true;
-                }
-                if (plugin != null && plugin.isEnabled()) {
+                if (plugin == null) return;
+                isDynmapPresent = true;
+                if (plugin.isEnabled()) {
                     dapi = (DynmapAPI) plugin;
                     if (dapi.markerAPIInitialized()) {
                         markerset = dapi.getMarkerAPI().getMarkerSet("virtualrealty.plots");
