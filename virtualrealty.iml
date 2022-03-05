@@ -35,7 +35,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.dynmap:dynmap-api:2.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.bukkit:bukkit:1.4.7-R1.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: me.clip:placeholderapi:2.10.9" level="project" />
-    <orderEntry type="module" module-name="virtualrealty-premium" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.modnmetl:virtualrealty-premium:2.0.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.projectlombok:lombok:1.18.22" level="project" />
     <orderEntry type="library" name="Maven: de.tr7zw:item-nbt-api-plugin:2.9.1" level="project" />
     <orderEntry type="library" name="Maven: com.zaxxer:HikariCP:5.0.1" level="project" />
