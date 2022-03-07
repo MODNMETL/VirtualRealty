@@ -9,6 +9,7 @@ import com.modnmetl.virtualrealty.utils.WorldUtil;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Switch;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -21,9 +22,12 @@ import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.permissions.Permission;
 import org.bukkit.util.Vector;
 
 public class WorldProtectionListener extends VirtualListener {
+
+    public static final Permission WORLD_BUILD = new Permission("virtualrealty.build.world");
 
     public WorldProtectionListener(VirtualRealty plugin) {
         super(plugin);
@@ -45,7 +49,7 @@ public class WorldProtectionListener extends VirtualListener {
         }
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         try {
             if ((!VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch) || PlotProtectionListener.SWITCHABLE.contains(e.getClickedBlock().getType())) {
                 Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getCustomClassLoader());
@@ -62,8 +66,7 @@ public class WorldProtectionListener extends VirtualListener {
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
                 }
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -76,7 +79,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (player.isSneaking() && e.isBlockInHand()) return;
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.CHEST_ACCESS)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
@@ -89,7 +92,7 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getPlot(e.getBlockPlaced().getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.PLACE)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
@@ -102,20 +105,11 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getPlot(e.getBlock().getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.BREAK)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
         }
-    }
-    
-
-    public Vector getDirection(BlockFace blockFace) {
-        Vector direction = new Vector(blockFace.getModX(), blockFace.getModY(), blockFace.getModZ());
-        if (blockFace.getModX() != 0 || blockFace.getModY() != 0 || blockFace.getModZ() != 0) {
-            direction.normalize();
-        }
-        return direction;
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -126,7 +120,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (e.getIgnitingBlock() == null) return;
         Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.ITEM_USE)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
@@ -139,7 +133,7 @@ public class WorldProtectionListener extends VirtualListener {
         Plot plot = PlotManager.getPlot(e.getPlayer().getLocation());
         Player player = e.getPlayer();
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.ARMOR_STAND)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
@@ -153,7 +147,7 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = (Player) e.getRemover();
         Plot plot = PlotManager.getPlot(player.getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.ENTITY_DAMAGE)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
@@ -167,7 +161,7 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getPlot(player.getLocation());
         if (plot != null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.ITEM_USE)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
@@ -182,7 +176,7 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = (Player) e.getDamager();
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.ENTITY_DAMAGE)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
@@ -197,11 +191,15 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = ((Player) ((Projectile) e.getDamager()).getShooter());
         Plot plot = PlotManager.getBorderedPlot(e.getDamager().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, WORLD_BUILD)) return;
         if (!WorldUtil.hasPermission(RegionPermission.ENTITY_DAMAGE)) {
             e.setCancelled(true);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
         }
+    }
+
+    public boolean hasPermission(CommandSender sender, Permission permission) {
+        return sender.hasPermission(permission);
     }
 
 }

@@ -2,10 +2,9 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.PermissionUtil;
 import com.modnmetl.virtualrealty.utils.multiversion.Chat;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -17,20 +16,19 @@ import org.bukkit.command.CommandSender;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
 
 public class ListSubCommand extends SubCommand {
 
-    public ListSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public ListSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());
     }
 
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
-        if (!PermissionUtil.hasPermission(sender, COMMAND_PERMISSION.getName() + args[0].toLowerCase())) return;
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
+        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
         if (PlotManager.getPlots().isEmpty()) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
             return;

@@ -1,8 +1,8 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.commands.vrplot.subcommand.AssignSubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
+import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
 import lombok.SneakyThrows;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -17,26 +17,37 @@ public abstract class SubCommand {
     private final LinkedList<String> helpList;
 
     @SneakyThrows
-    public SubCommand(CommandSender sender, Command command, String label, String[] args, LinkedList<String> helpList) throws FailedCommandExecution {
+    public SubCommand(CommandSender sender, Command command, String label, String[] args, LinkedList<String> helpList) throws FailedCommandException {
         this.helpList = helpList;
         this.commandSender = sender;
         exec(sender, command, label, args);
     }
 
-    public abstract void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution;
+    public abstract void exec(CommandSender sender, Command command, String label, String[] args) throws Exception;
 
-    public void assertPlayer() throws FailedCommandExecution {
+    public void assertPlayer() throws FailedCommandException {
         if (!(commandSender instanceof Player)) {
             commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cmdOnlyPlayers);
-            throw new FailedCommandExecution();
+            throw new FailedCommandException();
         }
     }
 
-    public void printHelp() throws FailedCommandExecution {
+    public void assertPermission(String permission) throws InsufficientPermissionsException {
+        if (!commandSender.hasPermission(permission)) {
+            if (commandSender.isOp()) {
+                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", permission));
+            } else {
+                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissionsShort.replaceAll("%permission%", permission));
+            }
+            throw new InsufficientPermissionsException();
+        }
+    }
+
+    public void printHelp() throws FailedCommandException {
         for (String s : helpList) {
             commandSender.sendMessage(s);
         }
-        throw new FailedCommandExecution();
+        throw new FailedCommandException();
     }
 
     public static void registerSubCommands(String[] subCommand, Class<?> mainCommandClass) {

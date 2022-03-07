@@ -32,6 +32,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String creationPlotComponent3 = " §acreated! §8(§7%creation_time% ms§8)";
 
     //Checks
+    public String insufficientPermissionsShort = "§cInsufficient permissions!";
     public String insufficientPermissions = "§cInsufficient permissions! §8(§7%permission%§8)";
     public String useNaturalNumbersOnly = "§cUse only natural numbers!";
     public String incorrectGamemode = "§cIncorrect gamemode value!";

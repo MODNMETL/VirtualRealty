@@ -2,7 +2,7 @@ package com.modnmetl.virtualrealty.commands.plot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -14,17 +14,16 @@ import org.bukkit.entity.Player;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class ListSubCommand extends SubCommand {
 
-    public ListSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public ListSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());
     }
 
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         assertPlayer();
         Player player = ((Player) sender);
         boolean hasPlot = false;

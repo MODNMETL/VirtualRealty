@@ -1,5 +1,8 @@
 package com.modnmetl.virtualrealty;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.modnmetl.virtualrealty.commands.CommandManager;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
@@ -45,6 +48,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -137,7 +141,7 @@ public final class VirtualRealty extends JavaPlugin {
         }
         if (!pluginConfiguration.license.key.isEmpty() && !pluginConfiguration.license.email.isEmpty()) {
             try {
-                runLoader(new URL("http://license.mineproxy.com/virtualrealty/premium"), pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion());
+                runLoader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion());
             } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                 getLogger().log(Level.WARNING, "Loading of premium features failed.");
             }
@@ -197,12 +201,30 @@ public final class VirtualRealty extends JavaPlugin {
             VirtualRealty.getInstance().getLogger().warning("DEBUG > " + debugMessage);
     }
 
-    private void runLoader(URL url, String licenseKey, String licenseEmail, String pluginVersion) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-        url = new URL(url.toString() + "?license=" + licenseKey + "&email=" + licenseEmail + "&version=" + pluginVersion);
+    private void runLoader(String licenseKey, String licenseEmail, String pluginVersion) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        URL url = new URL("https://api.modnmetl.com/auth/key");
+
         debug("Injecting premium..");
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.setConnectTimeout(1200);
-        httpConn.setReadTimeout(5000);
+        HttpURLConnection httpConn = (HttpURLConnection)url.openConnection();
+        httpConn.setRequestMethod("POST");
+        httpConn.setDoOutput(true);
+        httpConn.setRequestProperty("Content-Type", "application/json");
+
+        Gson gson = new Gson();
+        JsonObject jsonObject = new JsonObject();
+//        jsonObject.addProperty("license", licenseKey);
+//        jsonObject.addProperty("email", licenseEmail);
+//        jsonObject.addProperty("version", pluginVersion);
+        jsonObject.addProperty("id", "62110bdbf58570001812deb8");
+        jsonObject.addProperty("key", "cVvW6fuGV5a6Mbm7nWlXSC4m0J5cazYz");
+        jsonObject.addProperty("version", pluginVersion);
+        String data = gson.toJson(jsonObject);
+
+        byte[] out = data.getBytes(StandardCharsets.UTF_8);
+        OutputStream stream = httpConn.getOutputStream();
+        stream.write(out);
+        System.out.println(httpConn.getResponseCode() + " " + httpConn.getResponseMessage());
+
         int responseCode = httpConn.getResponseCode();
         if (responseCode != HttpURLConnection.HTTP_OK) {
             debug("Authentication error");
@@ -215,6 +237,7 @@ public final class VirtualRealty extends JavaPlugin {
         }
         URL jarUrl = loaderFile.toURI().toURL();
         loader = new CustomClassLoader(new URL[]{jarUrl}, getClassLoader());
+        httpConn.disconnect();
         try {
             Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, loader);
             premium = clazz.newInstance();

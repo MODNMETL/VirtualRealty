@@ -3,7 +3,7 @@ package com.modnmetl.virtualrealty.commands.plot.subcommand;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.enums.permissions.ManagementPermission;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.PlotMember;
@@ -26,12 +26,12 @@ public class AddSubCommand extends SubCommand {
         HELP.add(" §a/plot add §8<§7plot§8> §8<§7player§8>");
     }
 
-    public AddSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public AddSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);
     }
 
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         assertPlayer();
         Player player = ((Player) sender);
         if (args.length < 3) {

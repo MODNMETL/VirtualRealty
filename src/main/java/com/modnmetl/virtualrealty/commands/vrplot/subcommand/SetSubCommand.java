@@ -3,10 +3,9 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.PermissionUtil;
 import com.modnmetl.virtualrealty.utils.UUIDUtils;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
 import org.bukkit.Bukkit;
@@ -18,6 +17,8 @@ import org.bukkit.command.RemoteConsoleCommandSender;
 
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
 
 public class SetSubCommand extends SubCommand {
 
@@ -32,20 +33,20 @@ public class SetSubCommand extends SubCommand {
         HELP.add(" §a/vrplot set §8<§7plot§8> §aexpiry §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
     }
 
-    public SetSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public SetSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);
     }
 
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
-        if (!PermissionUtil.hasPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + args[0].toLowerCase())) return;
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
+        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
         if (args.length < 3) {
             printHelp();
             return;
         }
         switch (args[2].toUpperCase()) {
             case "OWNER": {
-                if (!PermissionUtil.hasPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase())) return;
+                assertPermission(COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase());
                 if (args.length < 4) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyUsername);
                     return;
@@ -111,7 +112,7 @@ public class SetSubCommand extends SubCommand {
                 return;
             }
             case "FLOOR": {
-                if (!PermissionUtil.hasPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase())) return;
+                assertPermission(COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase());
                 if (args.length < 4) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyMaterialName);
                     return;
@@ -149,7 +150,7 @@ public class SetSubCommand extends SubCommand {
                 return;
             }
             case "BORDER": {
-                if (!PermissionUtil.hasPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase())) return;
+                assertPermission(COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase());
                 if (args.length < 4) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyMaterialName);
                     return;
@@ -187,7 +188,7 @@ public class SetSubCommand extends SubCommand {
                 return;
             }
             case "EXPIRY": {
-                if (!PermissionUtil.hasPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase())) return;
+                assertPermission(COMMAND_PERMISSION.getName() + args[0].toLowerCase() + "." + args[2].toLowerCase());
                 if (args.length < 4) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().specifyExpiryDate);
                     return;

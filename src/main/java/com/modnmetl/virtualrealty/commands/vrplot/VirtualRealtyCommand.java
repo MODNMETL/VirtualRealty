@@ -1,8 +1,8 @@
 package com.modnmetl.virtualrealty.commands.vrplot;
 
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
-import com.modnmetl.virtualrealty.utils.PermissionUtil;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
 import org.bukkit.command.*;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,10 @@ public class VirtualRealtyCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         boolean displayError = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--error"));
         args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--error")).toArray(String[]::new);
-        if (!PermissionUtil.hasPermission(sender, COMMAND_PERMISSION.getName())) return false;
+        if (!sender.hasPermission(COMMAND_PERMISSION)) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", COMMAND_PERMISSION.getName()));
+            return false;
+        }
         if ((args.length > 0 && args[0].equalsIgnoreCase("help")) || args.length == 0) {
             printHelp(sender);
             return false;
@@ -62,7 +65,8 @@ public class VirtualRealtyCommand implements CommandExecutor {
             if (displayError) {
                 e.printStackTrace();
             } else {
-                if (e.getCause() instanceof FailedCommandExecution) return false;
+                if (e.getCause() instanceof FailedCommandException) return false;
+                if (e.getCause() instanceof InsufficientPermissionsException) return false;
                 sender.sendMessage("§cAn error occurred while executing the command.");
                 sender.sendMessage("§cCheck console for details.");
                 VirtualRealty.getInstance().getLogger().log(Level.SEVERE, "Failed command execution | Command Sender: " + sender.getName());

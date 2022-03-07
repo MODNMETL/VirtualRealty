@@ -8,14 +8,12 @@ import com.modnmetl.virtualrealty.listeners.VirtualListener;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.PlotMember;
-import de.tr7zw.nbtinjector.javassist.expr.Instanceof;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.type.Switch;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,14 +24,15 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.util.Vector;
+import org.bukkit.permissions.Permission;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 
 public class PlotProtectionListener extends VirtualListener {
+    
+    public static final Permission PLOT_BUILD = new Permission("virtualrealty.build.plot");
 
     public static final LinkedList<Material> INTERACTABLE = new LinkedList<>();
     public static final LinkedList<Material> SWITCHABLE = new LinkedList<>();
@@ -72,7 +71,7 @@ public class PlotProtectionListener extends VirtualListener {
         }
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -121,7 +120,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (player.isSneaking() && e.isBlockInHand()) return;
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -148,7 +147,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getBorderedPlot(e.getBlockClicked().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -176,7 +175,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = (Player) e.getAttacker();
         Plot plot = PlotManager.getBorderedPlot(e.getVehicle().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -203,7 +202,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getBorderedPlot(e.getBlockClicked().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -229,7 +228,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getBorderedPlot(e.getBlockPlaced().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -256,7 +255,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getBorderedPlot(e.getBlock().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -323,7 +322,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.getIgnitingBlock() == null) return;
         Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -404,7 +403,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player shooter = ((Player) e.getEntity().getShooter());
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot == null) return;
-        if (shooter.isOp()) return;
+        if (hasPermission(shooter, PLOT_BUILD)) return;
         if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(((Player) e.getEntity().getShooter()).getUniqueId()))
             return;
         if (plot.hasMembershipAccess(shooter.getUniqueId())) return;
@@ -418,7 +417,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player shooter = ((Player) e.getEntity().getShooter());
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot == null) return;
-        if (shooter.isOp()) return;
+        if (hasPermission(shooter, PLOT_BUILD)) return;
         if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(((Player) e.getEntity().getShooter()).getUniqueId()))
             return;
         if (plot.hasMembershipAccess(shooter.getUniqueId())) return;
@@ -431,7 +430,7 @@ public class PlotProtectionListener extends VirtualListener {
         Plot plot = PlotManager.getPlot(e.getPlayer().getLocation());
         Player player = e.getPlayer();
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -459,7 +458,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = (Player) e.getRemover();
         Plot plot = PlotManager.getPlot(player.getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -486,7 +485,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         Plot plot = PlotManager.getPlot(player.getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -515,7 +514,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = (Player) e.getDamager();
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -585,7 +584,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = ((Player) ((Projectile) e.getDamager()).getShooter());
         Plot plot = PlotManager.getBorderedPlot(e.getDamager().getLocation());
         if (plot == null) return;
-        if (player.isOp()) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
             PlotMember plotMember = plot.getMember(player.getUniqueId());
             if (plot.isOwnershipExpired()) {
@@ -604,6 +603,10 @@ public class PlotProtectionListener extends VirtualListener {
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
             }
         }
+    }
+
+    public boolean hasPermission(CommandSender sender, Permission permission) {
+        return sender.hasPermission(permission);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.modnmetl.virtualrealty.commands;
 
+import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.enums.PlotSize;
@@ -34,7 +35,7 @@ public class CommandManager implements TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         LinkedList<String> tabCompleter = new LinkedList<>();
         if (command.getName().equalsIgnoreCase("virtualrealty")) {
-            if (!sender.isOp()) return null;
+            if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName())) return null;
             if (args.length <= 1) {
                 for (String subcommand : SUBCOMMANDS.get(VirtualRealtyCommand.class)) {
                     if (args[0].isEmpty()) {
@@ -46,6 +47,7 @@ public class CommandManager implements TabCompleter {
             }
             switch (args[0].toUpperCase(Locale.ROOT)) {
                 case "CREATE": {
+                    if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length > 1) {
                         if (args.length == 2) {
                             for (PlotSize value : PlotSize.values()) {
@@ -74,6 +76,7 @@ public class CommandManager implements TabCompleter {
                     return tabCompleter;
                 }
                 case "SET": {
+                    if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length == 2) {
                         for (Plot plot : PlotManager.getPlots()) {
                             if (args[1].isEmpty()) {
@@ -171,6 +174,7 @@ public class CommandManager implements TabCompleter {
                 }
                 case "ASSIGN":
                 case "UNASSIGN": {
+                    if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length == 2) {
                         for (Plot plot : PlotManager.getPlots()) {
                             if (args[1].isEmpty()) {
@@ -196,6 +200,7 @@ public class CommandManager implements TabCompleter {
                 case "INFO":
                 case "REMOVE":
                 case "TP": {
+                    if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length == 2) {
                         for (Plot plot : PlotManager.getPlots()) {
                             if (args[1].isEmpty()) {
@@ -208,6 +213,7 @@ public class CommandManager implements TabCompleter {
                     }
                 }
                 case "ITEM": {
+                    if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length > 1) {
                         boolean isNatural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
                         args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--natural")).toArray(String[]::new);
@@ -299,7 +305,6 @@ public class CommandManager implements TabCompleter {
             }
             return tabCompleter;
         } else if (command.getName().equalsIgnoreCase("plot")) {
-            if (!sender.isOp()) return null;
             if (!(sender instanceof Player)) return null;
             Player player = ((Player) sender);
             if (args.length <= 1) {
@@ -353,6 +358,11 @@ public class CommandManager implements TabCompleter {
             return tabCompleter;
         }
         return null;
+    }
+
+
+    public boolean assertPermission(CommandSender sender, String permission) {
+        return !sender.hasPermission(permission);
     }
 
 }

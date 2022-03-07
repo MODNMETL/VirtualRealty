@@ -2,11 +2,9 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.PermissionUtil;
 import com.modnmetl.virtualrealty.utils.UUIDUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -15,7 +13,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.UUID;
 
@@ -31,13 +28,13 @@ public class AssignSubCommand extends SubCommand {
         HELP.add(" §a/vrplot assign §8<§7plot§8> §8<§7username§8>");
     }
 
-    public AssignSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public AssignSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);
     }
     
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
-        if (!PermissionUtil.hasPermission(sender, COMMAND_PERMISSION.getName() + args[0].toLowerCase())) return;
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
+        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
         if (args.length < 2) {
             for (String helpMessage : HELP) {
                 sender.sendMessage(helpMessage);

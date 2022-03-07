@@ -1,7 +1,7 @@
 package com.modnmetl.virtualrealty.commands.plot;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -57,7 +57,7 @@ public class PlotCommand implements CommandExecutor {
             if (displayError) {
                 e.printStackTrace();
             } else {
-                if (e.getCause() instanceof FailedCommandExecution) return false;
+                if (e.getCause() instanceof FailedCommandException) return false;
                 sender.sendMessage("§cAn error occurred while executing the command.");
                 sender.sendMessage("§cCheck console for details.");
                 VirtualRealty.getInstance().getLogger().log(Level.SEVERE, "Failed command execution | Command Sender: " + sender.getName());

@@ -2,16 +2,15 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.PermissionUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
+
+import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
 
 public class RemoveSubCommand extends SubCommand {
 
@@ -23,13 +22,13 @@ public class RemoveSubCommand extends SubCommand {
         HELP.add(" §a/vrplot remove §8<§7plot§8>");
     }
 
-    public RemoveSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public RemoveSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);
     }
 
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
-        if (!PermissionUtil.hasPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + args[0].toLowerCase())) return;
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
+        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
         if (args.length < 2) {
             printHelp();
             return;

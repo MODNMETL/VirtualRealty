@@ -2,10 +2,9 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandExecution;
+import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.PermissionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -21,13 +20,13 @@ import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.CO
 
 public class InfoSubCommand extends SubCommand {
 
-    public InfoSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
+    public InfoSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());
     }
 
     @Override
-    public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandExecution {
-        if (!PermissionUtil.hasPermission(sender, COMMAND_PERMISSION.getName() + args[0].toLowerCase())) return;
+    public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
+        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
         if (args.length < 2) {
             assertPlayer();
             Plot plot = PlotManager.getPlot(((Player) sender).getLocation());
