@@ -1,13 +1,14 @@
 name: VirtualRealty
 version: ${project.version}
-main: me.plytki.virtualrealty.VirtualRealty
+main: com.modnmetl.virtualrealty.VirtualRealty
 prefix: Virtual Realty
 authors: [ plytki ]
 api-version: 1.13
 description: §7A plot creation and management plugin for Minecraft
-softdepend: [dynmap, PlaceholderAPI]
+softdepend: [ dynmap, PlaceholderAPI ]
 commands:
   virtualrealty:
-    aliases: [vrplot, virtualr]
+    aliases: [ vrplot, virtualr ]
   plot:
-    aliases: [p]
+    aliases: [ p ]
+  test:
