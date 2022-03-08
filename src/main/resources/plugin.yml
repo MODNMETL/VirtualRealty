@@ -11,4 +11,3 @@ commands:
     aliases: [ vrplot, virtualr ]
   plot:
     aliases: [ p ]
-  test:
