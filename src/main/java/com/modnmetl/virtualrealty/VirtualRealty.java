@@ -212,22 +212,19 @@ public final class VirtualRealty extends JavaPlugin {
 
         Gson gson = new Gson();
         JsonObject jsonObject = new JsonObject();
-//        jsonObject.addProperty("license", licenseKey);
-//        jsonObject.addProperty("email", licenseEmail);
-//        jsonObject.addProperty("version", pluginVersion);
         jsonObject.addProperty("id", "62110bdbf58570001812deb8");
-        jsonObject.addProperty("key", "cVvW6fuGV5a6Mbm7nWlXSC4m0J5cazYz");
+        jsonObject.addProperty("key", licenseKey);
+        jsonObject.addProperty("email", licenseEmail);
         jsonObject.addProperty("version", pluginVersion);
         String data = gson.toJson(jsonObject);
 
         byte[] out = data.getBytes(StandardCharsets.UTF_8);
         OutputStream stream = httpConn.getOutputStream();
         stream.write(out);
-        System.out.println(httpConn.getResponseCode() + " " + httpConn.getResponseMessage());
 
         int responseCode = httpConn.getResponseCode();
         if (responseCode != HttpURLConnection.HTTP_OK) {
-            debug("Authentication error");
+            debug("Authentication error | " + httpConn.getResponseCode() + " " + httpConn.getResponseMessage());
             return;
         }
         try (InputStream in = httpConn.getInputStream()) {

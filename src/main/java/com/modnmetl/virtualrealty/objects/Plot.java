@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,10 +62,17 @@ public class Plot {
         this.nonMemberPermissions = new HashSet<>(VirtualRealty.getPermissions().getDefaultNonMemberPlotPerms());
         this.assignedBy = null;
         this.ownedUntilDate = MAX_DATE;
-        this.floorMaterial = floorMaterial;
-        this.floorData = 0;
-        this.borderMaterial = borderMaterial;
-        this.borderData = 0;
+        if (natural) {
+            this.floorMaterial = Material.AIR;
+            this.floorData = 0;
+            this.borderMaterial = Material.AIR;
+            this.borderData = 0;
+        } else {
+            this.floorMaterial = floorMaterial;
+            this.floorData = 0;
+            this.borderMaterial = borderMaterial;
+            this.borderData = 0;
+        }
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getDefaultPlotGamemode();
@@ -133,6 +141,24 @@ public class Plot {
             borderData = plotSize.getBorderData();
         }
         prepareCorners();
+    }
+
+    public String getFloorMaterialName() {
+        if (this.floorMaterial == Material.AIR) return "NONE";
+        return this.floorMaterial.name();
+    }
+
+    public String getBorderMaterialName() {
+        if (this.borderMaterial == Material.AIR) return "NONE";
+        return this.borderMaterial.name();
+    }
+
+    public void teleportPlayer(Player player) {
+        Location loc = new Location(createdLocation.getWorld(), getCenter().getBlockX(), getCenter().getBlockY() + 1, getCenter().getBlockZ());
+        if (!createdLocation.getWorld().getName().endsWith("_nether")) {
+            loc.setY(Objects.requireNonNull(loc.getWorld()).getHighestBlockAt(loc.getBlockX(), loc.getBlockZ()).getY() + 1);
+        }
+        player.teleport(loc);
     }
 
     public boolean hasMembershipAccess(UUID uuid) {

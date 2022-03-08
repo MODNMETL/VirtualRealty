@@ -7,6 +7,7 @@ import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
+import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.objects.region.GridStructure;
 import com.modnmetl.virtualrealty.utils.RegionUtil;
 import com.modnmetl.virtualrealty.utils.multiversion.Chat;
@@ -34,8 +35,8 @@ public class CreateSubCommand extends SubCommand {
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot create §8<§7small/medium/large/area§8> §8<§7floor (optional)§8> §8<§7border (optional)§8>");
-        HELP.add(" §a/vrplot create §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor (optional)§8> §8<§7border (optional)§8>");
+        HELP.add(" §a/vrplot create §8<§7small/medium/large/area§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot create §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
     }
 
     public CreateSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
@@ -59,7 +60,8 @@ public class CreateSubCommand extends SubCommand {
                 plotSize = PlotSize.valueOf(args[1].toUpperCase());
             } catch (IllegalArgumentException ignored) {}
             if (plotSize != null) {
-                if (PlotManager.isColliding(RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth()))) {
+                Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth());
+                if (PlotManager.isColliding(cuboid) || PlotManager.getPlot(player.getLocation()) != null) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
                 } else {
                     boolean natural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
@@ -131,8 +133,8 @@ public class CreateSubCommand extends SubCommand {
             }
         } else {
             int length;
-            int width;
             int height;
+            int width;
             try {
                 length = Integer.parseInt(args[1]);
                 height = Integer.parseInt(args[2]);
@@ -145,7 +147,8 @@ public class CreateSubCommand extends SubCommand {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().LHWHardLimit);
                 return;
             }
-            if (PlotManager.isColliding(RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), length, height, width))) {
+            Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), length, height, width);
+            if (PlotManager.isColliding(cuboid) || PlotManager.getPlot(player.getLocation()) != null) {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
             } else {
                 boolean natural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));

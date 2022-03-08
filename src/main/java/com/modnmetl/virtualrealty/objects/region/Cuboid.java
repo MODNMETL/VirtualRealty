@@ -185,4 +185,8 @@ public class Cuboid {
         return walls;
     }
 
+    public World getWorld() {
+        return world;
+    }
+
 }

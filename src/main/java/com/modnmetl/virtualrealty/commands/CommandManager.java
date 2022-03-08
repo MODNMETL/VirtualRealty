@@ -59,6 +59,9 @@ public class CommandManager implements TabCompleter {
                                 }
                             }
                         }
+                        boolean isNatural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
+                        args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--natural")).toArray(String[]::new);
+                        if (isNatural) return null;
                         if (args.length > 2) {
                             boolean predefinedValue = EnumUtils.isValidEnum(PlotSize.class, args[1].toUpperCase());
                             if ((predefinedValue && args.length < 5) || (!predefinedValue && args.length > 4 && args.length < 7)) {

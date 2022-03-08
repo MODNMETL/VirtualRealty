@@ -100,8 +100,8 @@ public class InfoSubCommand extends SubCommand {
         sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
         sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
         sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
-        sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterial().name());
-        sender.sendMessage(" §7Border Material §8§l‣ §f" + plot.getBorderMaterial().name());
+        sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterialName());
+        sender.sendMessage(" §7Border Material §8§l‣ §f" + plot.getBorderMaterialName());
         sender.sendMessage(" §7Pos 1 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getBottomLeftCorner().toString());
         sender.sendMessage(" §7Pos 2 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getTopRightCorner().toString());
         sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());

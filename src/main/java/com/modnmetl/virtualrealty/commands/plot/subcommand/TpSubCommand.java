@@ -55,9 +55,7 @@ public class TpSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
             return;
         }
-        Location loc = new Location(plot.getCreatedLocation().getWorld(), plot.getCenter().getBlockX(), plot.getCenter().getBlockY() + 1, plot.getCenter().getBlockZ());
-        loc.setY(Objects.requireNonNull(loc.getWorld()).getHighestBlockAt(loc.getBlockX(), loc.getBlockZ()).getY() + 1);
-        player.teleport(loc);
+        plot.teleportPlayer(player);
         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().teleportedToPlot);
     }
     

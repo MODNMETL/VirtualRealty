@@ -143,7 +143,7 @@ public class PlotManager {
             Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), plot.getCreatedLocation().getWorld());
             for (BlockVector2 vector2 : region.getWalls()) {
                 if (vector2.containedWithin(newPlot.getMinimumPoint(), newPlot.getMaximumPoint())) {
-                    return true;
+                    return plot.getCreatedWorldString().equals(newPlot.getWorld().getName());
                 }
             }
         }
