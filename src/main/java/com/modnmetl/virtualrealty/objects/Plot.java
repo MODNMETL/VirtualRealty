@@ -4,6 +4,7 @@ import com.modnmetl.virtualrealty.configs.PluginConfiguration;
 import com.modnmetl.virtualrealty.enums.Direction;
 import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
 import com.modnmetl.virtualrealty.enums.PlotSize;
+import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.sql.Database;
@@ -84,8 +85,8 @@ public class Plot {
         this.width = width;
         this.height = height;
         initialize(natural);
-        if (VirtualRealty.markerset != null) {
-            PlotManager.resetPlotMarker(this);
+        if (VirtualRealty.getDynmapManager().markerset != null) {
+            DynmapManager.resetPlotMarker(this);
         }
     }
 
@@ -650,7 +651,7 @@ public class Plot {
         for (PlotMember member : this.getMembers()) {
             removeMember(member);
         }
-        PlotManager.removeDynMapMarker(this);
+        DynmapManager.removeDynMapMarker(this);
         try {
             Database.getInstance().getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
         } catch (SQLException e) {
@@ -665,7 +666,7 @@ public class Plot {
     }
 
     public void updateMarker() {
-        PlotManager.resetPlotMarker(this);
+        DynmapManager.resetPlotMarker(this);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.modnmetl.virtualrealty.managers;
 
-import com.modnmetl.virtualrealty.enums.dynmap.HighlightType;
 import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.objects.math.BlockVector2;
 import com.modnmetl.virtualrealty.VirtualRealty;
@@ -11,22 +10,15 @@ import com.modnmetl.virtualrealty.sql.Database;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.dynmap.markers.AreaMarker;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class PlotManager {
 
-    private static final String MARKER_STRING = "<h3>Plot #%s</h3><b>Owned By: </b>Available";
-    private static final String MARKER_OWNED_STRING = "<h3>Plot #%s</h3><b>Owned By: </b>%s<br><b>Owned Until: </b>%s";
-
-    public static Set<AreaMarker> areaMarkers = new HashSet<>();
     @Getter
-    private static Set<Plot> plots = new LinkedHashSet<>();
+    private static final Set<Plot> plots = new LinkedHashSet<>();
 
     public static void loadPlots() {
         plots.clear();
@@ -148,55 +140,6 @@ public class PlotManager {
             }
         }
         return false;
-    }
-
-    private static AreaMarker getAreaMarker(String areaMarkerName) {
-        for (AreaMarker areaMarker : VirtualRealty.markerset.getAreaMarkers()) {
-            if (areaMarker.getMarkerID().equalsIgnoreCase(areaMarkerName)) {
-                return areaMarker;
-            }
-        }
-        return null;
-    }
-
-    public static void resetPlotMarker(Plot plot) {
-        if (!VirtualRealty.isDynmapPresent) return;
-        LocalDateTime localDateTime = plot.getOwnedUntilDate();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        String ownedBy;
-        double opacity;
-        int color;
-        if (plot.getOwnedBy() == null) {
-            ownedBy = "Available";
-            color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.getHexColor();
-            opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.available.opacity;
-        } else {
-            ownedBy = plot.getPlotOwner().getName();
-            color = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.getHexColor();
-            opacity = VirtualRealty.getPluginConfiguration().dynmapMarkersColor.owned.opacity;
-        }
-        if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.OWNED && plot.getOwnedBy() == null) return;
-        if (VirtualRealty.getPluginConfiguration().dynmapType == HighlightType.AVAILABLE && plot.getOwnedBy() != null) return;
-        AreaMarker marker = getAreaMarker("virtualrealty.plots." + plot.getID());
-        if (marker == null) {
-            marker = VirtualRealty.markerset.createAreaMarker("virtualrealty.plots." + plot.getID(),
-                    plot.getOwnedBy() == null ? String.format(MARKER_STRING, plot.getID()) : String.format(MARKER_OWNED_STRING, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true,
-                    plot.getCreatedWorldString(), new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
-            areaMarkers.add(marker);
-        } else {
-            marker.setLabel(
-                    plot.getOwnedBy() == null ? String.format(MARKER_STRING, plot.getID()) : String.format(MARKER_OWNED_STRING, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true);
-        }
-        marker.setFillStyle(opacity, color);
-        marker.setLineStyle(2, 0.8, 0x474747);
-        marker.setMarkerSet(VirtualRealty.markerset);
-    }
-
-    public static void removeDynMapMarker(Plot plot) {
-        if (!VirtualRealty.isDynmapPresent || VirtualRealty.dapi == null || VirtualRealty.markerset == null) return;
-        AreaMarker marker = VirtualRealty.markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
-        areaMarkers.remove(marker);
-        marker.deleteMarker();
     }
 
 }
