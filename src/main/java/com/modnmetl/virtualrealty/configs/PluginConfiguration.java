@@ -60,6 +60,10 @@ public class PluginConfiguration extends OkaeriConfig {
     @CustomKey("enable-dynmap-markers")
     public boolean dynmapMarkers = false;
 
+    @Comment("The minimum number of blocks required between plots")
+    @CustomKey("enforce-plot-separation")
+    public int plotSpacing = 1;
+
     @Comment("Choose which type of plots should be highlighted on Dynmap page | Choose from: { ALL, AVAILABLE, OWNED }")
     public HighlightType dynmapType = HighlightType.ALL;
 
