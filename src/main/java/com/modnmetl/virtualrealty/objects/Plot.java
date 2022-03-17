@@ -4,7 +4,9 @@ import com.modnmetl.virtualrealty.configs.PluginConfiguration;
 import com.modnmetl.virtualrealty.enums.Direction;
 import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
 import com.modnmetl.virtualrealty.enums.PlotSize;
+import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.sql.Database;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
@@ -84,8 +86,8 @@ public class Plot {
         this.width = width;
         this.height = height;
         initialize(natural);
-        if (VirtualRealty.markerset != null) {
-            PlotManager.resetPlotMarker(this);
+        if (VirtualRealty.getDynmapManager() != null && VirtualRealty.getDynmapManager().markerset != null) {
+            DynmapManager.resetPlotMarker(this);
         }
     }
 
@@ -292,6 +294,10 @@ public class Plot {
 
     public BlockVector3 getCenter() {
         return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld()).getCenterVector();
+    }
+
+    public Cuboid getCuboid() {
+        return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld());
     }
 
     public org.bukkit.World getCreatedWorld() {
@@ -570,6 +576,7 @@ public class Plot {
 
     public void unloadPlot() {
         if (SchematicUtil.isOldSerialization(ID)) {
+            long time = System.currentTimeMillis();
             Location location = null;
             switch (createdDirection) {
                 case SOUTH: {
@@ -590,6 +597,7 @@ public class Plot {
                 }
             }
             OldSchematicUtil.paste(ID, location);
+            VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms (Old Serialization)");
         } else {
             long time = System.currentTimeMillis();
             SchematicUtil.paste(ID);
@@ -650,7 +658,7 @@ public class Plot {
         for (PlotMember member : this.getMembers()) {
             removeMember(member);
         }
-        PlotManager.removeDynMapMarker(this);
+        DynmapManager.removeDynMapMarker(this);
         try {
             Database.getInstance().getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
         } catch (SQLException e) {
@@ -658,6 +666,7 @@ public class Plot {
         }
         SchematicUtil.deletePlotFile(ID);
         PlotManager.removePlotFromList(this);
+        VirtualRealty.debug("Removed plot #" + this.ID);
     }
 
     public Direction getCreatedDirection() {
@@ -665,7 +674,8 @@ public class Plot {
     }
 
     public void updateMarker() {
-        PlotManager.resetPlotMarker(this);
+        DynmapManager.resetPlotMarker(this);
+        VirtualRealty.debug("Updated marker #" + this.ID);
     }
 
     @Override

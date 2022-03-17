@@ -18,8 +18,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 
-import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
-
 public class ListSubCommand extends SubCommand {
 
     public ListSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
@@ -28,7 +26,7 @@ public class ListSubCommand extends SubCommand {
 
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
-        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
+        assertPermission();
         if (PlotManager.getPlots().isEmpty()) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
             return;

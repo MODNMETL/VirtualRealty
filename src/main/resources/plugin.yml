@@ -1,6 +1,6 @@
+main: com.modnmetl.virtualrealty.VirtualRealty
 name: VirtualRealty
 version: ${project.version}
-main: com.modnmetl.virtualrealty.VirtualRealty
 prefix: Virtual Realty
 authors: [ plytki ]
 api-version: 1.13
@@ -11,4 +11,3 @@ commands:
     aliases: [ vrplot, virtualr ]
   plot:
     aliases: [ p ]
-  test:

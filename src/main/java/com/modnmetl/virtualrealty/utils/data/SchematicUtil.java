@@ -51,7 +51,7 @@ public class SchematicUtil {
     }
 
     public static void paste(int plotID) {
-        LinkedList<VirtualBlock> blocks = load(plotID);
+        List<VirtualBlock> blocks = load(plotID);
         if (blocks == null) return;
         Plot plot = PlotManager.getPlot(plotID);
         if (plot == null) return;
@@ -145,14 +145,23 @@ public class SchematicUtil {
 
     public static void deletePlotFile(int id) {
         File file = new File(VirtualRealty.plotsSchemaFolder, "plot" + id + ".region");
-        if (file.exists())
-            FileUtils.deleteQuietly(file);
-        File file2 = new File(VirtualRealty.plotsSchemaFolder, REGION_PREFIX + id + REGION_SUFFIX);
-        if (file2.exists())
-            FileUtils.deleteQuietly(file2);
-        File file3 = new File(VirtualRealty.plotsSchemaFolder, LEGACY_REGION_PREFIX + id + REGION_SUFFIX);
-        if (file3.exists())
-            FileUtils.deleteQuietly(file3);
+        if (file.exists()) {
+            if (file.delete()) {
+                VirtualRealty.debug("Deleted plot file (" + file.getName() + ")");
+            }
+        }
+        file = new File(VirtualRealty.plotsSchemaFolder, REGION_PREFIX + id + REGION_SUFFIX);
+        if (file.exists()) {
+            if (file.delete()) {
+                VirtualRealty.debug("Deleted plot file (" + file.getName() + ")");
+            }
+        }
+        file = new File(VirtualRealty.plotsSchemaFolder, LEGACY_REGION_PREFIX + id + REGION_SUFFIX);
+        if (file.exists()) {
+            if (file.delete()) {
+                VirtualRealty.debug("Deleted plot file (" + file.getName() + ")");
+            }
+        }
     }
 
     public static boolean isOldSerialization(int plotID) {

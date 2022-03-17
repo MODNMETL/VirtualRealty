@@ -4,7 +4,7 @@ import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.objects.PlotMember;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;

@@ -52,7 +52,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (hasPermission(player, WORLD_BUILD)) return;
         try {
             if ((!VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch) || PlotProtectionListener.SWITCHABLE.contains(e.getClickedBlock().getType())) {
-                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getCustomClassLoader());
+                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getLoader());
                 if (!WorldUtil.hasPermission(RegionPermission.SWITCH)) {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
@@ -60,7 +60,7 @@ public class WorldProtectionListener extends VirtualListener {
                 return;
             }
             if (PlotProtectionListener.INTERACTABLE.contains(e.getClickedBlock().getType())) {
-                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getCustomClassLoader());
+                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getLoader());
                 if (!WorldUtil.hasPermission(RegionPermission.ITEM_USE)) {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);

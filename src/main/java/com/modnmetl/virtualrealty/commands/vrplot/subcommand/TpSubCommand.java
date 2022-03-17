@@ -5,14 +5,11 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.LinkedList;
-
-import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
 
 public class TpSubCommand extends SubCommand {
 
@@ -31,7 +28,7 @@ public class TpSubCommand extends SubCommand {
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPlayer();
-        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
+        assertPermission();
         if (args.length < 2) {
             printHelp();
             return;

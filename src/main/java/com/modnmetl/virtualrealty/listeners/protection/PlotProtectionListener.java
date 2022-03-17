@@ -7,7 +7,7 @@ import com.modnmetl.virtualrealty.enums.materials.SwitchMaterial;
 import com.modnmetl.virtualrealty.listeners.VirtualListener;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.objects.PlotMember;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

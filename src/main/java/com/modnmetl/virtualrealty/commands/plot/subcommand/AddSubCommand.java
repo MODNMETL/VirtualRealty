@@ -6,7 +6,7 @@ import com.modnmetl.virtualrealty.enums.permissions.ManagementPermission;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.objects.PlotMember;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;

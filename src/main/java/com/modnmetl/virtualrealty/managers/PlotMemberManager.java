@@ -1,7 +1,7 @@
 package com.modnmetl.virtualrealty.managers;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.objects.PlotMember;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import com.modnmetl.virtualrealty.sql.Database;
 
 import java.sql.ResultSet;

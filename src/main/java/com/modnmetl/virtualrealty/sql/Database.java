@@ -19,6 +19,7 @@ import java.util.logging.Level;
 
 public class Database {
 
+    @Getter
     private static Database instance;
 
     @Getter
@@ -38,6 +39,7 @@ public class Database {
         dataSource = sqLiteDataSource;
         connection = dataSource.getConnection();
         statement = connection.createStatement();
+        instance = this;
         createTables();
         updateTables();
     }
@@ -54,6 +56,7 @@ public class Database {
         dataSource.setLogWriter(new PrintWriter(System.out));
         connection = dataSource.getConnection();
         statement = connection.createStatement();
+        instance = this;
         createTables();
         updateTables();
     }
@@ -105,12 +108,20 @@ public class Database {
         }
     }
 
-    public static Database getInstance() {
-        return instance;
-    }
-
-    public static void setInstance(Database database) {
-        instance = database;
+    public static void connectToDatabase(File databaseFile) throws SQLException {
+        if (VirtualRealty.getPluginConfiguration().dataModel == PluginConfiguration.DataModel.SQLITE) {
+            new Database(databaseFile);
+        }
+        if (VirtualRealty.getPluginConfiguration().dataModel == PluginConfiguration.DataModel.MYSQL) {
+            new Database(
+                    VirtualRealty.getPluginConfiguration().mysql.hostname,
+                    VirtualRealty.getPluginConfiguration().mysql.port,
+                    VirtualRealty.getPluginConfiguration().mysql.user,
+                    VirtualRealty.getPluginConfiguration().mysql.password,
+                    VirtualRealty.getPluginConfiguration().mysql.database
+            );
+        }
+        VirtualRealty.debug("Connected to database");
     }
 
 }

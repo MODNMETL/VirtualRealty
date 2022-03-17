@@ -3,6 +3,8 @@ package com.modnmetl.virtualrealty.commands.vrplot;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.*;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
@@ -45,17 +47,8 @@ public class VirtualRealtyCommand implements CommandExecutor {
             printHelp(sender);
             return false;
         }
-        if (args[0].equalsIgnoreCase("visual") || args[0].equalsIgnoreCase("item")) {
-            try {
-                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, VirtualRealty.getCustomClassLoader());
-            } catch (Exception e) {
-                sender.sendMessage("§aThis function is available with a valid license key");
-                sender.sendMessage("§aPlease visit §fhttps://modnmetl.com/ §ato purchase one");
-                return false;
-            }
-        }
         try {
-            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.vrplot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getCustomClassLoader());
+            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.vrplot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getLoader());
             clazz.getConstructors()[0].newInstance(sender, command, label, args);
         } catch (Exception e) {
             if(!(e instanceof InvocationTargetException)) {

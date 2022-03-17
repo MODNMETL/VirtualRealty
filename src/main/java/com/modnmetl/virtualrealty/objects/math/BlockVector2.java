@@ -1,5 +1,8 @@
 package com.modnmetl.virtualrealty.objects.math;
 
+import org.bukkit.Location;
+import org.bukkit.World;
+
 import java.util.Vector;
 
 public class BlockVector2 extends Vector {
@@ -34,6 +37,10 @@ public class BlockVector2 extends Vector {
 
     public boolean containedWithin(BlockVector2 min, BlockVector2 max) {
         return this.x >= min.x && this.x <= max.x && this.z >= min.z && this.z <= max.z;
+    }
+
+    public Location toLocation(World world, int y) {
+        return new Location(world, x, y, z);
     }
 
     @Override

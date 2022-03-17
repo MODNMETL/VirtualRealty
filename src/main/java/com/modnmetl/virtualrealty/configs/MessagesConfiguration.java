@@ -2,7 +2,6 @@ package com.modnmetl.virtualrealty.configs;
 
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Header;
-import eu.okaeri.configs.annotation.NameModifier;
 import eu.okaeri.configs.annotation.NameStrategy;
 import eu.okaeri.configs.annotation.Names;
 
@@ -37,7 +36,8 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String useNaturalNumbersOnly = "§cUse only natural numbers!";
     public String incorrectGamemode = "§cIncorrect gamemode value!";
     public String sizeNotRecognised = "§cSize not recognized!";
-    public String LHWHardLimit = "§cL, W and H hard-limit is 500!";
+    public String hardLimit = "§cL, W and H hard-limit is 500!";
+    public String graterThenZero = "§cL, W and H values must be greater than 0!";
     public String specifyUsername = "§cSpecify username!";
     public String playerNotFoundWithUsername = "§cCouldn't find player with specified username!";
     public String invalidDateProvided = "§cInvalid date format provided!";
@@ -50,7 +50,6 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String cantDoAnyDMG = "§cYou can't do any damage here!";
     public String cantInteract = "§cYou can't interact here!";
     public String cantBuildHere = "§cYou can't build here!";
-    public String cantRideOnPlot = "§cYou can't ride on someones plot!";
 
     //Plot
     public String noPlotFound = "§cCouldn't get plot with specified ID!";
@@ -99,8 +98,8 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String cantPlaceDraftItems = "§cYou can't place draft items.";
     public String noDraftClaimEnabled = "§cYou don't have plot draft claim enabled.";
     public String draftModeDisabled = "§aDraft mode successfully disabled!";
-    public String draftModeCancelled = "§cDraft cancelled. Collision with another plot.";
-    public String draftModeCancelledCollision = "§cDraft cancelled. Collision with another plot.";
+    public String draftModeCancelledBedrock = "§cDraft cancelled. Colliding with bedrock.";
+    public String draftModeCancelledCollision = "§cDraft cancelled. Colliding with another plot.";
     public String draftModeDisabledDueToDeath = "§cDraft mode has been disabled due to death.";
     public List<String> draftModeEnabled = Arrays.asList(
             " ",

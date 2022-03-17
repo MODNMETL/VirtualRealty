@@ -16,8 +16,6 @@ import org.bukkit.entity.Player;
 import java.util.LinkedList;
 import java.util.UUID;
 
-import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
-
 public class AssignSubCommand extends SubCommand {
 
     public static final LinkedList<String> HELP = new LinkedList<>();
@@ -34,7 +32,7 @@ public class AssignSubCommand extends SubCommand {
     
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
-        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
+        assertPermission();
         if (args.length < 2) {
             for (String helpMessage : HELP) {
                 sender.sendMessage(helpMessage);

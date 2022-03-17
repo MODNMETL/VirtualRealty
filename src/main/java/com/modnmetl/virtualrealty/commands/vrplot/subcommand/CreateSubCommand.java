@@ -26,8 +26,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
-
 public class CreateSubCommand extends SubCommand {
 
     public static final LinkedList<String> HELP = new LinkedList<>();
@@ -35,7 +33,8 @@ public class CreateSubCommand extends SubCommand {
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot create §8<§7small/medium/large/area§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot create §8<§7small/medium/large§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot create area §8<§7length§8> §8<§7height§8> §8<§7width§8>");
         HELP.add(" §a/vrplot create §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
     }
 
@@ -46,7 +45,7 @@ public class CreateSubCommand extends SubCommand {
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPlayer();
-        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
+        assertPermission();
         if (args.length < 2) {
             printHelp();
             return;
@@ -60,16 +59,61 @@ public class CreateSubCommand extends SubCommand {
                 plotSize = PlotSize.valueOf(args[1].toUpperCase());
             } catch (IllegalArgumentException ignored) {}
             if (plotSize != null) {
-                Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth());
-                if (PlotManager.isColliding(cuboid) || PlotManager.getPlot(player.getLocation()) != null) {
-                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
+                if (plotSize == PlotSize.AREA) {
+                    int length = plotSize.getLength();
+                    int height = plotSize.getHeight();
+                    int width = plotSize.getWidth();
+                    if (args.length > 2) {
+                        try {
+                            length = Integer.parseInt(args[2]);
+                            height = Integer.parseInt(args[3]);
+                            width = Integer.parseInt(args[4]);
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
+                            return;
+                        }
+                    }
+                    if (length < 1 || width < 1 || height < 1) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().graterThenZero);
+                        return;
+                    }
+                    if (length > 500 || width > 500 || height > 500) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().hardLimit);
+                        return;
+                    }
+                    Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), length, height, width);
+                    if (RegionUtil.isCollidingWithAnotherPlot(cuboid)) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
+                    } else {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
+                        long timeStart = System.currentTimeMillis();
+                        Plot plot = PlotManager.createPlot(location, PlotSize.AREA, length, height, width, true);
+                        long timeEnd = System.currentTimeMillis();
+                        BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
+                        BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
+                        BaseComponent textComponent3 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent3.replaceAll("%creation_time%", String.valueOf(timeEnd - timeStart)));
+                        textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
+                        textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
+                        textComponent.addExtra(textComponent2);
+                        textComponent.addExtra(textComponent3);
+                        new Chat(textComponent).sendTo(player);
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                new GridStructure(player, plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview(true, false);
+                            }
+                        }.runTaskLater(VirtualRealty.getInstance(), 20);
+                    }
                 } else {
-                    boolean natural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
-                    Material floorMaterial = null;
-                    byte floorData = 0;
-                    Material borderMaterial = null;
-                    byte borderData = 0;
-                    if (plotSize != PlotSize.AREA) {
+                    Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth());
+                    if (RegionUtil.isCollidingWithAnotherPlot(cuboid)) {
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
+                    } else {
+                        boolean natural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
+                        Material floorMaterial = null;
+                        byte floorData = 0;
+                        Material borderMaterial = null;
+                        byte borderData = 0;
                         if (args.length >= 3 && !natural) {
                             try {
                                 floorMaterial = VMaterial.getMaterial(args[2].split(":")[0].toUpperCase());
@@ -100,33 +144,33 @@ public class CreateSubCommand extends SubCommand {
                                 borderData = Byte.parseByte(args[3].split(":")[1]);
                             }
                         }
+                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
+                        long timeStart = System.currentTimeMillis();
+                        Plot plot = PlotManager.createPlot(location, plotSize, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), natural);
+                        if (!natural) {
+                            if (floorMaterial != null) {
+                                plot.setFloorMaterial(floorMaterial, floorData);
+                            }
+                            if (borderMaterial != null) {
+                                plot.setBorderMaterial(borderMaterial, borderData);
+                            }
+                        }
+                        long timeEnd = System.currentTimeMillis();
+                        BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
+                        BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
+                        BaseComponent textComponent3 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent3.replaceAll("%creation_time%", String.valueOf(timeEnd - timeStart)));
+                        textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
+                        textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
+                        textComponent.addExtra(textComponent2);
+                        textComponent.addExtra(textComponent3);
+                        new Chat(textComponent).sendTo(player);
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                new GridStructure(player, plot.getPlotSize().getLength(), plot.getPlotSize().getHeight(), plot.getPlotSize().getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview(true, false);
+                            }
+                        }.runTaskLater(VirtualRealty.getInstance(), 20);
                     }
-                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
-                    long timeStart = System.currentTimeMillis();
-                    Plot plot = PlotManager.createPlot(location, plotSize, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), natural);
-                    if (!natural) {
-                        if (floorMaterial != null) {
-                            plot.setFloorMaterial(floorMaterial, floorData);
-                        }
-                        if (borderMaterial != null) {
-                            plot.setBorderMaterial(borderMaterial, borderData);
-                        }
-                    }
-                    long timeEnd = System.currentTimeMillis();
-                    BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
-                    BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
-                    BaseComponent textComponent3 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent3.replaceAll("%creation_time%", String.valueOf(timeEnd - timeStart)));
-                    textComponent2.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
-                    textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-                    textComponent.addExtra(textComponent2);
-                    textComponent.addExtra(textComponent3);
-                    new Chat(textComponent).sendTo(player);
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            new GridStructure(player, plot.getPlotSize().getLength(), plot.getPlotSize().getHeight(), plot.getPlotSize().getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview();
-                        }
-                    }.runTaskLater(VirtualRealty.getInstance(), 20);
                 }
             } else {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().sizeNotRecognised);
@@ -143,12 +187,16 @@ public class CreateSubCommand extends SubCommand {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
                 return;
             }
+            if (length < 1 || width < 1 || height < 1) {
+                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().graterThenZero);
+                return;
+            }
             if (length > 500 || width > 500 || height > 500) {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().LHWHardLimit);
+                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().hardLimit);
                 return;
             }
             Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), length, height, width);
-            if (PlotManager.isColliding(cuboid) || PlotManager.getPlot(player.getLocation()) != null) {
+            if (RegionUtil.isCollidingWithAnotherPlot(cuboid) || RegionUtil.isCollidingWithBedrock(cuboid)) {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantCreateOnExisting);
             } else {
                 boolean natural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
@@ -209,7 +257,7 @@ public class CreateSubCommand extends SubCommand {
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        new GridStructure(player, plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview();
+                        new GridStructure(player, plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview(true, false);
                     }
                 }.runTaskLater(VirtualRealty.getInstance(), 20);
             }

@@ -10,8 +10,6 @@ import org.bukkit.command.CommandSender;
 
 import java.util.LinkedList;
 
-import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
-
 public class RemoveSubCommand extends SubCommand {
 
     public static final LinkedList<String> HELP = new LinkedList<>();
@@ -28,7 +26,7 @@ public class RemoveSubCommand extends SubCommand {
 
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
-        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
+        assertPermission();
         if (args.length < 2) {
             printHelp();
             return;
