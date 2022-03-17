@@ -6,6 +6,7 @@ import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
 import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.sql.Database;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
@@ -85,7 +86,7 @@ public class Plot {
         this.width = width;
         this.height = height;
         initialize(natural);
-        if (VirtualRealty.getDynmapManager().markerset != null) {
+        if (VirtualRealty.getDynmapManager() != null && VirtualRealty.getDynmapManager().markerset != null) {
             DynmapManager.resetPlotMarker(this);
         }
     }
@@ -293,6 +294,10 @@ public class Plot {
 
     public BlockVector3 getCenter() {
         return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld()).getCenterVector();
+    }
+
+    public Cuboid getCuboid() {
+        return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld());
     }
 
     public org.bukkit.World getCreatedWorld() {
@@ -571,6 +576,7 @@ public class Plot {
 
     public void unloadPlot() {
         if (SchematicUtil.isOldSerialization(ID)) {
+            long time = System.currentTimeMillis();
             Location location = null;
             switch (createdDirection) {
                 case SOUTH: {
@@ -591,6 +597,7 @@ public class Plot {
                 }
             }
             OldSchematicUtil.paste(ID, location);
+            VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms (Old Serialization)");
         } else {
             long time = System.currentTimeMillis();
             SchematicUtil.paste(ID);
@@ -659,6 +666,7 @@ public class Plot {
         }
         SchematicUtil.deletePlotFile(ID);
         PlotManager.removePlotFromList(this);
+        VirtualRealty.debug("Removed plot #" + this.ID);
     }
 
     public Direction getCreatedDirection() {
@@ -667,6 +675,7 @@ public class Plot {
 
     public void updateMarker() {
         DynmapManager.resetPlotMarker(this);
+        VirtualRealty.debug("Updated marker #" + this.ID);
     }
 
     @Override

@@ -5,13 +5,11 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.LinkedList;
-import java.util.Objects;
 
 public class TpSubCommand extends SubCommand {
 

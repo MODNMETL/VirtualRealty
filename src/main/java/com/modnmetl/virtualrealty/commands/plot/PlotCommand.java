@@ -2,9 +2,12 @@ package com.modnmetl.virtualrealty.commands.plot;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -36,17 +39,19 @@ public class PlotCommand implements CommandExecutor {
             printHelp(sender);
             return false;
         }
-        if (args[0].equalsIgnoreCase("panel") || args[0].equalsIgnoreCase("draft") || args[0].equalsIgnoreCase("stake")) {
+        if (args[0].equalsIgnoreCase("panel")) {
             try {
-                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, VirtualRealty.getCustomClassLoader());
+                Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, VirtualRealty.getLoader());
             } catch (Exception e) {
                 sender.sendMessage("§aThis function is available with a valid license key");
-                sender.sendMessage("§aPlease visit §fhttps://modnmetl.com/ §ato purchase one");
+                TextComponent linkComponent = new TextComponent("§fhttps://modnmetl.com/");
+                linkComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modnmetl.com/category/virtual-realty-plugin-61eef16fe2eeab00116a3e64"));
+                sender.spigot().sendMessage(new TextComponent("§aPlease visit "), linkComponent, new TextComponent(" §ato purchase one"));
                 return false;
             }
         }
         try {
-            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.plot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getCustomClassLoader());
+            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.plot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getLoader());
             clazz.getConstructors()[0].newInstance(sender, command, label, args);
         } catch (Exception e) {
             if(!(e instanceof InvocationTargetException)) {

@@ -50,6 +50,14 @@ public class PlotManager {
         return null;
     }
 
+    public static List<Plot> getPlots(String world) {
+        List<Plot> newPlots = new LinkedList<>();
+        for (Plot plot : plots) {
+            if (plot.getCreatedWorldString().equals(world)) newPlots.add(plot);
+        }
+        return newPlots;
+    }
+
     public static HashMap<Integer, Plot> getPlots(UUID owner) {
         HashMap<Integer, Plot> plotHashMap = new HashMap<>();
         for (Plot plot : plots) {
@@ -96,7 +104,7 @@ public class PlotManager {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-            if(region.contains(newVector)) {
+            if(region.isIn(newVector, plot.getCreatedWorld())) {
                 return plot;
             }
         }
@@ -110,14 +118,14 @@ public class PlotManager {
     public static boolean isLocationInPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-        return region.contains(newVector);
+        return region.isIn(newVector, location.getWorld());
     }
 
     public static Plot getBorderedPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
-            if(region.contains(newVector)) {
+            if(region.isIn(newVector, plot.getCreatedWorld())) {
                 return plot;
             }
         }
@@ -127,19 +135,7 @@ public class PlotManager {
     public static boolean isLocationInBorderedPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
-        return region.contains(newVector);
-    }
-
-    public static boolean isColliding(Cuboid newPlot) {
-        for (Plot plot : plots) {
-            Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), plot.getCreatedLocation().getWorld());
-            for (BlockVector2 vector2 : region.getWalls()) {
-                if (vector2.containedWithin(newPlot.getMinimumPoint(), newPlot.getMaximumPoint())) {
-                    return plot.getCreatedWorldString().equals(newPlot.getWorld().getName());
-                }
-            }
-        }
-        return false;
+        return region.isIn(newVector, plot.getCreatedWorld());
     }
 
 }

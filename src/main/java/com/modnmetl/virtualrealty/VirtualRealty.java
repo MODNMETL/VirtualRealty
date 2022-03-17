@@ -13,6 +13,8 @@ import com.modnmetl.virtualrealty.listeners.protection.BorderProtectionListener;
 import com.modnmetl.virtualrealty.listeners.PlotEntranceListener;
 import com.modnmetl.virtualrealty.listeners.protection.PlotProtectionListener;
 import com.modnmetl.virtualrealty.listeners.protection.WorldProtectionListener;
+import com.modnmetl.virtualrealty.listeners.stake.DraftListener;
+import com.modnmetl.virtualrealty.listeners.stake.StakeConfirmationListener;
 import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.MetricsManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
@@ -22,40 +24,53 @@ import com.modnmetl.virtualrealty.registry.VirtualPlaceholders;
 import com.modnmetl.virtualrealty.sql.Database;
 import com.modnmetl.virtualrealty.utils.Loader;
 import com.modnmetl.virtualrealty.utils.configuration.ConfigurationFactory;
+import com.modnmetl.virtualrealty.utils.loader.CustomClassLoader;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
 import com.modnmetl.virtualrealty.utils.UpdateChecker;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import javax.sql.DataSource;
 import java.io.*;
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public final class VirtualRealty extends JavaPlugin {
 
     //CORE
+    public List<JarFile> jarFiles = new ArrayList<>();
     public DynmapManager dynmapManager;
     public Locale locale;
     @Getter
     private static VirtualRealty instance;
+    @Getter
+    public MetricsManager metricsManager;
     public PluginConfiguration pluginConfiguration;
     public SizesConfiguration sizesConfiguration;
     public MessagesConfiguration messagesConfiguration;
     public PermissionsConfiguration permissionsConfiguration;
-    @Getter
-    @Setter
-    private static ClassLoader customClassLoader;
+    private static ClassLoader classLoader;
     public static final String PREFIX = "§a§lVR §8§l» §7";
     public static List<BukkitTask> tasks = new ArrayList<>();
     private final List<String> preVersions = Arrays.asList("1.12", "1.11", "1.10", "1.9", "1.8");
@@ -83,7 +98,13 @@ public final class VirtualRealty extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        classLoader = getClassLoader();
         instance = this;
+        try {
+            jarFiles.add(new JarFile(getFile()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         checkLegacyVersions();
         databaseFolder.mkdirs();
         plotsFolder = new File(getInstance().getDataFolder().getAbsolutePath(), "plots");
@@ -124,12 +145,13 @@ public final class VirtualRealty extends JavaPlugin {
         }
         if (!pluginConfiguration.license.key.isEmpty() && !pluginConfiguration.license.email.isEmpty()) {
             try {
-                new Loader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion(), getClassLoader(), false);
+                new Loader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion(), getLoader(), false);
             } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                 getLogger().log(Level.WARNING, "Load of premium features failed.");
             }
         }
-        MetricsManager.registerMetrics(this, 14066);
+        metricsManager = new MetricsManager(this, 14066);
+        metricsManager.registerMetrics();
         loadSizesConfiguration();
         try {
             Database.connectToDatabase(databaseFile);
@@ -156,11 +178,17 @@ public final class VirtualRealty extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
-            Method method = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, getCustomClassLoader()).getMethod("onDisable");
+            Method method = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, getLoader()).getMethod("onDisable");
             method.setAccessible(true);
             method.invoke(premium);
         } catch (Exception ignored) {
         }
+        DraftListener.DRAFT_MAP.forEach((player, gridStructureEntryEntry) -> {
+            player.getInventory().remove(gridStructureEntryEntry.getValue().getValue().getItemStack());
+            player.getInventory().addItem(gridStructureEntryEntry.getValue().getKey().getItemStack());
+            gridStructureEntryEntry.getKey().removeGrid();
+        });
+        DraftListener.DRAFT_MAP.clear();
         PlotManager.getPlots().forEach(Plot::update);
         tasks.forEach(BukkitTask::cancel);
         try {
@@ -179,8 +207,7 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public static void debug(String message) {
-        if (VirtualRealty.getPluginConfiguration().debugMode)
-            VirtualRealty.getInstance().getLogger().warning("DEBUG > " + message);
+        if (VirtualRealty.getPluginConfiguration().debugMode) VirtualRealty.getInstance().getLogger().warning("DEBUG > " + message);
     }
 
     public void configureMessages() {
@@ -203,15 +230,33 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     private void registerCommands() {
-        Objects.requireNonNull(this.getCommand("plot")).setExecutor(new PlotCommand());
-        Objects.requireNonNull(this.getCommand("plot")).setTabCompleter( new CommandManager());
-        SubCommand.registerSubCommands(new String[]{"panel", "draft", "stake"}, PlotCommand.class);
-        SubCommand.registerSubCommands(new String[]{"add", "gm", "info", "kick", "list", "tp"}, PlotCommand.class);
+        PluginCommand plotCommand = this.getCommand("plot");
+        assert plotCommand != null;
+        plotCommand.setExecutor(new PlotCommand());
+        plotCommand.setTabCompleter( new CommandManager());
+        registerSubCommands(PlotCommand.class, "panel");
 
-        Objects.requireNonNull(this.getCommand("virtualrealty")).setExecutor(new VirtualRealtyCommand());
-        Objects.requireNonNull(this.getCommand("virtualrealty")).setTabCompleter( new CommandManager());
-        SubCommand.registerSubCommands(new String[]{"visual", "item"}, VirtualRealtyCommand.class);
-        SubCommand.registerSubCommands(new String[]{"assign", "create", "info", "list", "reload", "remove", "set", "tp", "unassign"}, VirtualRealtyCommand.class);
+        PluginCommand vrCommand = this.getCommand("virtualrealty");
+        assert vrCommand != null;
+        vrCommand.setExecutor(new VirtualRealtyCommand());
+        vrCommand.setTabCompleter( new CommandManager());
+        registerSubCommands(VirtualRealtyCommand.class);
+    }
+
+    public void registerSubCommands(Class<?> mainCommandClass, String... names) {
+        SubCommand.registerSubCommands(names, mainCommandClass);
+        for (JarFile jarFile : jarFiles) {
+            for (Enumeration<JarEntry> entry = jarFile.entries(); entry.hasMoreElements();) {
+                JarEntry jarEntry = entry.nextElement();
+                String name = jarEntry.getName().replace("/", ".");
+                if (name.endsWith(".class") && name.startsWith(mainCommandClass.getPackage().getName() + ".subcommand.")) {
+                    try {
+                        Class<?> clazz = Class.forName(name.replaceAll("[.]class", ""), true, getClassLoader());
+                        SubCommand.registerSubCommands(new String[]{ clazz.getSimpleName().toLowerCase().replaceAll("subcommand", "") }, mainCommandClass);
+                    } catch (ClassNotFoundException ignored) {}
+                }
+            }
+        }
     }
 
     private void registerListeners() {
@@ -220,11 +265,11 @@ public final class VirtualRealty extends JavaPlugin {
         new WorldProtectionListener(this);
         new PlotEntranceListener(this);
         new PlayerActionListener(this);
+        new DraftListener(this);
+        new StakeConfirmationListener(this);
         try {
             List<Class<?>> classes = new ArrayList<>();
-            classes.add(Class.forName("com.modnmetl.virtualrealty.listeners.premium.PanelListener", true, getCustomClassLoader()));
-            classes.add(Class.forName("com.modnmetl.virtualrealty.listeners.premium.DraftListener", true, getCustomClassLoader()));
-            classes.add(Class.forName("com.modnmetl.virtualrealty.listeners.premium.StakeConfirmationListener", true, getCustomClassLoader()));
+            classes.add(Class.forName("com.modnmetl.virtualrealty.listeners.premium.PanelListener", true, getLoader()));
             for (Class<?> aClass : classes) {
                 aClass.getConstructors()[0].newInstance(this);
             }
@@ -321,6 +366,14 @@ public final class VirtualRealty extends JavaPlugin {
 
     public static Database getDatabase() {
         return Database.getInstance();
+    }
+
+    public static ClassLoader getLoader() {
+        return classLoader;
+    }
+
+    public void setClassLoader(ClassLoader newClassLoader) {
+        classLoader = newClassLoader;
     }
 
 }

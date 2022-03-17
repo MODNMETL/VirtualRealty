@@ -11,13 +11,17 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 
+import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
+
 public abstract class SubCommand {
 
+    private final String[] args;
     private final CommandSender commandSender;
     private final LinkedList<String> helpList;
 
     @SneakyThrows
     public SubCommand(CommandSender sender, Command command, String label, String[] args, LinkedList<String> helpList) throws FailedCommandException {
+        this.args = args;
         this.helpList = helpList;
         this.commandSender = sender;
         exec(sender, command, label, args);
@@ -29,6 +33,21 @@ public abstract class SubCommand {
         if (!(commandSender instanceof Player)) {
             commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cmdOnlyPlayers);
             throw new FailedCommandException();
+        }
+    }
+
+    public String getDefaultPermission() {
+        return COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase();
+    }
+
+    public void assertPermission() throws InsufficientPermissionsException {
+        if (!commandSender.hasPermission(getDefaultPermission())) {
+            if (commandSender.isOp()) {
+                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", getDefaultPermission()));
+            } else {
+                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissionsShort.replaceAll("%permission%", getDefaultPermission()));
+            }
+            throw new InsufficientPermissionsException();
         }
     }
 

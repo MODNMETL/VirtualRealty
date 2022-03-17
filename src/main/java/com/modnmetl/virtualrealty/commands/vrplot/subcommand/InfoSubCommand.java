@@ -16,8 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.UUID;
 
-import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
-
 public class InfoSubCommand extends SubCommand {
 
     public InfoSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
@@ -26,7 +24,7 @@ public class InfoSubCommand extends SubCommand {
 
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
-        assertPermission(COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase());
+        assertPermission();
         if (args.length < 2) {
             assertPlayer();
             Plot plot = PlotManager.getPlot(((Player) sender).getLocation());

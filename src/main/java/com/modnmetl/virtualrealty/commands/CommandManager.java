@@ -1,6 +1,5 @@
 package com.modnmetl.virtualrealty.commands;
 
-import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.enums.PlotSize;
@@ -8,7 +7,6 @@ import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
 import lombok.SneakyThrows;
-import net.minecraft.server.v1_13_R2.ItemNetherStar;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -49,6 +47,7 @@ public class CommandManager implements TabCompleter {
                 case "CREATE": {
                     if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length > 1) {
+                        // Enum Hints (Sizes)
                         if (args.length == 2) {
                             for (PlotSize value : PlotSize.values()) {
                                 if (value == PlotSize.CUSTOM) continue;
@@ -62,15 +61,34 @@ public class CommandManager implements TabCompleter {
                         boolean isNatural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
                         args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--natural")).toArray(String[]::new);
                         if (isNatural) return null;
+                        // Enum Hints (Materials)
                         if (args.length > 2) {
                             boolean predefinedValue = EnumUtils.isValidEnum(PlotSize.class, args[1].toUpperCase());
-                            if ((predefinedValue && args.length < 5) || (!predefinedValue && args.length > 4 && args.length < 7)) {
-                                for (Material value : Material.values()) {
-                                    if (!value.isSolid()) continue;
-                                    if (args[args.length - 1].isEmpty()) {
-                                        tabCompleter.add(value.name().toLowerCase());
-                                    } else if (value.name().toLowerCase().startsWith(args[args.length - 1].toLowerCase())) {
-                                        tabCompleter.add(value.name().toLowerCase());
+                            PlotSize plotSize = predefinedValue ? PlotSize.valueOf(args[1].toUpperCase()) : PlotSize.CUSTOM;
+                            if (plotSize != PlotSize.AREA) {
+                                if (((predefinedValue && args.length < 5) || (!predefinedValue && args.length > 4 && args.length < 7))) {
+                                    for (Material value : Material.values()) {
+                                        if (!value.isSolid()) continue;
+                                        if (args[args.length - 1].isEmpty()) {
+                                            tabCompleter.add(value.name().toLowerCase());
+                                        } else if (value.name().toLowerCase().startsWith(args[args.length - 1].toLowerCase())) {
+                                            tabCompleter.add(value.name().toLowerCase());
+                                        }
+                                    }
+                                }
+                            } else if (args.length < 6) {
+                                switch (args.length) {
+                                    case 3: {
+                                        tabCompleter.add(String.valueOf(plotSize.getLength()));
+                                        break;
+                                    }
+                                    case 4: {
+                                        tabCompleter.add(String.valueOf(plotSize.getHeight()));
+                                        break;
+                                    }
+                                    case 5: {
+                                        tabCompleter.add(String.valueOf(plotSize.getWidth()));
+                                        break;
                                     }
                                 }
                             }

@@ -54,11 +54,11 @@ public class GridStructure {
         return ACTIVE_GRIDS.containsKey(player.getUniqueId()) && ACTIVE_GRIDS.get(player.getUniqueId()).contains(cuboidId);
     }
 
-    public void preview() {
-        preview(null);
+    public void preview(boolean visualization, boolean colliding) {
+        preview(null, visualization, colliding);
     }
 
-    public void preview(Location playerPreviewLocation) {
+    public void preview(Location playerPreviewLocation, boolean visualization, boolean colliding) {
         changedBlocks.clear();
         Plot plot = PlotManager.getPlot(cuboidId);
         Location location = previewLocation;
@@ -162,7 +162,7 @@ public class GridStructure {
         }
         swapBlocks(
                 blocks,
-                PlotManager.isColliding(RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), getLength(), getHeight(), getWidth()))
+                visualization && colliding
         );
         if (displayTicks == 0) return;
         new BukkitRunnable() {

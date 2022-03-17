@@ -1,9 +1,10 @@
-package com.modnmetl.virtualrealty.objects;
+package com.modnmetl.virtualrealty.objects.data;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.enums.permissions.ManagementPermission;
 import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
 import com.modnmetl.virtualrealty.managers.PlotManager;
+import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.sql.Database;
 import lombok.Data;
 import lombok.Setter;

@@ -7,7 +7,9 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class PlayerActionListener extends VirtualListener {
 
@@ -20,11 +22,16 @@ public class PlayerActionListener extends VirtualListener {
         Player player = e.getPlayer();
         if (!player.isOp()) return;
         if (VirtualRealty.upToDate) return;
-        player.sendMessage(VirtualRealty.PREFIX + "§7A new version of VirtualRealty plugin is available. §a[" + VirtualRealty.latestVersion + "]");
-        TextComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aDownload the new version of the plugin here!");
-        textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§f§oClick here to download the update!")}));
-        textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.spigotmc.org/resources/virtual-realty.95599/"));
-        player.spigot().sendMessage(textComponent);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                player.sendMessage(VirtualRealty.PREFIX + "§7A new version of VirtualRealty plugin is available. §a[" + VirtualRealty.latestVersion + "]");
+                TextComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aDownload the new version of the plugin here!");
+                textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick here to download the update!")}));
+                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.spigotmc.org/resources/virtual-realty.95599/"));
+                player.spigot().sendMessage(textComponent);
+            }
+        }.runTaskLater(VirtualRealty.getInstance(), 5);
     }
 
 }
