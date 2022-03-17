@@ -19,6 +19,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
@@ -369,8 +370,7 @@ public class Plot {
     public void initialize(boolean natural) {
         long time = System.currentTimeMillis();
         prepareCorners();
-        if (plotSize == PlotSize.AREA) return;
-        prepareBlocks(createdLocation, natural);
+        if (plotSize != PlotSize.AREA) prepareBlocks(createdLocation, natural);
         VirtualRealty.debug("Plot initialize time: " + (System.currentTimeMillis() - time) + " ms");
     }
 
@@ -653,18 +653,26 @@ public class Plot {
                 " WHERE `ID`='" + this.ID + "'");
     }
 
-    public void remove() {
-        this.unloadPlot();
+    public void remove(CommandSender sender) {
+        if (plotSize != PlotSize.AREA) {
+            if (SchematicUtil.doesPlotFileExist(ID)) {
+                this.unloadPlot();
+                SchematicUtil.deletePlotFile(ID);
+            } else {
+                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noRegionFileFound);
+            }
+        }
         for (PlotMember member : this.getMembers()) {
             removeMember(member);
         }
-        DynmapManager.removeDynMapMarker(this);
+        if (VirtualRealty.getDynmapManager() != null) {
+            DynmapManager.removeDynMapMarker(this);
+        }
         try {
             Database.getInstance().getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        SchematicUtil.deletePlotFile(ID);
         PlotManager.removePlotFromList(this);
         VirtualRealty.debug("Removed plot #" + this.ID);
     }

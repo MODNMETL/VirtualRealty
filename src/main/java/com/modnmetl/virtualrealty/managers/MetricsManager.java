@@ -70,9 +70,4 @@ public class MetricsManager {
         VirtualRealty.debug("Registered metrics");
     }
 
-    public void addLicenseUser(String licenseName) {
-        licenses.add(licenseName);
-        metrics.addCustomChart(new SimplePie("used_license", () -> licenseName));
-    }
-
 }

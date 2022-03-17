@@ -14,7 +14,7 @@ import com.modnmetl.virtualrealty.listeners.PlotEntranceListener;
 import com.modnmetl.virtualrealty.listeners.protection.PlotProtectionListener;
 import com.modnmetl.virtualrealty.listeners.protection.WorldProtectionListener;
 import com.modnmetl.virtualrealty.listeners.stake.DraftListener;
-import com.modnmetl.virtualrealty.listeners.stake.StakeConfirmationListener;
+import com.modnmetl.virtualrealty.listeners.stake.ConfirmationListener;
 import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.MetricsManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
@@ -24,13 +24,11 @@ import com.modnmetl.virtualrealty.registry.VirtualPlaceholders;
 import com.modnmetl.virtualrealty.sql.Database;
 import com.modnmetl.virtualrealty.utils.Loader;
 import com.modnmetl.virtualrealty.utils.configuration.ConfigurationFactory;
-import com.modnmetl.virtualrealty.utils.loader.CustomClassLoader;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
 import com.modnmetl.virtualrealty.utils.UpdateChecker;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -41,20 +39,13 @@ import org.bukkit.scheduler.BukkitTask;
 
 import javax.sql.DataSource;
 import java.io.*;
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 public final class VirtualRealty extends JavaPlugin {
 
@@ -266,7 +257,7 @@ public final class VirtualRealty extends JavaPlugin {
         new PlotEntranceListener(this);
         new PlayerActionListener(this);
         new DraftListener(this);
-        new StakeConfirmationListener(this);
+        new ConfirmationListener(this);
         try {
             List<Class<?>> classes = new ArrayList<>();
             classes.add(Class.forName("com.modnmetl.virtualrealty.listeners.premium.PanelListener", true, getLoader()));

@@ -18,12 +18,23 @@ public abstract class SubCommand {
     private final String[] args;
     private final CommandSender commandSender;
     private final LinkedList<String> helpList;
+    private final boolean bypass;
+
+    @SneakyThrows
+    public SubCommand(CommandSender sender, Command command, String label, String[] args, boolean bypass, LinkedList<String> helpList) throws FailedCommandException {
+        this.args = args;
+        this.helpList = helpList;
+        this.commandSender = sender;
+        this.bypass = bypass;
+        exec(sender, command, label, args);
+    }
 
     @SneakyThrows
     public SubCommand(CommandSender sender, Command command, String label, String[] args, LinkedList<String> helpList) throws FailedCommandException {
         this.args = args;
         this.helpList = helpList;
         this.commandSender = sender;
+        this.bypass = false;
         exec(sender, command, label, args);
     }
 
@@ -60,6 +71,10 @@ public abstract class SubCommand {
             }
             throw new InsufficientPermissionsException();
         }
+    }
+
+    public boolean isBypass() {
+        return this.bypass;
     }
 
     public void printHelp() throws FailedCommandException {

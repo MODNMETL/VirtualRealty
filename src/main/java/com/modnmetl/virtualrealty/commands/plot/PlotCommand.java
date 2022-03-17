@@ -33,8 +33,14 @@ public class PlotCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        boolean displayError = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--error"));
-        args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--error")).toArray(String[]::new);
+        boolean displayError = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--error") || s.equalsIgnoreCase("-e"));
+        boolean bypass = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--yes") || s.equalsIgnoreCase("-y"));
+        args = Arrays.stream(args).filter(s1 ->
+                !s1.equalsIgnoreCase("--error") &&
+                !s1.equalsIgnoreCase("--yes") &&
+                !s1.equalsIgnoreCase("-e") &&
+                !s1.equalsIgnoreCase("-y"))
+                .toArray(String[]::new);
         if ((args.length > 0 && args[0].equalsIgnoreCase("help")) || args.length == 0) {
             printHelp(sender);
             return false;

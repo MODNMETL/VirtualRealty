@@ -45,6 +45,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String specifyExpiryDate = "§cSpecify expiry date!";
     public String minPlotID = "§cMinimum plot ID is %min_id%!";
     public String maxPlotID = "§cMaximum plot ID is %max_id%!";
+    public String noRegionFileFound = "No saved plot schema found, remove and restore not possible - deleting plot record only";
 
     //Permissions
     public String cantDoAnyDMG = "§cYou can't do any damage here!";
@@ -115,8 +116,14 @@ public class MessagesConfiguration extends OkaeriConfig {
             "§7You are about to stake your claim to the plot shown, once done you cannot undo.",
             "§7Type §aYES §7to proceed."
     );
+    public String removalCancelled = "§cRemoval cancelled.";
+    public List<String> removeConfirmation = Arrays.asList(
+            "§7You are about to remove §a%plot_id%§7, once done you cannot undo.",
+            "§7Type §aYES §7to proceed."
+    );
 
     //Other
+    public String confirmationExpired = "§cConfirmation not received, command cancelled.";
     public String visualBoundaryDisplayed = "§aThe visual boundary was displayed.";
     public String visualBoundaryActive = "§cThe visual boundary is already active for this region.";
 

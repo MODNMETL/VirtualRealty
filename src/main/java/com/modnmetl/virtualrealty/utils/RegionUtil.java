@@ -55,13 +55,13 @@ public class RegionUtil {
         long time = System.currentTimeMillis();
         for (Plot plot : PlotManager.getPlots(cuboid.getWorld().getName())) {
             for (BlockVector2 blockVector2 : plot.getCuboid().getFlatRegion()) {
-                if (cuboid.isIn(blockVector2, cuboid.getWorld(), 1)) {
-                    VirtualRealty.debug("Collision checked! (Found) " + (System.currentTimeMillis() - time) + " ms | Spacing: 1");
+                if (cuboid.isIn(blockVector2, cuboid.getWorld(), VirtualRealty.getPluginConfiguration().plotSpacing)) {
+                    VirtualRealty.debug("Collision checked! (Found) " + (System.currentTimeMillis() - time) + " ms | Spacing: " + VirtualRealty.getPluginConfiguration().plotSpacing);
                     return true;
                 }
             }
         }
-        VirtualRealty.debug("Collision checked! " + (System.currentTimeMillis() - time) + " ms | Spacing: 1");
+        VirtualRealty.debug("Collision checked! " + (System.currentTimeMillis() - time) + " ms | Spacing: " + VirtualRealty.getPluginConfiguration().plotSpacing);
         return false;
     }
 

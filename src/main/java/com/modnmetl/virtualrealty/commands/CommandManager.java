@@ -79,15 +79,30 @@ public class CommandManager implements TabCompleter {
                             } else if (args.length < 6) {
                                 switch (args.length) {
                                     case 3: {
-                                        tabCompleter.add(String.valueOf(plotSize.getLength()));
+                                        String length = String.valueOf(plotSize.getLength());
+                                        if (args[args.length - 1].isEmpty()) {
+                                            tabCompleter.add(length.toLowerCase());
+                                        } else if (length.toLowerCase().startsWith(args[args.length - 1].toLowerCase())) {
+                                            tabCompleter.add(length.toLowerCase());
+                                        }
                                         break;
                                     }
                                     case 4: {
-                                        tabCompleter.add(String.valueOf(plotSize.getHeight()));
+                                        String height = String.valueOf(plotSize.getHeight());
+                                        if (args[args.length - 1].isEmpty()) {
+                                            tabCompleter.add(height.toLowerCase());
+                                        } else if (height.toLowerCase().startsWith(args[args.length - 1].toLowerCase())) {
+                                            tabCompleter.add(height.toLowerCase());
+                                        }
                                         break;
                                     }
                                     case 5: {
-                                        tabCompleter.add(String.valueOf(plotSize.getWidth()));
+                                        String width = String.valueOf(plotSize.getWidth());
+                                        if (args[args.length - 1].isEmpty()) {
+                                            tabCompleter.add(width.toLowerCase());
+                                        } else if (width.toLowerCase().startsWith(args[args.length - 1].toLowerCase())) {
+                                            tabCompleter.add(width.toLowerCase());
+                                        }
                                         break;
                                     }
                                 }

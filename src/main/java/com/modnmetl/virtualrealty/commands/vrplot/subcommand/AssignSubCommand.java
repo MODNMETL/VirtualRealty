@@ -26,8 +26,8 @@ public class AssignSubCommand extends SubCommand {
         HELP.add(" §a/vrplot assign §8<§7plot§8> §8<§7username§8>");
     }
 
-    public AssignSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
-        super(sender, command, label, args, HELP);
+    public AssignSubCommand(CommandSender sender, Command command, String label, String[] args, boolean bypass) throws FailedCommandException {
+        super(sender, command, label, args, bypass, HELP);
     }
     
     @Override

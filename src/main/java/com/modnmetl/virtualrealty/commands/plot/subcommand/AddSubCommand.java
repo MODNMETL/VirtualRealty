@@ -27,7 +27,7 @@ public class AddSubCommand extends SubCommand {
     }
 
     public AddSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
-        super(sender, command, label, args, HELP);
+        super(sender, command, label, args, false, HELP);
     }
 
     @Override

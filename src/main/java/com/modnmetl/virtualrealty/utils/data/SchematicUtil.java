@@ -135,6 +135,13 @@ public class SchematicUtil {
         return null;
     }
 
+    public static boolean doesPlotFileExist(int plotID) {
+        File region = new File(VirtualRealty.plotsSchemaFolder, REGION_PREFIX + plotID + REGION_SUFFIX);
+        File legacyRegion = new File(VirtualRealty.plotsSchemaFolder, LEGACY_REGION_PREFIX + plotID + REGION_SUFFIX);
+        File oldRegion = new File(VirtualRealty.plotsSchemaFolder, OldSchematicUtil.OLD_REGION_PREFIX + plotID + OldSchematicUtil.OLD_REGION_SUFFIX);
+        return region.exists() || legacyRegion.exists() || oldRegion.exists();
+    }
+
     public static boolean isPlotFileLegacy(int plotID) throws FileNotFoundException {
         File region = new File(VirtualRealty.plotsSchemaFolder, REGION_PREFIX + plotID + REGION_SUFFIX);
         File legacyRegion = new File(VirtualRealty.plotsSchemaFolder, LEGACY_REGION_PREFIX + plotID + REGION_SUFFIX);
@@ -144,7 +151,7 @@ public class SchematicUtil {
     }
 
     public static void deletePlotFile(int id) {
-        File file = new File(VirtualRealty.plotsSchemaFolder, "plot" + id + ".region");
+        File file = new File(VirtualRealty.plotsSchemaFolder, OldSchematicUtil.OLD_REGION_PREFIX + id + OldSchematicUtil.OLD_REGION_SUFFIX);
         if (file.exists()) {
             if (file.delete()) {
                 VirtualRealty.debug("Deleted plot file (" + file.getName() + ")");
