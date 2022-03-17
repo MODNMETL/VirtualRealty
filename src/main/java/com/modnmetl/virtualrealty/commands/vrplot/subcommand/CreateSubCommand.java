@@ -23,8 +23,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.*;
 
 public class CreateSubCommand extends SubCommand {
 
@@ -75,10 +74,6 @@ public class CreateSubCommand extends SubCommand {
                     }
                     if (length < 1 || width < 1 || height < 1) {
                         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().graterThenZero);
-                        return;
-                    }
-                    if (length > 500 || width > 500 || height > 500) {
-                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().hardLimit);
                         return;
                     }
                     Cuboid cuboid = RegionUtil.getRegion(location, Direction.byYaw(location.getYaw()), length, height, width);

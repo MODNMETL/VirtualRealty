@@ -44,36 +44,34 @@ public class DynmapManager {
                 Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("dynmap");
                 if (plugin == null) return;
                 dynmapPresent = true;
-                if (plugin.isEnabled()) {
-                    dapi = (DynmapAPI) plugin;
-                    if (dapi.markerAPIInitialized()) {
-                        markerset = dapi.getMarkerAPI().getMarkerSet("virtualrealty.plots");
-                        if (markerset == null)
-                            markerset = dapi.getMarkerAPI().createMarkerSet("virutalrealty.plots", "Plots", dapi.getMarkerAPI().getMarkerIcons(), false);
-                        for (MarkerSet markerSet : dapi.getMarkerAPI().getMarkerSets()) {
-                            if (markerSet.getMarkerSetLabel().equalsIgnoreCase("Plots")) {
-                                markerset = markerSet;
-                            }
-                        }
-                        try {
-                            if (dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon") == null) {
-                                InputStream in = this.getClass().getResourceAsStream("/ploticon.png");
-                                if (in != null && in.available() > 0) {
-                                    markerIcon = dapi.getMarkerAPI().createMarkerIcon("virtualrealty_main_icon", "Plots", in);
-                                }
-                            } else {
-                                markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
-                            }
-                        } catch (IOException ignored) {
-                        }
-                        VirtualRealty.debug("Registering plots markers..");
-                        for (Plot plot : PlotManager.getPlots()) {
-                            resetPlotMarker(plot);
-                        }
-                        VirtualRealty.debug("Registered plots markers");
-                        this.cancel();
+                if (!plugin.isEnabled()) return;
+                dapi = (DynmapAPI) plugin;
+                if (!dapi.markerAPIInitialized()) return;
+                markerset = dapi.getMarkerAPI().getMarkerSet("virtualrealty.plots");
+                if (markerset == null)
+                    markerset = dapi.getMarkerAPI().createMarkerSet("virutalrealty.plots", "Plots", dapi.getMarkerAPI().getMarkerIcons(), false);
+                for (MarkerSet markerSet : dapi.getMarkerAPI().getMarkerSets()) {
+                    if (markerSet.getMarkerSetLabel().equalsIgnoreCase("Plots")) {
+                        markerset = markerSet;
                     }
                 }
+                try {
+                    if (dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon") == null) {
+                        InputStream in = this.getClass().getResourceAsStream("/ploticon.png");
+                        if (in != null && in.available() > 0) {
+                            markerIcon = dapi.getMarkerAPI().createMarkerIcon("virtualrealty_main_icon", "Plots", in);
+                        }
+                    } else {
+                        markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
+                    }
+                } catch (IOException ignored) {
+                }
+                VirtualRealty.debug("Registering plots markers..");
+                for (Plot plot : PlotManager.getPlots()) {
+                    resetPlotMarker(plot);
+                }
+                VirtualRealty.debug("Registered plots markers");
+                this.cancel();
             }
         }.runTaskTimer(instance, 20, 20 * 5);
     }
@@ -124,8 +122,10 @@ public class DynmapManager {
     public static void removeDynMapMarker(Plot plot) {
         if (VirtualRealty.getDynmapManager() == null || !VirtualRealty.getDynmapManager().isDynmapPresent() || VirtualRealty.getDynmapManager().dapi == null || VirtualRealty.getDynmapManager().markerset == null) return;
         AreaMarker marker = VirtualRealty.getDynmapManager().markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
-        areaMarkers.remove(marker);
-        marker.deleteMarker();
+        if (marker != null) {
+            areaMarkers.remove(marker);
+            marker.deleteMarker();
+        }
     }
 
 }

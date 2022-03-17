@@ -4,7 +4,8 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.enums.Direction;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.RegionUtil;
+import com.modnmetl.virtualrealty.objects.math.BlockVector2;
+import com.modnmetl.virtualrealty.utils.VectorUtils;
 import com.modnmetl.virtualrealty.utils.data.VirtualBlock;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -15,6 +16,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.NumberConversions;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -59,43 +62,43 @@ public class GridStructure {
     }
 
     public void preview(Location playerPreviewLocation, boolean visualization, boolean colliding) {
+        int maxDistance = viewer.getClientViewDistance() * 16;
         changedBlocks.clear();
         Plot plot = PlotManager.getPlot(cuboidId);
-        Location location = previewLocation;
         LinkedList<Block> blocks = new LinkedList<>();
         LinkedList<Block> borderBlocks = new LinkedList<>();
-        Direction direction = Direction.byYaw(location.getYaw());
+        Direction direction = Direction.byYaw(previewLocation.getYaw());
         int maxX;
         int maxZ;
         int minX;
         int minZ;
         switch(direction) {
             case SOUTH: {
-                maxX = location.getBlockX() + 1 + 1;
-                maxZ = location.getBlockZ() + getLength() + 1;
-                minX = location.getBlockX() - getWidth() + 1;
-                minZ = location.getBlockZ() - 1;
+                maxX = previewLocation.getBlockX() + 1 + 1;
+                maxZ = previewLocation.getBlockZ() + getLength() + 1;
+                minX = previewLocation.getBlockX() - getWidth() + 1;
+                minZ = previewLocation.getBlockZ() - 1;
                 break;
             }
             case WEST: {
-                maxX = location.getBlockX() + 1 + 1;
-                maxZ = location.getBlockZ() + 1 + 1;
-                minX = location.getBlockX() - getLength() + 1;
-                minZ = location.getBlockZ() - getWidth();
+                maxX = previewLocation.getBlockX() + 1 + 1;
+                maxZ = previewLocation.getBlockZ() + 1 + 1;
+                minX = previewLocation.getBlockX() - getLength() + 1;
+                minZ = previewLocation.getBlockZ() - getWidth();
                 break;
             }
             case NORTH: {
-                maxX = location.getBlockX() + getWidth() + 1;
-                maxZ = location.getBlockZ() + 1 + 1;
-                minX = location.getBlockX();
-                minZ = location.getBlockZ() - getLength();
+                maxX = previewLocation.getBlockX() + getWidth() + 1;
+                maxZ = previewLocation.getBlockZ() + 1 + 1;
+                minX = previewLocation.getBlockX();
+                minZ = previewLocation.getBlockZ() - getLength();
                 break;
             }
             case EAST: {
-                maxX = location.getBlockX() + getLength() + 1;
-                maxZ = location.getBlockZ() + getWidth() + 1;
-                minX = location.getBlockX();
-                minZ = location.getBlockZ() - 1;
+                maxX = previewLocation.getBlockX() + getLength() + 1;
+                maxZ = previewLocation.getBlockZ() + getWidth() + 1;
+                minX = previewLocation.getBlockX();
+                minZ = previewLocation.getBlockZ() - 1;
                 break;
             }
             default:
@@ -104,7 +107,10 @@ public class GridStructure {
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
-                    borderBlocks.add(location.getWorld().getBlockAt(x, location.getBlockY(), z));
+                    Block block = previewLocation.getWorld().getBlockAt(x, previewLocation.getBlockY(), z);
+                    if (previewLocation.distance(block.getLocation()) < maxDistance) {
+                        borderBlocks.add(block);
+                    }
                 }
             }
         }
@@ -116,23 +122,23 @@ public class GridStructure {
         } else {
             switch (direction) {
                 case SOUTH: {
-                    bottomLeftCorner = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() - 1);
-                    topRightCorner = new Location(location.getWorld(), location.getBlockX() - getWidth(), location.getBlockY() + getHeight(), location.getBlockZ() + getLength());
+                    bottomLeftCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() + 1, previewLocation.getBlockY() - 10, previewLocation.getBlockZ() - 1);
+                    topRightCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() - getWidth(), previewLocation.getBlockY() + getHeight(), previewLocation.getBlockZ() + getLength());
                     break;
                 }
                 case WEST: {
-                    bottomLeftCorner = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() + 1);
-                    topRightCorner = new Location(location.getWorld(), location.getBlockX() - getLength(), location.getBlockY() + getHeight(), location.getBlockZ() - getWidth());
+                    bottomLeftCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() + 1, previewLocation.getBlockY() - 10, previewLocation.getBlockZ() + 1);
+                    topRightCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() - getLength(), previewLocation.getBlockY() + getHeight(), previewLocation.getBlockZ() - getWidth());
                     break;
                 }
                 case NORTH: {
-                    bottomLeftCorner = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() - 10, location.getBlockZ() + 1);
-                    topRightCorner = new Location(location.getWorld(), location.getBlockX() + getWidth(), location.getBlockY() + getHeight(), location.getBlockZ() - getLength());
+                    bottomLeftCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() - 1, previewLocation.getBlockY() - 10, previewLocation.getBlockZ() + 1);
+                    topRightCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() + getWidth(), previewLocation.getBlockY() + getHeight(), previewLocation.getBlockZ() - getLength());
                     break;
                 }
                 case EAST: {
-                    bottomLeftCorner = new Location(location.getWorld(), location.getBlockX() + getLength(), location.getBlockY() - 10, location.getBlockZ() - 1);
-                    topRightCorner = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() + getHeight(), location.getBlockZ() + getWidth());
+                    bottomLeftCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() + getLength(), previewLocation.getBlockY() - 10, previewLocation.getBlockZ() - 1);
+                    topRightCorner = new Location(previewLocation.getWorld(), previewLocation.getBlockX() - 1, previewLocation.getBlockY() + getHeight(), previewLocation.getBlockZ() + getWidth());
                     break;
                 }
                 default:
@@ -154,11 +160,30 @@ public class GridStructure {
             blocks.add(playerBlockLocation.getBlock());
         }
         // grid pillars
-        for (int y = bottomLeftCorner.getBlockY(); y < bottomLeftCorner.getBlockY() + getHeight() + 10; y++) {
-            blocks.add(new Location(world, minX - 1, y, minZ).getBlock());
-            blocks.add(new Location(world, maxX - 1, y, minZ).getBlock());
-            blocks.add(new Location(world, minX - 1, y, maxZ - 1).getBlock());
-            blocks.add(new Location(world, maxX - 1, y, maxZ - 1).getBlock());
+        BlockVector2 firstPillarV = BlockVector2.at(minX - 1, minZ);
+        BlockVector2 secondPillarV = BlockVector2.at(maxX - 1, minZ);
+        BlockVector2 thirdPillarV = BlockVector2.at(minX - 1, maxZ - 1);
+        BlockVector2 fourthPillarV = BlockVector2.at(maxX - 1, maxZ - 1);
+        BlockVector2 previewV = BlockVector2.at(previewLocation.getBlockX(), previewLocation.getBlockZ());
+        if (VectorUtils.distance(previewV, firstPillarV) < maxDistance) {
+            for (int y = bottomLeftCorner.getBlockY(); y < bottomLeftCorner.getBlockY() + getHeight() + 10; y++) {
+                blocks.add(firstPillarV.toLocation(this.world, y).getBlock());
+            }
+        }
+        if (VectorUtils.distance(previewV, secondPillarV) < maxDistance) {
+            for (int y = bottomLeftCorner.getBlockY(); y < bottomLeftCorner.getBlockY() + getHeight() + 10; y++) {
+                blocks.add(secondPillarV.toLocation(this.world, y).getBlock());
+            }
+        }
+        if (VectorUtils.distance(previewV, thirdPillarV) < maxDistance) {
+            for (int y = bottomLeftCorner.getBlockY(); y < bottomLeftCorner.getBlockY() + getHeight() + 10; y++) {
+                blocks.add(thirdPillarV.toLocation(this.world, y).getBlock());
+            }
+        }
+        if (VectorUtils.distance(previewV, fourthPillarV) < maxDistance) {
+            for (int y = bottomLeftCorner.getBlockY(); y < bottomLeftCorner.getBlockY() + getHeight() + 10; y++) {
+                blocks.add(fourthPillarV.toLocation(this.world, y).getBlock());
+            }
         }
         swapBlocks(
                 blocks,

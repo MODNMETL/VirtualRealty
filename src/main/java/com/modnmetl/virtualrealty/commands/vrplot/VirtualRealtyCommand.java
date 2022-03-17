@@ -9,6 +9,7 @@ import org.bukkit.command.*;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.logging.Level;
@@ -37,8 +38,14 @@ public class VirtualRealtyCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        boolean displayError = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--error"));
-        args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--error")).toArray(String[]::new);
+        boolean displayError = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--error") || s.equalsIgnoreCase("-e"));
+        boolean bypass = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--yes") || s.equalsIgnoreCase("-y"));
+        args = Arrays.stream(args).filter(s1 ->
+                        !s1.equalsIgnoreCase("--error") &&
+                                !s1.equalsIgnoreCase("--yes") &&
+                                !s1.equalsIgnoreCase("-e") &&
+                                !s1.equalsIgnoreCase("-y"))
+                .toArray(String[]::new);
         if (!sender.hasPermission(COMMAND_PERMISSION)) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", COMMAND_PERMISSION.getName()));
             return false;
@@ -48,8 +55,12 @@ public class VirtualRealtyCommand implements CommandExecutor {
             return false;
         }
         try {
-            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.vrplot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getLoader());
-            clazz.getConstructors()[0].newInstance(sender, command, label, args);
+            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.vrplot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase() + args[0].substring(1) + "SubCommand", true, VirtualRealty.getLoader());
+            if (bypass) {
+                clazz.getConstructors()[1].newInstance(sender, command, label, args, true);
+            } else {
+                clazz.getConstructors()[0].newInstance(sender, command, label, args);
+            }
         } catch (Exception e) {
             if(!(e instanceof InvocationTargetException)) {
                 printHelp(sender);
