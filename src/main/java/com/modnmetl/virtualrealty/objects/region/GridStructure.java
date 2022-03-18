@@ -104,11 +104,15 @@ public class GridStructure {
             default:
                 throw new IllegalStateException("Unexpected value: " + direction);
         }
+        Location distanceCalculateLoc = previewLocation;
+        if (playerPreviewLocation != null) {
+            distanceCalculateLoc = playerPreviewLocation;
+        }
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
                     Block block = previewLocation.getWorld().getBlockAt(x, previewLocation.getBlockY(), z);
-                    if (previewLocation.distance(block.getLocation()) < maxDistance) {
+                    if (distanceCalculateLoc.distance(block.getLocation()) < maxDistance) {
                         borderBlocks.add(block);
                     }
                 }
@@ -164,7 +168,7 @@ public class GridStructure {
         BlockVector2 secondPillarV = BlockVector2.at(maxX - 1, minZ);
         BlockVector2 thirdPillarV = BlockVector2.at(minX - 1, maxZ - 1);
         BlockVector2 fourthPillarV = BlockVector2.at(maxX - 1, maxZ - 1);
-        BlockVector2 previewV = BlockVector2.at(previewLocation.getBlockX(), previewLocation.getBlockZ());
+        BlockVector2 previewV = BlockVector2.at(distanceCalculateLoc.getBlockX(), distanceCalculateLoc.getBlockZ());
         if (VectorUtils.distance(previewV, firstPillarV) < maxDistance) {
             for (int y = bottomLeftCorner.getBlockY(); y < bottomLeftCorner.getBlockY() + getHeight() + 10; y++) {
                 blocks.add(firstPillarV.toLocation(this.world, y).getBlock());
