@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class PlotEntranceListener extends VirtualListener {
 
@@ -32,13 +33,14 @@ public class PlotEntranceListener extends VirtualListener {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
         Location to = e.getTo();
+        if (to == null) return;
         Plot plot = PlotManager.getPlot(to);
         if (plot != null) {
             OfflinePlayer offlinePlayer;
             String enterPlotString = VirtualRealty.getMessages().enteredAvailablePlot;
             if (plot.getOwnedBy() != null) {
                 offlinePlayer = Bukkit.getOfflinePlayer(plot.getOwnedBy());
-                enterPlotString = VirtualRealty.getMessages().enteredOwnedPlot.replaceAll("%owner%", offlinePlayer.getName()).replaceAll("%plot_id%", plot.getID() + "");
+                enterPlotString = VirtualRealty.getMessages().enteredOwnedPlot.replaceAll("%owner%", Objects.requireNonNull(offlinePlayer.getName())).replaceAll("%plot_id%", plot.getID() + "");
             }
             if (!enteredPlot.containsKey(player)) {
                 enteredPlot.put(player, new AbstractMap.SimpleEntry<>(plot, true));
@@ -72,34 +74,33 @@ public class PlotEntranceListener extends VirtualListener {
                 }
             }
         } else {
-            if (enteredPlot.containsKey(player)) {
-                if (enteredPlot.get(player).getValue()) {
-                    OfflinePlayer offlinePlayer;
-                    String leavePlotString = VirtualRealty.getMessages().leftAvailablePlot;
-                    if (enteredPlot.get(player).getKey().getOwnedBy() != null) {
-                        offlinePlayer = Bukkit.getOfflinePlayer(enteredPlot.get(player).getKey().getOwnedBy());
-                        leavePlotString = VirtualRealty.getMessages().leftOwnedPlot.replaceAll("%owner%", offlinePlayer.getName()).replaceAll("%plot_id%", enteredPlot.get(player).getKey().getID() + "");
-                        if (VirtualRealty.getPluginConfiguration().enablePlotGamemode) {
-                            if (enteredPlot.get(player).getKey().hasMembershipAccess(player.getUniqueId())) {
-                                player.setGameMode(Bukkit.getServer().getDefaultGameMode());
-                            }
+            if (!enteredPlot.containsKey(player)) return;
+            if (enteredPlot.get(player).getValue()) {
+                OfflinePlayer offlinePlayer;
+                String leavePlotString = VirtualRealty.getMessages().leftAvailablePlot;
+                if (enteredPlot.get(player).getKey().getOwnedBy() != null) {
+                    offlinePlayer = Bukkit.getOfflinePlayer(enteredPlot.get(player).getKey().getOwnedBy());
+                    leavePlotString = VirtualRealty.getMessages().leftOwnedPlot.replaceAll("%owner%", Objects.requireNonNull(offlinePlayer.getName())).replaceAll("%plot_id%", enteredPlot.get(player).getKey().getID() + "");
+                    if (VirtualRealty.getPluginConfiguration().enablePlotGamemode) {
+                        if (enteredPlot.get(player).getKey().hasMembershipAccess(player.getUniqueId())) {
+                            player.setGameMode(Bukkit.getServer().getDefaultGameMode());
                         }
                     }
-                    if (!VirtualRealty.getInstance().getServer().getBukkitVersion().startsWith("1.8")) {
-                        if (VirtualRealty.getPluginConfiguration().plotSound) {
-                            player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_TRAPDOOR_CLOSE, 0.3f, 1f);
-                        }
-                        if (enteredPlot.get(player).getKey().getPlotSize() == PlotSize.AREA) {
-                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(VirtualRealty.getMessages().leftProtectedArea));
-                        } else {
-                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(leavePlotString));
-                        }
-                    }
-                    enteredPlot.remove(player);
-                    return;
                 }
-                enteredPlot.replace(player, new AbstractMap.SimpleEntry<>(enteredPlot.get(player).getKey(), false));
+                if (!VirtualRealty.getInstance().getServer().getBukkitVersion().startsWith("1.8")) {
+                    if (VirtualRealty.getPluginConfiguration().plotSound) {
+                        player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_TRAPDOOR_CLOSE, 0.3f, 1f);
+                    }
+                    if (enteredPlot.get(player).getKey().getPlotSize() == PlotSize.AREA) {
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(VirtualRealty.getMessages().leftProtectedArea));
+                    } else {
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(leavePlotString));
+                    }
+                }
+                enteredPlot.remove(player);
+                return;
             }
+            enteredPlot.replace(player, new AbstractMap.SimpleEntry<>(enteredPlot.get(player).getKey(), false));
         }
     }
 

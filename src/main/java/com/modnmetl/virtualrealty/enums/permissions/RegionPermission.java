@@ -15,21 +15,29 @@ public enum RegionPermission {
     ARMOR_STAND(3, "Armor Stand", new ItemBuilder(Material.ARMOR_STAND)),
     ENTITY_DAMAGE(4, "Entity Damage", new ItemBuilder(Material.IRON_SWORD).addItemFlag(ItemFlag.HIDE_ATTRIBUTES)),
     SWITCH(5, "Switch", new ItemBuilder(Material.LEVER)),
-    ITEM_USE(6, "Item Use", new ItemBuilder(Material.FLINT_AND_STEEL));
+    ITEM_USE(6, "Item Use", new ItemBuilder(Material.FLINT_AND_STEEL)),
+    DOORS(7, "Doors", new ItemBuilder(Material.OAK_DOOR));
 
-    private final int slot;
+    private final int index;
     private final String name;
     private final ItemBuilder item;
 
-    RegionPermission(int slot, String name, ItemBuilder item) {
-        this.slot = slot;
+    RegionPermission(int index, String name, ItemBuilder item) {
+        this.index = index;
         this.name = name;
         this.item = item;
     }
 
     public static RegionPermission getPermission(int i) {
+        int currentSlot = 0;
+        int endings = 0;
         for (RegionPermission value : values()) {
-            if (value.getSlot() == i) return value;
+            if ((currentSlot-endings)%7==0 && currentSlot!=0) {
+                currentSlot+=2;
+                endings+=2;
+            }
+            if (currentSlot == i) return value;
+            currentSlot++;
         }
         return null;
     }

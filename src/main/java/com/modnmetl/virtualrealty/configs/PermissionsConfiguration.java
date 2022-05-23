@@ -26,6 +26,7 @@ public class PermissionsConfiguration extends OkaeriConfig {
     @Comment(" - ENTITY_DAMAGE")
     @Comment(" - SWITCH")
     @Comment(" - ITEM_USE")
+    @Comment(" - DOORS")
     @Comment(" ")
     @Comment("Set permissions for players who are not members of the plot.")
     private final List<RegionPermission> defaultNonMembers = new LinkedList<>();

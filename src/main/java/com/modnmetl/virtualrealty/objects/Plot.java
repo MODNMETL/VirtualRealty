@@ -51,7 +51,7 @@ public class Plot {
     private Material floorMaterial, borderMaterial;
     private byte floorData, borderData;
     private final Location createdLocation;
-    private final Direction createdDirection;
+    private Direction createdDirection;
     private BlockVector3 bottomLeftCorner, topRightCorner, borderBottomLeftCorner, borderTopRightCorner;
     private GameMode selectedGameMode;
     private final String createdWorld;
@@ -67,19 +67,17 @@ public class Plot {
         this.ownedUntilDate = MAX_DATE;
         if (natural) {
             this.floorMaterial = Material.AIR;
-            this.floorData = 0;
             this.borderMaterial = Material.AIR;
-            this.borderData = 0;
         } else {
             this.floorMaterial = floorMaterial;
-            this.floorData = 0;
             this.borderMaterial = borderMaterial;
-            this.borderData = 0;
         }
+        this.floorData = 0;
+        this.borderData = 0;
         this.createdLocation = location;
         this.createdDirection = Direction.byYaw(location.getYaw());
         this.selectedGameMode = VirtualRealty.getPluginConfiguration().getDefaultPlotGamemode();
-        this.createdWorld = location.getWorld().getName();
+        this.createdWorld = Objects.requireNonNull(location.getWorld()).getName();
         this.modified = Instant.now();
         this.createdAt = LocalDateTime.now();
         this.plotSize = plotSize;
@@ -128,7 +126,9 @@ public class Plot {
         ArrayList<String> location = new ArrayList<>(Arrays.asList(rs.getString("createdLocation").subSequence(0, rs.getString("createdLocation").length() - 1).toString().split(";")));
         Location createLocation = new Location(Bukkit.getWorld(location.get(0)), Double.parseDouble(location.get(1)), Double.parseDouble(location.get(2)), Double.parseDouble(location.get(3)), Float.parseFloat(location.get(4)), Float.parseFloat(location.get(5)));
         this.createdLocation = rs.getString("createdLocation").isEmpty() ? null : createLocation;
-        this.createdDirection = Direction.byYaw(createdLocation.getYaw());
+        if (this.createdLocation != null) {
+            this.createdDirection = Direction.byYaw(createdLocation.getYaw());
+        }
         if (!rs.getString("selectedGameMode").isEmpty() && EnumUtils.isValidEnum(GameMode.class, rs.getString("selectedGameMode"))) {
             this.selectedGameMode = GameMode.valueOf(rs.getString("selectedGameMode"));
         } else {
@@ -157,17 +157,16 @@ public class Plot {
     }
 
     public void teleportPlayer(Player player) {
-        Location loc = new Location(createdLocation.getWorld(), getCenter().getBlockX(), getCenter().getBlockY() + 1, getCenter().getBlockZ());
-        if (!createdLocation.getWorld().getName().endsWith("_nether")) {
-            loc.setY(Objects.requireNonNull(loc.getWorld()).getHighestBlockAt(loc.getBlockX(), loc.getBlockZ()).getY() + 1);
+        Location location = new Location(createdLocation.getWorld(), getCenter().getBlockX(), getCenter().getBlockY() + 1, getCenter().getBlockZ());
+        if (!Objects.requireNonNull(createdLocation.getWorld()).getName().endsWith("_nether")) {
+            location.setY(Objects.requireNonNull(location.getWorld()).getHighestBlockAt(location.getBlockX(), location.getBlockZ()).getY() + 1);
         }
-        player.teleport(loc);
+        player.teleport(location);
     }
 
     public boolean hasMembershipAccess(UUID uuid) {
         PlotMember member = getMember(uuid);
-        if (member != null || (ownedBy != null && getPlotOwner().getUniqueId() == uuid)) return true;
-        return false;
+        return member != null || (ownedBy != null && getPlotOwner().getUniqueId() == uuid);
     }
 
     public void togglePermission(RegionPermission plotPermission) {
@@ -193,9 +192,7 @@ public class Plot {
 
     public PlotMember getMember(UUID uuid) {
         for (PlotMember member : members) {
-            if (member.getUuid().equals(uuid)) {
-                return member;
-            }
+            if (member.getUuid().equals(uuid)) return member;
         }
         return null;
     }
@@ -287,10 +284,6 @@ public class Plot {
                 borderBlock.setType(borderMaterial);
             }
         }
-    }
-
-    public BlockVector3 getBorderedCenter() {
-        return new Cuboid(borderBottomLeftCorner, borderTopRightCorner, createdLocation.getWorld()).getCenterVector();
     }
 
     public BlockVector3 getCenter() {
@@ -417,7 +410,7 @@ public class Plot {
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
-                    blocks.add(location.getWorld().getBlockAt(x, location.getBlockY() + 1, z));
+                    blocks.add(Objects.requireNonNull(location.getWorld()).getBlockAt(x, location.getBlockY() + 1, z));
                 }
             }
         }
@@ -505,7 +498,7 @@ public class Plot {
         if (natural) return;
         for (Block floorBlock : getFloorBlocks()) {
             for (int y = location.getBlockY() + height; y > location.getBlockY() - 1; y--) {
-                Block airBlock = location.getWorld().getBlockAt(floorBlock.getX(), y, floorBlock.getZ());
+                Block airBlock = Objects.requireNonNull(location.getWorld()).getBlockAt(floorBlock.getX(), y, floorBlock.getZ());
                 airBlock.setType(Material.AIR, false);
             }
             floorBlock.setType(floorMaterial);
@@ -556,7 +549,7 @@ public class Plot {
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
-                    Block borderBlock = location.getWorld().getBlockAt(x, location.getBlockY() + 1, z);
+                    Block borderBlock = Objects.requireNonNull(location.getWorld()).getBlockAt(x, location.getBlockY() + 1, z);
                     if (VirtualRealty.legacyVersion) {
                         borderBlock.setType(plotSize.getBorderMaterial());
                         try {
@@ -612,7 +605,7 @@ public class Plot {
     @SneakyThrows
     public void insert() {
         String serializedLocation =
-                        this.createdLocation.getWorld().getName() + ";" +
+                        Objects.requireNonNull(this.createdLocation.getWorld()).getName() + ";" +
                         this.createdLocation.getX() + ";" +
                         this.createdLocation.getY() + ";" +
                         this.createdLocation.getZ() + ";" +

@@ -136,8 +136,9 @@ public final class VirtualRealty extends JavaPlugin {
         }
         if (!pluginConfiguration.license.key.isEmpty() && !pluginConfiguration.license.email.isEmpty()) {
             try {
-                new Loader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion(), getLoader(), false);
+                new Loader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion(), getLoader(), VirtualRealty.getPluginConfiguration().loaderDebugMode);
             } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                e.printStackTrace();
                 getLogger().log(Level.WARNING, "Load of premium features failed.");
             }
         }
