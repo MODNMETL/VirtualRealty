@@ -80,7 +80,7 @@ public class PlotProtectionListener extends VirtualListener {
         Location location = e.getLocation();
         Plot plot = PlotManager.getPlot(location);
         if (plot != null) {
-            if (!VirtualRealty.getPluginConfiguration().plotMobsSpawn) {
+            if (VirtualRealty.getPluginConfiguration().disablePlotMobsSpawn) {
                 if (e.getEntity() instanceof Monster) {
                     e.setCancelled(true);
                 }

@@ -48,7 +48,7 @@ public class PluginConfiguration extends OkaeriConfig {
     public String plotGamemode = "SURVIVAL";
 
     @Comment("Disable natural spawning of hostile mobs in plots/areas")
-    public boolean plotMobsSpawn = true;
+    public boolean disablePlotMobsSpawn = false;
 
     @Comment("Lock gamemode to plot default when player enters their plot (disables '/plot gm' command)")
     public boolean lockPlotGamemode = false;
