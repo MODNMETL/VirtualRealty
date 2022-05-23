@@ -6,15 +6,10 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.utils.loader.CustomClassLoader;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import sun.net.www.protocol.ftp.FtpURLConnection;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,14 +27,27 @@ public class Loader {
     private void runLoader(String licenseKey, String licenseEmail, String pluginVersion, ClassLoader classLoader, boolean debug) throws IOException {
         VirtualRealty.debug("Injecting premium..");
         URL url;
-        HttpURLConnection httpConn;
+        URLConnection httpConn;
         if (debug) {
-            url = new URL("http://localhost/virtualrealty/premium" + "?license=" + licenseKey + "&email=" + licenseEmail + "&version=" + pluginVersion);
-            httpConn = (HttpURLConnection) url.openConnection();
+            String premiumPath = VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "virtualrealty-premium-" + VirtualRealty.getInstance().getDescription().getVersion() + ".jar";
+            url = new URL("file:/" + premiumPath);
+            System.out.println(url);
+            File originFile = new File(premiumPath);
+            InputStream targetStream = new FileInputStream(originFile);
+            File loaderFile = File.createTempFile(String.valueOf(Arrays.asList(new Random().nextInt(9), new Random().nextInt(9), new Random().nextInt(9))), ".tmp");
+            VirtualRealty.setLoaderFile(loaderFile);
+            FileUtils.deleteQuietly(loaderFile);
+            Files.copy(targetStream, Paths.get(loaderFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+            targetStream.close();
+            VirtualRealty.getInstance().jarFiles.add(new JarFile(loaderFile));
+            URL jarUrl = loaderFile.toURI().toURL();
+            VirtualRealty.getInstance().setClassLoader(new CustomClassLoader(
+                    new URL[]{jarUrl}, classLoader)
+            );
         } else {
             url = new URL("https://api.modnmetl.com/auth/key");
-            httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.setRequestMethod("POST");
+            httpConn = url.openConnection();
+            ((HttpURLConnection)httpConn).setRequestMethod("POST");
             httpConn.setDoOutput(true);
             httpConn.setRequestProperty("Content-Type", "application/json");
 
@@ -54,26 +62,27 @@ public class Loader {
             byte[] out = data.getBytes(StandardCharsets.UTF_8);
             OutputStream stream = httpConn.getOutputStream();
             stream.write(out);
-        }
+            int responseCode = ((HttpURLConnection) httpConn).getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                VirtualRealty.debug("Authentication error | " + ((HttpURLConnection) httpConn).getResponseCode() + " " + ((HttpURLConnection) httpConn).getResponseMessage());
+                return;
+            }
 
-        int responseCode = httpConn.getResponseCode();
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-            VirtualRealty.debug("Authentication error | " + httpConn.getResponseCode() + " " + httpConn.getResponseMessage());
-            return;
+            File loaderFile;
+            try (InputStream in = httpConn.getInputStream()) {
+                loaderFile = File.createTempFile(String.valueOf(Arrays.asList(new Random().nextInt(9), new Random().nextInt(9), new Random().nextInt(9))), ".tmp");
+                VirtualRealty.setLoaderFile(loaderFile);
+                FileUtils.deleteQuietly(loaderFile);
+                Files.copy(in, Paths.get(loaderFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                VirtualRealty.getInstance().jarFiles.add(new JarFile(loaderFile));
+            }
+            ((HttpURLConnection) httpConn).disconnect();
+            URL jarUrl = loaderFile.toURI().toURL();
+            System.out.println(jarUrl);
+            VirtualRealty.getInstance().setClassLoader(new CustomClassLoader(
+                    new URL[]{jarUrl}, classLoader)
+            );
         }
-        File loaderFile;
-        try (InputStream in = httpConn.getInputStream()) {
-            loaderFile = File.createTempFile(String.valueOf(Arrays.asList(new Random().nextInt(9), new Random().nextInt(9), new Random().nextInt(9))), ".tmp");
-            VirtualRealty.setLoaderFile(loaderFile);
-            FileUtils.deleteQuietly(loaderFile);
-            Files.copy(in, Paths.get(loaderFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-            VirtualRealty.getInstance().jarFiles.add(new JarFile(loaderFile));
-        }
-        httpConn.disconnect();
-        URL jarUrl = loaderFile.toURI().toURL();
-        VirtualRealty.getInstance().setClassLoader(new CustomClassLoader(
-                new URL[]{ jarUrl }, classLoader)
-        );
         try {
             Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, VirtualRealty.getLoader());
             VirtualRealty.setPremium(clazz.newInstance());

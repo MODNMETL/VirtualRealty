@@ -7,7 +7,6 @@ import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.WorldUtil;
 import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
@@ -23,7 +22,6 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.permissions.Permission;
-import org.bukkit.util.Vector;
 
 public class WorldProtectionListener extends VirtualListener {
 
@@ -41,7 +39,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (e.getClickedBlock().getType() == Material.CHEST) return;
         if (!(e.getAction() == Action.PHYSICAL || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
         if (player.isSneaking() && e.isBlockInHand()) return;
-        if (!(PlotProtectionListener.INTERACTABLE.contains(e.getClickedBlock().getType()) || PlotProtectionListener.SWITCHABLE.contains(e.getClickedBlock().getType())))
+        if (!(PlotProtectionListener.INTERACT.contains(e.getClickedBlock().getType()) || PlotProtectionListener.SWITCHES.contains(e.getClickedBlock().getType())))
             return;
         if (!VirtualRealty.legacyVersion) {
             if (e.getHand() == EquipmentSlot.OFF_HAND) return;
@@ -51,7 +49,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         try {
-            if ((!VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch) || PlotProtectionListener.SWITCHABLE.contains(e.getClickedBlock().getType())) {
+            if ((!VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch) || PlotProtectionListener.SWITCHES.contains(e.getClickedBlock().getType())) {
                 Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getLoader());
                 if (!WorldUtil.hasPermission(RegionPermission.SWITCH)) {
                     e.setCancelled(true);
@@ -59,7 +57,7 @@ public class WorldProtectionListener extends VirtualListener {
                 }
                 return;
             }
-            if (PlotProtectionListener.INTERACTABLE.contains(e.getClickedBlock().getType())) {
+            if (PlotProtectionListener.INTERACT.contains(e.getClickedBlock().getType())) {
                 Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", false, VirtualRealty.getLoader());
                 if (!WorldUtil.hasPermission(RegionPermission.ITEM_USE)) {
                     e.setCancelled(true);

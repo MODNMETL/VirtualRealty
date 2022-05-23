@@ -1,7 +1,9 @@
 package com.modnmetl.virtualrealty.listeners.protection;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.enums.materials.DoorMaterial;
 import com.modnmetl.virtualrealty.enums.materials.InteractMaterial;
+import com.modnmetl.virtualrealty.enums.materials.StorageMaterial;
 import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
 import com.modnmetl.virtualrealty.enums.materials.SwitchMaterial;
 import com.modnmetl.virtualrealty.listeners.VirtualListener;
@@ -20,6 +22,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
+import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.world.StructureGrowEvent;
@@ -34,20 +37,34 @@ public class PlotProtectionListener extends VirtualListener {
     
     public static final Permission PLOT_BUILD = new Permission("virtualrealty.build.plot");
 
-    public static final LinkedList<Material> INTERACTABLE = new LinkedList<>();
-    public static final LinkedList<Material> SWITCHABLE = new LinkedList<>();
+    public static final LinkedList<Material> INTERACT = new LinkedList<>();
+    public static final LinkedList<Material> SWITCHES = new LinkedList<>();
+    public static final LinkedList<Material> STORAGES = new LinkedList<>();
+    public static final LinkedList<Material> DOORS = new LinkedList<>();
 
     static {
         for (InteractMaterial value : InteractMaterial.values()) {
             Material material = Material.getMaterial(value.toString());
             if (Objects.nonNull(material)) {
-                INTERACTABLE.add(material);
+                INTERACT.add(material);
             }
         }
         for (SwitchMaterial value : SwitchMaterial.values()) {
             Material material = Material.getMaterial(value.toString());
             if (Objects.nonNull(material)) {
-                SWITCHABLE.add(material);
+                SWITCHES.add(material);
+            }
+        }
+        for (StorageMaterial value : StorageMaterial.values()) {
+            Material material = Material.getMaterial(value.toString());
+            if (Objects.nonNull(material)) {
+                STORAGES.add(material);
+            }
+        }
+        for (DoorMaterial value : DoorMaterial.values()) {
+            Material material = Material.getMaterial(value.toString());
+            if (Objects.nonNull(material)) {
+                DOORS.add(material);
             }
         }
     }
@@ -56,19 +73,28 @@ public class PlotProtectionListener extends VirtualListener {
         super(plugin);
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void onBlockInteract(PlayerInteractEvent e) {
+    @EventHandler
+    public void onMobSpawn(CreatureSpawnEvent e) {
+        if (e.isCancelled()) return;
+        if (e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) return;
+        Location location = e.getLocation();
+        Plot plot = PlotManager.getPlot(location);
+        if (plot != null) {
+            if (VirtualRealty.getPluginConfiguration().disablePlotMobsSpawn) {
+                if (e.getEntity() instanceof Monster) {
+                    e.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onCropInteract(PlayerInteractEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
+        if (e.getAction() != Action.PHYSICAL) return;
         if (e.getClickedBlock() == null) return;
-        if (e.getClickedBlock().getType() == Material.CHEST) return;
-        if (!(e.getAction() == Action.PHYSICAL || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
-        if (player.isSneaking() && e.isBlockInHand()) return;
-        if (!(INTERACTABLE.contains(e.getClickedBlock().getType()) || SWITCHABLE.contains(e.getClickedBlock().getType()))) return;
-        if (!VirtualRealty.legacyVersion) {
-            if (e.getHand() == EquipmentSlot.OFF_HAND) return;
-            if (!e.getClickedBlock().getType().isInteractable()) return;
-        }
+        if (e.getClickedBlock().getType() != Material.FARMLAND) return;
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
@@ -80,31 +106,87 @@ public class PlotProtectionListener extends VirtualListener {
                 return;
             }
             if (plotMember == null) return;
-            if ((!VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch) || SWITCHABLE.contains(e.getClickedBlock().getType())) {
+            if (!plotMember.hasPermission(RegionPermission.BREAK)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
+            }
+        } else {
+            if (!plot.hasPermission(RegionPermission.BREAK)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onBlockInteract(PlayerInteractEvent e) {
+        if (e.isCancelled()) return;
+        Player player = e.getPlayer();
+        if (e.getClickedBlock() == null) return;
+        if (STORAGES.contains(e.getClickedBlock().getType())) return;
+        if (!(e.getAction() == Action.PHYSICAL || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
+        if (player.isSneaking() && e.isBlockInHand()) return;
+        if (!(INTERACT.contains(e.getClickedBlock().getType()) || SWITCHES.contains(e.getClickedBlock().getType()) || DOORS.contains(e.getClickedBlock().getType()) || e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE"))) return;
+        if (!VirtualRealty.legacyVersion) {
+            if (e.getHand() == EquipmentSlot.OFF_HAND) return;
+            if (!e.getClickedBlock().getType().isInteractable() && !(e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE"))) return;
+        }
+        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        if (plot == null) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
+        boolean isModernSwitch = !VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch;
+        boolean isLegacySwitch = SWITCHES.contains(e.getClickedBlock().getType());
+        if (plot.hasMembershipAccess(player.getUniqueId())) {
+            PlotMember plotMember = plot.getMember(player.getUniqueId());
+            if (plot.isOwnershipExpired()) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                return;
+            }
+            if (plotMember == null) return;
+            if (isModernSwitch || isLegacySwitch || e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE")) {
                 if (!plotMember.hasPermission(RegionPermission.SWITCH)) {
                     e.setCancelled(true);
-                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    if (!e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE"))
+                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
                 }
                 return;
             }
-            if (INTERACTABLE.contains(e.getClickedBlock().getType())) {
+            if (INTERACT.contains(e.getClickedBlock().getType())) {
                 if (!plotMember.hasPermission(RegionPermission.ITEM_USE)) {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    return;
+                }
+            }
+            if (DOORS.contains(e.getClickedBlock().getType())) {
+                if (!plotMember.hasPermission(RegionPermission.DOORS)) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    return;
                 }
             }
         } else {
-            if ((!VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch) || SWITCHABLE.contains(e.getClickedBlock().getType())) {
+            if (isModernSwitch || isLegacySwitch || e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE")) {
                 if (!plot.hasPermission(RegionPermission.SWITCH)) {
                     e.setCancelled(true);
-                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    if (!e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE"))
+                        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
                 }
                 return;
             }
-            if (INTERACTABLE.contains(e.getClickedBlock().getType())) {
+            if (INTERACT.contains(e.getClickedBlock().getType())) {
                 if (!plot.hasPermission(RegionPermission.ITEM_USE)) {
                     e.setCancelled(true);
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    return;
+                }
+            }
+            if (DOORS.contains(e.getClickedBlock().getType())) {
+                if (!plot.hasPermission(RegionPermission.DOORS)) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+                    return;
                 }
             }
         }
@@ -115,7 +197,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
         if (e.getClickedBlock() == null) return;
-        if (e.getClickedBlock().getType() != Material.CHEST) return;
+        if (!STORAGES.contains(e.getClickedBlock().getType())) return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (player.isSneaking() && e.isBlockInHand()) return;
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
@@ -137,6 +219,51 @@ public class PlotProtectionListener extends VirtualListener {
             if (!plot.hasPermission(RegionPermission.CHEST_ACCESS)) {
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPotInteract(PlayerInteractEvent e) {
+        if (e.isCancelled()) return;
+        Player player = e.getPlayer();
+        if (e.getClickedBlock() == null) return;
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        if (plot == null) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
+        if (plot.hasMembershipAccess(player.getUniqueId())) {
+            PlotMember plotMember = plot.getMember(player.getUniqueId());
+            if (plot.isOwnershipExpired()) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                return;
+            }
+            if (plotMember == null) return;
+            if (e.getClickedBlock().getType().name().startsWith("POTTED_")) {
+                if (!plotMember.hasPermission(RegionPermission.BREAK)) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+                }
+            }
+            if (e.getClickedBlock().getType().name().startsWith("FLOWER_POT")) {
+                if (!plotMember.hasPermission(RegionPermission.PLACE)) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+                }
+            }
+        } else {
+            if (e.getClickedBlock().getType().name().startsWith("POTTED_")) {
+                if (!plot.hasPermission(RegionPermission.BREAK)) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+                }
+            }
+            if (e.getClickedBlock().getType().name().startsWith("FLOWER_POT")) {
+                if (!plot.hasPermission(RegionPermission.PLACE)) {
+                    e.setCancelled(true);
+                    player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+                }
             }
         }
     }
@@ -467,14 +594,14 @@ public class PlotProtectionListener extends VirtualListener {
                 return;
             }
             if (plotMember == null) return;
-            if (!plotMember.hasPermission(RegionPermission.ENTITY_DAMAGE)) {
+            if (!plotMember.hasPermission(RegionPermission.BREAK)) {
                 e.setCancelled(true);
-                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
             }
         } else {
-            if (!plot.hasPermission(RegionPermission.ENTITY_DAMAGE)) {
+            if (!plot.hasPermission(RegionPermission.BREAK)) {
                 e.setCancelled(true);
-                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
             }
         }
     }
@@ -506,11 +633,69 @@ public class PlotProtectionListener extends VirtualListener {
         }
     }
 
+    @EventHandler(priority = EventPriority.LOWEST)
+    private void onInteract(PlayerInteractEvent e) {
+        if (e.isCancelled()) return;
+        Player player = e.getPlayer();
+        if (e.getItem() == null) return;
+        if (e.getItem().getType() != Material.ARMOR_STAND) return;
+        if (e.getClickedBlock() == null) return;
+        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        if (plot == null) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
+        if (plot.hasMembershipAccess(player.getUniqueId())) {
+            PlotMember plotMember = plot.getMember(player.getUniqueId());
+            if (plot.isOwnershipExpired()) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                return;
+            }
+            if (plotMember == null) return;
+            if (!plotMember.hasPermission(RegionPermission.PLACE)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+            }
+        } else {
+            if (!plot.hasPermission(RegionPermission.PLACE)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onHangingPlace(HangingPlaceEvent e) {
+        if (e.isCancelled()) return;
+        Player player = e.getPlayer();
+        if (player == null) return;
+        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        if (plot == null) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
+        if (plot.hasMembershipAccess(player.getUniqueId())) {
+            PlotMember plotMember = plot.getMember(player.getUniqueId());
+            if (plot.isOwnershipExpired()) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                return;
+            }
+            if (plotMember == null) return;
+            if (!plotMember.hasPermission(RegionPermission.PLACE)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+            }
+        } else {
+            if (!plot.hasPermission(RegionPermission.PLACE)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+            }
+        }
+    }
 
     @EventHandler(priority = EventPriority.LOW)
     public void onEntityDamage(EntityDamageByEntityEvent e) {
         if (e.isCancelled()) return;
         if (!(e.getDamager() instanceof Player)) return;
+        if (!(e.getEntity() instanceof Creature) && !(e.getEntity() instanceof Player)) return;
         Player player = (Player) e.getDamager();
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot == null) return;
@@ -531,6 +716,34 @@ public class PlotProtectionListener extends VirtualListener {
             if (!plot.hasPermission(RegionPermission.ENTITY_DAMAGE)) {
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantDoAnyDMG);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onStaticEntityDamage(EntityDamageByEntityEvent e) {
+        if (e.isCancelled()) return;
+        if (e.getEntity() instanceof Creature || e.getEntity() instanceof Player) return;
+        Player player = (Player) e.getDamager();
+        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        if (plot == null) return;
+        if (hasPermission(player, PLOT_BUILD)) return;
+        if (plot.hasMembershipAccess(player.getUniqueId())) {
+            PlotMember plotMember = plot.getMember(player.getUniqueId());
+            if (plot.isOwnershipExpired()) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+                return;
+            }
+            if (plotMember == null) return;
+            if (!plotMember.hasPermission(RegionPermission.BREAK)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
+            }
+        } else {
+            if (!plot.hasPermission(RegionPermission.BREAK)) {
+                e.setCancelled(true);
+                player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
             }
         }
     }

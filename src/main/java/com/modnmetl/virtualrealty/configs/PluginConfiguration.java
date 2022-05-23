@@ -23,6 +23,9 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("Debug mode")
     public boolean debugMode = false;
 
+    @Comment("Loader debug mode (only for devs)")
+    public boolean loaderDebugMode = false;
+
     @Comment("Here you put your license details")
     public License license = new License();
 
@@ -43,6 +46,9 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("Set which gamemode players change to when they enter their plot")
     @CustomKey("default-plot-gamemode")
     public String plotGamemode = "SURVIVAL";
+
+    @Comment("Disable natural spawning of hostile mobs in plots/areas")
+    public boolean disablePlotMobsSpawn = false;
 
     @Comment("Lock gamemode to plot default when player enters their plot (disables '/plot gm' command)")
     public boolean lockPlotGamemode = false;
