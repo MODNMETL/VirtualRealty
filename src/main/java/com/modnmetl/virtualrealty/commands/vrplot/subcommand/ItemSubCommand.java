@@ -69,10 +69,12 @@ public class ItemSubCommand extends SubCommand {
             } else {
                 if (args[5 - backwardArgs].equalsIgnoreCase("default")) {
                     floorData = new AbstractMap.SimpleEntry<>(plotSize.getFloorMaterial().name(), plotSize.getFloorData());
-                } else floorData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[5 - backwardArgs].split(":")[0].toUpperCase()).name(), Byte.valueOf(args[5 - backwardArgs].split(":")[1]));
+                } else
+                    floorData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[5 - backwardArgs].split(":")[0].toUpperCase()).name(), Byte.valueOf(args[5 - backwardArgs].split(":")[1]));
                 if (args[6 - backwardArgs].equalsIgnoreCase("default")) {
                     borderData = new AbstractMap.SimpleEntry<>(plotSize.getBorderMaterial().name(), plotSize.getBorderData());
-                } else borderData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[6 - backwardArgs].split(":")[0].toUpperCase()).name(), Byte.valueOf(args[6 - backwardArgs].split(":")[1]));
+                } else
+                    borderData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[6 - backwardArgs].split(":")[0].toUpperCase()).name(), Byte.valueOf(args[6 - backwardArgs].split(":")[1]));
             }
         } else {
             if (isNatural) {

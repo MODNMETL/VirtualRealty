@@ -157,8 +157,10 @@ public class Plot {
     }
 
     public void teleportPlayer(Player player) {
-        Location location = new Location(createdLocation.getWorld(), getCenter().getBlockX(), getCenter().getBlockY() + 1, getCenter().getBlockZ());
-        if (!Objects.requireNonNull(createdLocation.getWorld()).getName().endsWith("_nether")) {
+        World world = Bukkit.getWorld(createdWorld);
+        if (world == null) return;
+        Location location = new Location(world, getCenter().getBlockX(), getCenter().getBlockY() + 1, getCenter().getBlockZ());
+        if (!world.getName().endsWith("_nether")) {
             location.setY(Objects.requireNonNull(location.getWorld()).getHighestBlockAt(location.getBlockX(), location.getBlockZ()).getY() + 1);
         }
         player.teleport(location);
@@ -287,11 +289,11 @@ public class Plot {
     }
 
     public BlockVector3 getCenter() {
-        return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld()).getCenterVector();
+        return new Cuboid(bottomLeftCorner, topRightCorner, getCreatedWorld()).getCenterVector();
     }
 
     public Cuboid getCuboid() {
-        return new Cuboid(bottomLeftCorner, topRightCorner, createdLocation.getWorld());
+        return new Cuboid(bottomLeftCorner, topRightCorner, getCreatedWorld());
     }
 
     public org.bukkit.World getCreatedWorld() {
@@ -324,31 +326,31 @@ public class Plot {
         Location border2;
         switch(direction) {
             case SOUTH: {
-                location1 = new Location(location.getWorld(), location.getBlockX(), location.getBlockY() - 10, location.getBlockZ());
-                location2 = new Location(location.getWorld(), location.getBlockX() - width + 1, location.getBlockY() + height, location.getBlockZ() + length - 1);
-                border1 = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() - 1);
-                border2 = new Location(location.getWorld(), location.getBlockX() - width, location.getBlockY() + height, location.getBlockZ() + length);
+                location1 = new Location(getCreatedWorld(), location.getBlockX(), location.getBlockY() - 10, location.getBlockZ());
+                location2 = new Location(getCreatedWorld(), location.getBlockX() - width + 1, location.getBlockY() + height, location.getBlockZ() + length - 1);
+                border1 = new Location(getCreatedWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() - 1);
+                border2 = new Location(getCreatedWorld(), location.getBlockX() - width, location.getBlockY() + height, location.getBlockZ() + length);
                 break;
             }
             case WEST: {
-                location1 = new Location(location.getWorld(), location.getBlockX(), location.getBlockY() - 10, location.getBlockZ());
-                location2 = new Location(location.getWorld(), location.getBlockX() - length + 1, location.getBlockY() + height, location.getBlockZ() - width + 1);
-                border1 = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() + 1);
-                border2 = new Location(location.getWorld(), location.getBlockX() - length, location.getBlockY() + height, location.getBlockZ() - width);
+                location1 = new Location(getCreatedWorld(), location.getBlockX(), location.getBlockY() - 10, location.getBlockZ());
+                location2 = new Location(getCreatedWorld(), location.getBlockX() - length + 1, location.getBlockY() + height, location.getBlockZ() - width + 1);
+                border1 = new Location(getCreatedWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() + 1);
+                border2 = new Location(getCreatedWorld(), location.getBlockX() - length, location.getBlockY() + height, location.getBlockZ() - width);
                 break;
             }
             case NORTH: {
-                location1 = new Location(location.getWorld(), location.getBlockX(), location.getBlockY() - 10, location.getBlockZ());
-                location2 = new Location(location.getWorld(), location.getBlockX() + width - 1, location.getBlockY() + height, location.getBlockZ() - length + 1);
-                border1 = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() - 10, location.getBlockZ() + 1);
-                border2 = new Location(location.getWorld(), location.getBlockX() + width, location.getBlockY() + height, location.getBlockZ() - length);
+                location1 = new Location(getCreatedWorld(), location.getBlockX(), location.getBlockY() - 10, location.getBlockZ());
+                location2 = new Location(getCreatedWorld(), location.getBlockX() + width - 1, location.getBlockY() + height, location.getBlockZ() - length + 1);
+                border1 = new Location(getCreatedWorld(), location.getBlockX() - 1, location.getBlockY() - 10, location.getBlockZ() + 1);
+                border2 = new Location(getCreatedWorld(), location.getBlockX() + width, location.getBlockY() + height, location.getBlockZ() - length);
                 break;
             }
             case EAST: {
-                location1 = new Location(location.getWorld(), location.getBlockX() + length - 1, location.getBlockY() - 10, location.getBlockZ());
-                location2 = new Location(location.getWorld(), location.getBlockX(), location.getBlockY() + height, location.getBlockZ() + width - 1);
-                border1 = new Location(location.getWorld(), location.getBlockX() + length, location.getBlockY() - 10, location.getBlockZ() - 1);
-                border2 = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() + height, location.getBlockZ() + width);
+                location1 = new Location(getCreatedWorld(), location.getBlockX() + length - 1, location.getBlockY() - 10, location.getBlockZ());
+                location2 = new Location(getCreatedWorld(), location.getBlockX(), location.getBlockY() + height, location.getBlockZ() + width - 1);
+                border1 = new Location(getCreatedWorld(), location.getBlockX() + length, location.getBlockY() - 10, location.getBlockZ() - 1);
+                border2 = new Location(getCreatedWorld(), location.getBlockX() - 1, location.getBlockY() + height, location.getBlockZ() + width);
                 break;
             }
             default:
@@ -410,7 +412,7 @@ public class Plot {
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
-                    blocks.add(Objects.requireNonNull(location.getWorld()).getBlockAt(x, location.getBlockY() + 1, z));
+                    blocks.add(Objects.requireNonNull(getCreatedWorld()).getBlockAt(x, location.getBlockY() + 1, z));
                 }
             }
         }
@@ -459,7 +461,7 @@ public class Plot {
         }
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
-                blocks.add(location.getWorld().getBlockAt(x, location.getBlockY(), z));
+                blocks.add(getCreatedWorld().getBlockAt(x, location.getBlockY(), z));
             }
         }
         return blocks;
@@ -573,19 +575,19 @@ public class Plot {
             Location location = null;
             switch (createdDirection) {
                 case SOUTH: {
-                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
+                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
                     break;
                 }
                 case WEST: {
-                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width);
+                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width);
                     break;
                 }
                 case NORTH: {
-                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length);
+                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length);
                     break;
                 }
                 case EAST: {
-                    location = new Location(createdLocation.getWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
+                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
                     break;
                 }
             }
@@ -605,7 +607,7 @@ public class Plot {
     @SneakyThrows
     public void insert() {
         String serializedLocation =
-                        Objects.requireNonNull(this.createdLocation.getWorld()).getName() + ";" +
+                        Objects.requireNonNull(this.getCreatedWorld()).getName() + ";" +
                         this.createdLocation.getX() + ";" +
                         this.createdLocation.getY() + ";" +
                         this.createdLocation.getZ() + ";" +

@@ -39,23 +39,24 @@ public class GmSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeFeatureDisabled);
             return;
         }
-        GameMode gameMode;
-        int gameModeID;
+        GameMode gameMode = null;
         try {
-            gameMode = GameMode.valueOf(args[1]);
-            gameModeID = gameMode.getValue();
-        } catch (IllegalArgumentException e) {
+            gameMode = GameMode.valueOf(args[1].toUpperCase());
+        } catch (Exception ignored) {}
+        if (gameMode == null) {
             try {
-                gameModeID = Integer.parseInt(args[1]);
+                int gameModeInt = Integer.parseInt(args[1]);
+                gameMode = GameMode.getByValue(gameModeInt);
             } catch (IllegalArgumentException ex) {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectGamemode);
                 return;
             }
         }
+        int gameModeID = gameMode.getValue();
         GameMode defaultGamemode = VirtualRealty.getInstance().getServer().getDefaultGameMode();
         GameMode configGamemode = VirtualRealty.getPluginConfiguration().getDefaultPlotGamemode();
         if (!(gameModeID != configGamemode.getValue() && gameModeID != defaultGamemode.getValue())) {
-            gameMode = GameMode.getByValue(Integer.parseInt(args[1]));
+            gameMode = GameMode.getByValue(gameModeID);
         } else {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeDisabled);
             return;

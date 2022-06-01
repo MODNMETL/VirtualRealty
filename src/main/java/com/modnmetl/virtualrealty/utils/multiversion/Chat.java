@@ -22,22 +22,7 @@ public class Chat {
     }
 
     public void sendTo(CommandSender sender) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            if (VirtualRealty.legacyVersion) {
-                try {
-                    Method m = Player.class.getDeclaredMethod("sendMessage", BaseComponent.class);
-                    m.setAccessible(true);
-                    m.invoke(player, text);
-                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                player.spigot().sendMessage(text);
-            }
-        } else {
-            sender.sendMessage(text.toLegacyText());
-        }
+        sender.spigot().sendMessage(text);
     }
 
 

@@ -27,8 +27,8 @@ public class OldSchematicUtil {
         String[] blocks = load(plotID);
         if (blocks == null) return;
         Plot plot = PlotManager.getPlot(plotID);
-        Location location = new Location(plot.getCreatedLocation().getWorld(), plot.getBorderBottomLeftCorner().getBlockX(), plot.getBorderBottomLeftCorner().getBlockY(), plot.getBorderBottomLeftCorner().getBlockZ());
-        Location location2 = new Location(plot.getCreatedLocation().getWorld(), plot.getBorderTopRightCorner().getBlockX(), plot.getBorderTopRightCorner().getBlockY(), plot.getBorderTopRightCorner().getBlockZ());
+        Location location = new Location(plot.getCreatedWorld(), plot.getBorderBottomLeftCorner().getBlockX(), plot.getBorderBottomLeftCorner().getBlockY(), plot.getBorderBottomLeftCorner().getBlockZ());
+        Location location2 = new Location(plot.getCreatedWorld(), plot.getBorderTopRightCorner().getBlockX(), plot.getBorderTopRightCorner().getBlockY(), plot.getBorderTopRightCorner().getBlockZ());
         Block pos1Block = location.getBlock();
         Block pos2Block = location2.getBlock();
         int minX = Math.min(pos1Block.getX(), pos2Block.getX());

@@ -112,6 +112,7 @@ public class StakeSubCommand extends SubCommand {
                 }.runTaskLater(VirtualRealty.getInstance(), 20);
                 DraftListener.DRAFT_MAP.remove(this.getSender());
                 ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                plot.update();
             }
 
             @Override
