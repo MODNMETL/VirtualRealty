@@ -231,7 +231,7 @@ public final class VirtualRealty extends JavaPlugin {
         PluginCommand vrCommand = this.getCommand("virtualrealty");
         assert vrCommand != null;
         vrCommand.setExecutor(new VirtualRealtyCommand());
-        vrCommand.setTabCompleter( new CommandManager());
+        vrCommand.setTabCompleter(new CommandManager());
         registerSubCommands(VirtualRealtyCommand.class);
     }
 

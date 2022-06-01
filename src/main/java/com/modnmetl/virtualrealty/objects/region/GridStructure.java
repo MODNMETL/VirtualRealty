@@ -60,7 +60,9 @@ public class GridStructure {
     }
 
     public void preview(Location playerPreviewLocation, boolean visualization, boolean colliding) {
-        int maxDistance = viewer.getClientViewDistance() * 16;
+        int maxDistance = 16 * 16;
+        if (!VirtualRealty.legacyVersion)
+            maxDistance = viewer.getClientViewDistance() * 16;
         changedBlocks.clear();
         Plot plot = PlotManager.getPlot(cuboidId);
         LinkedList<Block> blocks = new LinkedList<>();
