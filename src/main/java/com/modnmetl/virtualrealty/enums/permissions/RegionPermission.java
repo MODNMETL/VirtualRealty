@@ -16,7 +16,7 @@ public enum RegionPermission {
     ENTITY_DAMAGE(4, "Entity Damage", new ItemBuilder(Material.IRON_SWORD).addItemFlag(ItemFlag.HIDE_ATTRIBUTES)),
     SWITCH(5, "Switch", new ItemBuilder(Material.LEVER)),
     ITEM_USE(6, "Item Use", new ItemBuilder(Material.FLINT_AND_STEEL)),
-    DOORS(7, "Doors", new ItemBuilder(Material.OAK_DOOR));
+    DOORS(7, "Doors", new ItemBuilder(VirtualRealty.legacyVersion ? Material.getMaterial("WOODEN_DOOR") : Material.OAK_DOOR));
 
     private final int index;
     private final String name;

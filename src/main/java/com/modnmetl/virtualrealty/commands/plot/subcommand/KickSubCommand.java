@@ -79,8 +79,12 @@ public class KickSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickYourself);
             return;
         }
-
-        plot.removeMember(plotMember);
+        PlotMember member = plot.getMember(offlinePlayer.getUniqueId());
+        if (member == null) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+            return;
+        }
+        plot.removeMember(member);
         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerKick.replaceAll("%player%", offlinePlayer.getName()));
     }
 
