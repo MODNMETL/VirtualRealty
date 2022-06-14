@@ -30,8 +30,6 @@ public class Loader {
         URLConnection httpConn;
         if (debug) {
             String premiumPath = VirtualRealty.getInstance().getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "virtualrealty-premium-" + VirtualRealty.getInstance().getDescription().getVersion() + ".jar";
-            url = new URL("file:/" + premiumPath);
-            System.out.println(url);
             File originFile = new File(premiumPath);
             InputStream targetStream = new FileInputStream(originFile);
             File loaderFile = File.createTempFile(String.valueOf(Arrays.asList(new Random().nextInt(9), new Random().nextInt(9), new Random().nextInt(9))), ".tmp");
@@ -78,7 +76,6 @@ public class Loader {
             }
             ((HttpURLConnection) httpConn).disconnect();
             URL jarUrl = loaderFile.toURI().toURL();
-            System.out.println(jarUrl);
             VirtualRealty.getInstance().setClassLoader(new CustomClassLoader(
                     new URL[]{jarUrl}, classLoader)
             );
