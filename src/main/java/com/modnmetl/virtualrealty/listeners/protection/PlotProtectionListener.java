@@ -27,6 +27,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.material.Crops;
 import org.bukkit.permissions.Permission;
 
 import java.util.ArrayList;
@@ -94,7 +95,11 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         if (e.getAction() != Action.PHYSICAL) return;
         if (e.getClickedBlock() == null) return;
-        if (e.getClickedBlock().getType() != Material.FARMLAND) return;
+        if (VirtualRealty.legacyVersion) {
+            if (e.getClickedBlock().getType() == Material.getMaterial("CROPS")) return;
+        } else {
+            if (e.getClickedBlock().getType() != Material.FARMLAND) return;
+        }
         Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;

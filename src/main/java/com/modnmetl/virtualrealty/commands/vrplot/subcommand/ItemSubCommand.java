@@ -62,6 +62,8 @@ public class ItemSubCommand extends SubCommand {
         }
         Map.Entry<String, Byte> floorData;
         Map.Entry<String, Byte> borderData;
+        String[] floorMaterialData = args[5 - backwardArgs].split(":");
+        String[] borderMaterialData = args[6 - backwardArgs].split(":");
         if (VirtualRealty.legacyVersion) {
             if (isNatural) {
                 floorData = new AbstractMap.SimpleEntry<>(Material.AIR.name(), (byte)0);
@@ -70,11 +72,15 @@ public class ItemSubCommand extends SubCommand {
                 if (args[5 - backwardArgs].equalsIgnoreCase("default")) {
                     floorData = new AbstractMap.SimpleEntry<>(plotSize.getFloorMaterial().name(), plotSize.getFloorData());
                 } else
-                    floorData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[5 - backwardArgs].split(":")[0].toUpperCase()).name(), Byte.valueOf(args[5 - backwardArgs].split(":")[1]));
+                    floorData = new AbstractMap.SimpleEntry<>(
+                            Material.valueOf(args[5 - backwardArgs].split(":")[0].toUpperCase()).name(),
+                            floorMaterialData.length > 1 ? Byte.valueOf(args[5 - backwardArgs].split(":")[1]) : 0);
                 if (args[6 - backwardArgs].equalsIgnoreCase("default")) {
                     borderData = new AbstractMap.SimpleEntry<>(plotSize.getBorderMaterial().name(), plotSize.getBorderData());
                 } else
-                    borderData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[6 - backwardArgs].split(":")[0].toUpperCase()).name(), Byte.valueOf(args[6 - backwardArgs].split(":")[1]));
+                    borderData = new AbstractMap.SimpleEntry<>(
+                            Material.valueOf(args[6 - backwardArgs].split(":")[0].toUpperCase()).name(),
+                            borderMaterialData.length > 1 ? Byte.valueOf(args[6 - backwardArgs].split(":")[1]) : 0);
             }
         } else {
             if (isNatural) {
@@ -82,13 +88,21 @@ public class ItemSubCommand extends SubCommand {
                 borderData = new AbstractMap.SimpleEntry<>(Material.AIR.createBlockData().getAsString(), (byte)0);
             } else {
                 if (args[5 - backwardArgs].equalsIgnoreCase("default")) {
-                    floorData = new AbstractMap.SimpleEntry<>(plotSize.getFloorMaterial().createBlockData().getAsString(), (byte) 0);
+                    floorData = new AbstractMap.SimpleEntry<>(
+                            plotSize.getFloorMaterial().createBlockData().getAsString(),
+                            (byte) 0);
                 } else
-                    floorData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[5 - backwardArgs].toUpperCase()).createBlockData().getAsString(), (byte) 0);
+                    floorData = new AbstractMap.SimpleEntry<>(
+                            Material.valueOf(args[5 - backwardArgs].toUpperCase()).createBlockData().getAsString(),
+                            (byte) 0);
                 if (args[6 - backwardArgs].equalsIgnoreCase("default")) {
-                    borderData = new AbstractMap.SimpleEntry<>(plotSize.getBorderMaterial().createBlockData().getAsString(), (byte) 0);
+                    borderData = new AbstractMap.SimpleEntry<>(
+                            plotSize.getBorderMaterial().createBlockData().getAsString(),
+                            (byte) 0);
                 } else
-                    borderData = new AbstractMap.SimpleEntry<>(Material.valueOf(args[6 - backwardArgs].toUpperCase()).createBlockData().getAsString(), (byte) 0);
+                    borderData = new AbstractMap.SimpleEntry<>(
+                            Material.valueOf(args[6 - backwardArgs].toUpperCase()).createBlockData().getAsString(),
+                            (byte) 0);
             }
         }
         int additionalDays = Integer.parseInt(args[7-backwardArgs]);
