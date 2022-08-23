@@ -35,6 +35,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String insufficientPermissions = "§cInsufficient permissions! §8(§7%permission%§8)";
     public String useNaturalNumbersOnly = "§cUse only natural numbers!";
     public String incorrectGamemode = "§cIncorrect gamemode value!";
+    public String incorrectValue = "§cIncorrect value!";
     public String sizeNotRecognised = "§cSize not recognized!";
     public String hardLimit = "§cL, W and H hard-limit is 500!";
     public String graterThenZero = "§cL, W and H values must be greater than 0!";
