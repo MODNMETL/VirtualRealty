@@ -3,19 +3,15 @@ package com.modnmetl.virtualrealty.sql;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.configs.PluginConfiguration;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.logging.Level;
 
 public class Database {
 
