@@ -729,6 +729,7 @@ public class PlotProtectionListener extends VirtualListener {
     public void onStaticEntityDamage(EntityDamageByEntityEvent e) {
         if (e.isCancelled()) return;
         if (e.getEntity() instanceof Creature || e.getEntity() instanceof Player) return;
+        if (!(e.getDamager() instanceof Player)) return;
         Player player = (Player) e.getDamager();
         Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
         if (plot == null) return;

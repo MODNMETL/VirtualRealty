@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
@@ -105,12 +106,44 @@ public class ItemSubCommand extends SubCommand {
                             (byte) 0);
             }
         }
-        int additionalDays = Integer.parseInt(args[7-backwardArgs]);
-        int itemsAmount = Integer.parseInt(args[8-backwardArgs]);
+        int additionalDays;
+        try {
+            additionalDays = Integer.parseInt(args[7-backwardArgs]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            return;
+        }
+        if (additionalDays < 0) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            return;
+        }
+        int itemsAmount;
+        try {
+            itemsAmount = Integer.parseInt(args[8-backwardArgs]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            return;
+        }
+        if (itemsAmount < 1) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            return;
+        }
         Player onlinePlayer = Bukkit.getPlayer(args[9-backwardArgs]);
+        if (onlinePlayer == null) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+            return;
+        }
         for (int i = 0; i < itemsAmount; i++) {
             PlotItem plotItem = new PlotItem(VItem.CLAIM, plotSize, length, height, width, floorData, borderData, isNatural, additionalDays, UUID.randomUUID());
-            onlinePlayer.getInventory().addItem(plotItem.getItemStack());
+            ItemStack itemStack = plotItem.getItemStack();
+            onlinePlayer.getInventory().addItem(itemStack);
+            if (onlinePlayer.getInventory().contains(itemStack)) {
+                sender.sendMessage(VirtualRealty.PREFIX + "§aPlot item has been assigned to " + onlinePlayer.getName() + " by " + (sender.getName()) + "!");
+                onlinePlayer.sendMessage(VirtualRealty.PREFIX + "§aYou received a plot item from " + (sender.getName()) + "!");
+            } else {
+                sender.sendMessage(VirtualRealty.PREFIX + "§c" + onlinePlayer.getName() + " has no inventory space to receive plot item!");
+                onlinePlayer.sendMessage(VirtualRealty.PREFIX + "§cNo inventory space to receive plot item from " + (sender.getName()) + "!");
+            }
         }
     }
 
