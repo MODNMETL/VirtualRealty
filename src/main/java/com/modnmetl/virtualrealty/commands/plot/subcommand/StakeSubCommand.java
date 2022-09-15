@@ -34,6 +34,8 @@ import java.util.*;
 
 public class StakeSubCommand extends SubCommand {
 
+    public StakeSubCommand() {}
+
     public StakeSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());
     }
@@ -49,6 +51,89 @@ public class StakeSubCommand extends SubCommand {
         GridStructure gridStructure = DraftListener.DRAFT_MAP.get(player).getKey();
         PlotItem plotItem =  DraftListener.DRAFT_MAP.get(player).getValue().getKey();
         Cuboid cuboid = RegionUtil.getRegion(gridStructure.getPreviewLocation(), Direction.byYaw(gridStructure.getPreviewLocation().getYaw()), plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth());
+        Plot plot = PlotManager.getPlot(gridStructure.getPreviewLocation());
+        if (plot != null) {
+            if (plotItem.getPlotSize().equals(plot.getPlotSize())) {
+                if (((plot.isOwnershipExpired() && plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) || plot.getPlotOwner() == null)) {
+                    for (String s : VirtualRealty.getMessages().claimConfirmation) {
+                        player.sendMessage(VirtualRealty.PREFIX + s);
+                    }
+                    Confirmation confirmation = new Confirmation(ConfirmationType.CLAIM, (Player) sender, "YES") {
+                        @Override
+                        public void success() {
+                            ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
+                            this.getSender().getInventory().remove(plotItemStack);
+                            plot.setOwnedBy(this.getSender().getUniqueId());
+                            plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
+                            gridStructure.removeGrid();
+                            DraftListener.DRAFT_MAP.remove(this.getSender());
+                            ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                            plot.update();
+                            this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().plotClaimed);
+                        }
+
+                        @Override
+                        public void failed() {
+                            this.getSender().getInventory().removeItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
+                            this.getSender().getInventory().remove(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
+                            this.getSender().getInventory().addItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey().getItemStack());
+                            DraftListener.DRAFT_MAP.get(this.getSender()).getKey().removeGrid();
+                            DraftListener.DRAFT_MAP.remove(this.getSender());
+                            this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().stakeCancelled);
+                            DraftListener.DRAFT_MAP.remove(this.getSender());
+                            ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                        }
+
+                        @Override
+                        public void expiry() {
+                            ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                        }
+                    };
+                    ConfirmationManager.confirmations.add(confirmation);
+                    return;
+                } else if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) {
+                    for (String s : VirtualRealty.getMessages().extendConfirmation) {
+                        player.sendMessage(VirtualRealty.PREFIX + s);
+                    }
+                    Confirmation confirmation = new Confirmation(ConfirmationType.EXTEND, (Player) sender, "YES") {
+                        @Override
+                        public void success() {
+                            PlotItem plotItem = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey();
+                            ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
+                            this.getSender().getInventory().remove(plotItemStack);
+                            if (plot.isOwnershipExpired())
+                                plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
+                            else
+                                plot.setOwnedUntilDate(plot.getOwnedUntilDate().plusDays(plotItem.getAdditionalDays()));
+                            gridStructure.removeGrid();
+                            DraftListener.DRAFT_MAP.remove(this.getSender());
+                            ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                            plot.update();
+                            this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().leaseExtended.replaceAll("%plot_id%", String.valueOf(plot.getID())).replaceAll("%date%", Plot.SHORT_PLOT_DATE_FORMAT.format(plot.getOwnedUntilDate())));
+                        }
+
+                        @Override
+                        public void failed() {
+                            this.getSender().getInventory().removeItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
+                            this.getSender().getInventory().remove(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
+                            this.getSender().getInventory().addItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey().getItemStack());
+                            DraftListener.DRAFT_MAP.get(this.getSender()).getKey().removeGrid();
+                            DraftListener.DRAFT_MAP.remove(this.getSender());
+                            this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().stakeCancelled);
+                            DraftListener.DRAFT_MAP.remove(this.getSender());
+                            ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                        }
+
+                        @Override
+                        public void expiry() {
+                            ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
+                        }
+                    };
+                    ConfirmationManager.confirmations.add(confirmation);
+                    return;
+                }
+            }
+        }
         if (RegionUtil.isCollidingWithAnotherPlot(cuboid)) {
             player.getInventory().remove(DraftListener.DRAFT_MAP.get(player).getValue().getValue().getItemStack());
             player.getInventory().addItem(DraftListener.DRAFT_MAP.get(player).getValue().getKey().getItemStack());
@@ -114,7 +199,6 @@ public class StakeSubCommand extends SubCommand {
                 ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
                 plot.update();
             }
-
             @Override
             public void failed() {
                 this.getSender().getInventory().removeItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
@@ -126,7 +210,6 @@ public class StakeSubCommand extends SubCommand {
                 DraftListener.DRAFT_MAP.remove(this.getSender());
                 ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
             }
-
             @Override
             public void expiry() {
                 ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());

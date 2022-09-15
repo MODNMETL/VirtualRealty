@@ -1,6 +1,9 @@
 package com.modnmetl.virtualrealty.commands.plot;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.commands.CommandRegistry;
+import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -13,6 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.logging.Level;
 
+import static com.modnmetl.virtualrealty.commands.CommandRegistry.PLOT_SUB_COMMAND_LIST;
+
 public class PlotCommand implements CommandExecutor {
 
     public static final LinkedList<String> HELP_LIST = new LinkedList<>();
@@ -20,15 +25,15 @@ public class PlotCommand implements CommandExecutor {
     static {
         HELP_LIST.add(" ");
         HELP_LIST.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP_LIST.add(" §a/plot panel §8- §7Opens your plots panel");
-        HELP_LIST.add(" §a/plot draft §8- §7Shows layout of potential new plot");
-        HELP_LIST.add(" §a/plot stake §8- §7Creates the plot shown with draft");
-        HELP_LIST.add(" §a/plot info §8- §7Shows plot info");
-        HELP_LIST.add(" §a/plot gm §8- §7Changes gamemode");
-        HELP_LIST.add(" §a/plot add §8- §7Adds a member");
-        HELP_LIST.add(" §a/plot kick §8- §7Kicks a member");
-        HELP_LIST.add(" §a/plot list §8- §7Shows your plots");
-        HELP_LIST.add(" §a/plot tp §8- §7Teleports to the plot");
+        HELP_LIST.add(" §a/plot %panel_command% §8- §7Opens your plots panel");
+        HELP_LIST.add(" §a/plot %draft_command% §8- §7Shows layout of potential new plot");
+        HELP_LIST.add(" §a/plot %stake_command% §8- §7Creates the plot shown with draft");
+        HELP_LIST.add(" §a/plot %info_command% §8- §7Shows plot info");
+        HELP_LIST.add(" §a/plot %gm_command% §8- §7Changes gamemode");
+        HELP_LIST.add(" §a/plot %add_command% §8- §7Adds a member");
+        HELP_LIST.add(" §a/plot %kick_command% §8- §7Kicks a member");
+        HELP_LIST.add(" §a/plot %list_command% §8- §7Shows your plots");
+        HELP_LIST.add(" §a/plot %tp_command% §8- §7Teleports to the plot");
     }
 
     @Override
@@ -57,14 +62,14 @@ public class PlotCommand implements CommandExecutor {
             }
         }
         try {
-            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.plot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase(Locale.ROOT) + args[0].substring(1) + "SubCommand", true, VirtualRealty.getLoader());
-            clazz.getConstructors()[0].newInstance(sender, command, label, args);
+            String subcommandName = String.valueOf(args[0].toCharArray()[0]).toUpperCase() + args[0].substring(1);
+            Optional<SubCommand> subCommand1 = CommandRegistry.getSubCommand(subcommandName.toLowerCase(), CommandType.PLOT);
+            subCommand1.get().getClass().getConstructors()[1].newInstance(sender, command, label, args);
         } catch (Exception e) {
-            if(!(e instanceof InvocationTargetException)) {
+            if (!(e instanceof InvocationTargetException)) {
                 printHelp(sender);
                 return false;
             }
-
             if (displayError) {
                 e.printStackTrace();
             } else {
@@ -80,7 +85,13 @@ public class PlotCommand implements CommandExecutor {
 
     private static void printHelp(CommandSender sender) {
         for (String message : HELP_LIST) {
-            sender.sendMessage(message);
+            final String[] finalMessage = {message};
+            CommandRegistry.PLOT_PLACEHOLDERS.forEach((s, s2) -> {
+                finalMessage[0] = finalMessage[0].replaceAll(s, s2);
+            });
+            sender.sendMessage(
+                    finalMessage[0]
+            );
         }
     }
 

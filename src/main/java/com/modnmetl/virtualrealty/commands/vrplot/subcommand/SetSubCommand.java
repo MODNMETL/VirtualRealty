@@ -7,6 +7,7 @@ import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.UUIDUtils;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -21,16 +22,18 @@ import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.CO
 
 public class SetSubCommand extends SubCommand {
 
-    public static final LinkedList<String> HELP = new LinkedList<>();
+    public static LinkedList<String> HELP = new LinkedList<>();
 
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot set §8<§7plot§8> §aowner §8<§7username§8>");
-        HELP.add(" §a/vrplot set §8<§7plot§8> §afloor §8<§7material§8>");
-        HELP.add(" §a/vrplot set §8<§7plot§8> §aborder §8<§7material§8>");
-        HELP.add(" §a/vrplot set §8<§7plot§8> §aexpiry §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
+        HELP.add(" §a/vrplot %command% §8<§7plot§8> §aowner §8<§7username§8>");
+        HELP.add(" §a/vrplot %command% §8<§7plot§8> §afloor §8<§7material§8>");
+        HELP.add(" §a/vrplot %command% §8<§7plot§8> §aborder §8<§7material§8>");
+        HELP.add(" §a/vrplot %command% §8<§7plot§8> §aexpiry §8<§7dd/mm/YYYY§8> §8<§7HH:mm (optional)§8>");
     }
+
+    public SetSubCommand() {}
 
     public SetSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);

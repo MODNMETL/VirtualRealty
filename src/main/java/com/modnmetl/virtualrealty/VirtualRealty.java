@@ -1,6 +1,7 @@
 package com.modnmetl.virtualrealty;
 
 import com.modnmetl.virtualrealty.commands.CommandManager;
+import com.modnmetl.virtualrealty.commands.CommandRegistry;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
@@ -61,6 +62,7 @@ public final class VirtualRealty extends JavaPlugin {
     public SizesConfiguration sizesConfiguration;
     public MessagesConfiguration messagesConfiguration;
     public PermissionsConfiguration permissionsConfiguration;
+    public CommandsConfiguration commandsConfiguration;
     private static ClassLoader classLoader;
     public static final String PREFIX = "§a§lVR §8§l» §7";
     public static List<BukkitTask> tasks = new ArrayList<>();
@@ -83,6 +85,7 @@ public final class VirtualRealty extends JavaPlugin {
     private final File pluginConfigurationFile = new File(this.getDataFolder(), "config.yml");
     private final File sizesConfigurationFile = new File(this.getDataFolder(), "sizes.yml");
     private final File permissionsConfigurationFile = new File(this.getDataFolder(), "permissions.yml");
+    private final File commandsConfigurationFile = new File(this.getDataFolder(), "commands.yml");
     private final File languagesDirectory = new File(this.getDataFolder(), "messages");
     private final File databaseFolder = new File(this.getDataFolder().getAbsolutePath(), File.separator + "data" + File.separator);
     private final File databaseFile = new File(databaseFolder, "data.db");
@@ -159,6 +162,7 @@ public final class VirtualRealty extends JavaPlugin {
             dynmapManager.registerDynmap();
         }
         registerCommands();
+        configureCommands();
         registerListeners();
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new VirtualPlaceholders(this).register();
@@ -173,8 +177,7 @@ public final class VirtualRealty extends JavaPlugin {
             Method method = Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, getLoader()).getMethod("onDisable");
             method.setAccessible(true);
             method.invoke(premium);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         DraftListener.DRAFT_MAP.forEach((player, gridStructureEntryEntry) -> {
             player.getInventory().remove(gridStructureEntryEntry.getValue().getValue().getItemStack());
             player.getInventory().addItem(gridStructureEntryEntry.getValue().getKey().getItemStack());
@@ -208,6 +211,14 @@ public final class VirtualRealty extends JavaPlugin {
         configFactory.loadMessagesConfiguration(messagesConfigurationFile);
     }
 
+    public void configureCommands() {
+        ConfigurationFactory configFactory = new ConfigurationFactory();
+        commandsConfiguration = configFactory.loadCommandsConfiguration(commandsConfigurationFile);
+        commandsConfiguration.refreshHelpMessages();
+        commandsConfiguration.assignAliases();
+        CommandRegistry.setupPlaceholders();
+    }
+
     public void reloadConfigs() {
         try {
             ConfigurationFactory configFactory = new ConfigurationFactory();
@@ -236,7 +247,8 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public void registerSubCommands(Class<?> mainCommandClass, String... names) {
-        SubCommand.registerSubCommands(names, mainCommandClass);
+        if (names.length > 0)
+            SubCommand.registerSubCommands(names, mainCommandClass);
         for (JarFile jarFile : jarFiles) {
             for (Enumeration<JarEntry> entry = jarFile.entries(); entry.hasMoreElements();) {
                 JarEntry jarEntry = entry.nextElement();
@@ -244,7 +256,9 @@ public final class VirtualRealty extends JavaPlugin {
                 if (name.endsWith(".class") && name.startsWith(mainCommandClass.getPackage().getName() + ".subcommand.")) {
                     try {
                         Class<?> clazz = Class.forName(name.replaceAll("[.]class", ""), true, getClassLoader());
-                        SubCommand.registerSubCommands(new String[]{ clazz.getSimpleName().toLowerCase().replaceAll("subcommand", "") }, mainCommandClass);
+                        String subcommand = clazz.getSimpleName().toLowerCase().replaceAll("subcommand", "");
+                        if (subcommand.isEmpty()) continue;
+                        SubCommand.registerSubCommands(new String[]{subcommand}, mainCommandClass);
                     } catch (ClassNotFoundException ignored) {}
                 }
             }
@@ -350,6 +364,10 @@ public final class VirtualRealty extends JavaPlugin {
 
     public static PermissionsConfiguration getPermissions() {
         return getInstance().permissionsConfiguration;
+    }
+
+    public static CommandsConfiguration getCommands() {
+        return getInstance().commandsConfiguration;
     }
 
     public static DynmapManager getDynmapManager() {

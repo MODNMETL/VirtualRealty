@@ -103,18 +103,31 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String draftModeCancelledBedrock = "§cDraft cancelled. Colliding with bedrock.";
     public String draftModeCancelledCollision = "§cDraft cancelled. Colliding with another plot.";
     public String draftModeDisabledDueToDeath = "§cDraft mode has been disabled due to death.";
-    public List<String> draftModeEnabled = Arrays.asList(
+    public List<String> draftEnabled = Arrays.asList(
             " ",
             " §8§l«§8§m                    §8[§aDraft Mode§8]§m                    §8§l»",
             " ",
-            " §8§l» §7Type §a/plot stake §7to place plot.",
+            " §8§l» §7Type §a/plot stake §7to %feature%.",
             " §8§l» §7If you want to leave draft mode type §a/plot draft",
             " "
     );
 
     public String stakeCancelled = "§cStake cancelled.";
+    public String createFeature = "place plot";
+    public String claimFeature = "claim this existing plot for yourself";
+    public String extendFeature = "extend the lease on this existing plot";
+    public String plotClaimed = "§aYou have successfully claimed the plot!";
+    public String leaseExtended = "§7Plot §8#§7%plot_id% lease extended to %date%.";
     public List<String> stakeConfirmation = Arrays.asList(
             "§7You are about to stake your claim to the plot shown, once done you cannot undo.",
+            "§7Type §aYES §7to proceed."
+    );
+    public List<String> extendConfirmation = Arrays.asList(
+            "§7You are about extend the lease duration of the plot shown, once done you cannot undo.",
+            "§7Type §aYES §7to proceed."
+    );
+    public List<String> claimConfirmation = Arrays.asList(
+            "§7You are about to claim the plot shown, once done you cannot undo.",
             "§7Type §aYES §7to proceed."
     );
     public String removalCancelled = "§cRemoval cancelled.";
