@@ -1,8 +1,10 @@
 package com.modnmetl.virtualrealty.commands;
 
+import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.enums.PlotSize;
+import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
@@ -21,11 +23,23 @@ public class CommandManager implements TabCompleter {
 
     public static final HashMap<Class<?>, SortedSet<String>> SUBCOMMANDS = new HashMap<>();
 
+
     public static void addSubCommand(String subCommand, Class<?> mainCommandClass) {
+        if (subCommand == null || subCommand.isEmpty()) return;
         if (!SUBCOMMANDS.containsKey(mainCommandClass)) {
             SUBCOMMANDS.put(mainCommandClass, new TreeSet<>());
         }
         SUBCOMMANDS.get(mainCommandClass).add(subCommand);
+        if (subCommand.equalsIgnoreCase("Panel") && VirtualRealty.getPremium() == null) return;
+        String className = mainCommandClass.getPackage().getName() + ".subcommand." + subCommand.replaceFirst(Character.toString(subCommand.toCharArray()[0]), Character.toString(Character.toUpperCase(subCommand.toCharArray()[0]))) + "SubCommand";
+        Class<?> subcommandClass;
+        try {
+            subcommandClass = VirtualRealty.getLoader().loadClass(className);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        String name = mainCommandClass.getPackage().getName().replaceAll("com.modnmetl.virtualrealty.commands.", "").toUpperCase();
+        CommandRegistry.addSubCommandToRegistry(subcommandClass, CommandType.valueOf(name));
     }
 
     @SneakyThrows

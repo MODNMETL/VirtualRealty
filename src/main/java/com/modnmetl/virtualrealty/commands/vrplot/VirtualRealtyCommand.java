@@ -1,5 +1,8 @@
 package com.modnmetl.virtualrealty.commands.vrplot;
 
+import com.modnmetl.virtualrealty.commands.CommandRegistry;
+import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
@@ -23,17 +26,17 @@ public class VirtualRealtyCommand implements CommandExecutor {
     static {
         HELP_LIST.add(" ");
         HELP_LIST.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP_LIST.add(" §a/vrplot create §8- §7Creates a plot");
-        HELP_LIST.add(" §a/vrplot remove §8- §7Removes a plot");
-        HELP_LIST.add(" §a/vrplot set §8- §7Sets a variable for the plot");
-        HELP_LIST.add(" §a/vrplot assign §8- §7Assigns a plot to player");
-        HELP_LIST.add(" §a/vrplot unassign §8- §7Sets assigned to and assigned by to null");
-        HELP_LIST.add(" §a/vrplot info §8- §7Prints info about plot");
-        HELP_LIST.add(" §a/vrplot list §8- §7Prints all plots");
-        HELP_LIST.add(" §a/vrplot item §8- §7Creates plot item");
-        HELP_LIST.add(" §a/vrplot visual §8- §7Displays visual grid of the plot");
-        HELP_LIST.add(" §a/vrplot tp §8- §7Teleports to the plot");
-        HELP_LIST.add(" §a/vrplot reload §8- §7Reloads plugin");
+        HELP_LIST.add(" §a/vrplot %create_command% §8- §7Creates a plot");
+        HELP_LIST.add(" §a/vrplot %remove_command% §8- §7Removes a plot");
+        HELP_LIST.add(" §a/vrplot %set_command% §8- §7Sets a variable for the plot");
+        HELP_LIST.add(" §a/vrplot %assign_command% §8- §7Assigns a plot to player");
+        HELP_LIST.add(" §a/vrplot %unassign_command% §8- §7Sets assigned to and assigned by to null");
+        HELP_LIST.add(" §a/vrplot %info_command% §8- §7Prints info about plot");
+        HELP_LIST.add(" §a/vrplot %list_command% §8- §7Prints all plots");
+        HELP_LIST.add(" §a/vrplot %item_command% §8- §7Creates plot item");
+        HELP_LIST.add(" §a/vrplot %visual_command% §8- §7Displays visual grid of the plot");
+        HELP_LIST.add(" §a/vrplot %tp_command% §8- §7Teleports to the plot");
+        HELP_LIST.add(" §a/vrplot %reload_command% §8- §7Reloads plugin");
     }
 
     @Override
@@ -55,11 +58,12 @@ public class VirtualRealtyCommand implements CommandExecutor {
             return false;
         }
         try {
-            Class<?> clazz = Class.forName("com.modnmetl.virtualrealty.commands.vrplot.subcommand." + String.valueOf(args[0].toCharArray()[0]).toUpperCase() + args[0].substring(1) + "SubCommand", true, VirtualRealty.getLoader());
+            String subcommandName = String.valueOf(args[0].toCharArray()[0]).toUpperCase() + args[0].substring(1);
+            Class<? extends SubCommand> aClass = CommandRegistry.getSubCommand(subcommandName.toLowerCase(), CommandType.VRPLOT).get().getClass();
             if (bypass) {
-                clazz.getConstructors()[1].newInstance(sender, command, label, args, true);
+                aClass.getConstructors()[2].newInstance(sender, command, label, args, true);
             } else {
-                clazz.getConstructors()[0].newInstance(sender, command, label, args);
+                aClass.getConstructors()[1].newInstance(sender, command, label, args);
             }
         } catch (Exception e) {
             if(!(e instanceof InvocationTargetException)) {
@@ -82,7 +86,13 @@ public class VirtualRealtyCommand implements CommandExecutor {
 
     private static void printHelp(CommandSender sender) {
         for (String message : HELP_LIST) {
-            sender.sendMessage(message);
+            final String[] finalMessage = {message};
+            CommandRegistry.VRPLOT_PLACEHOLDERS.forEach((s, s2) -> {
+                finalMessage[0] = finalMessage[0].replaceAll(s, s2);
+            });
+            sender.sendMessage(
+                    finalMessage[0]
+            );
         }
     }
     

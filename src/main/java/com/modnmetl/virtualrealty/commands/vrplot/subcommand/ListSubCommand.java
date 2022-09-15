@@ -6,6 +6,7 @@ import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.multiversion.Chat;
+import lombok.NoArgsConstructor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -19,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 
 public class ListSubCommand extends SubCommand {
+
+    public ListSubCommand() {}
 
     public ListSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());

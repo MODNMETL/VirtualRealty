@@ -5,6 +5,7 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
+import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -13,13 +14,15 @@ import java.util.LinkedList;
 
 public class TpSubCommand extends SubCommand {
 
-    public static final LinkedList<String> HELP = new LinkedList<>();
+    public static LinkedList<String> HELP = new LinkedList<>();
 
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/plot tp §8<§7plot§8>");
+        HELP.add(" §a/plot %command% §8<§7plot§8>");
     }
+
+    public TpSubCommand() {}
 
     public TpSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);

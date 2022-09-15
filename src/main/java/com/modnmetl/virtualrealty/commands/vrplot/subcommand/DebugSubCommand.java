@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
+import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -22,6 +23,7 @@ public class DebugSubCommand extends SubCommand {
 
     private static long LAST_REQUEST = 0;
 
+    public DebugSubCommand() {}
     public DebugSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());
     }

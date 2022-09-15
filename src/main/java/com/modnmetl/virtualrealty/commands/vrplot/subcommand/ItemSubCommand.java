@@ -7,6 +7,7 @@ import com.modnmetl.virtualrealty.enums.items.VItem;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.objects.data.PlotItem;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -18,14 +19,16 @@ import java.util.*;
 
 public class ItemSubCommand extends SubCommand {
 
-    public static final LinkedList<String> HELP = new LinkedList<>();
+    public static LinkedList<String> HELP = new LinkedList<>();
 
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot item §8<§7small/medium/large§8> §8<§7floor§8> §8<§7border§8> §8<§7lease duration (in days)§8> §8<§7amount of items§8> §8<§7player§8> §8<§7--natural(optional)§8>");
-        HELP.add(" §a/vrplot item §8<§7custom/area§8> §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor§8> §8<§7border§8> §8<§7lease duration (in days)§8> §8<§7amount of items§8> §8<§7player§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot %command% §8<§7small/medium/large§8> §8<§7floor§8> §8<§7border§8> §8<§7lease duration (in days)§8> §8<§7amount of items§8> §8<§7player§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot %command% §8<§7custom/area§8> §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor§8> §8<§7border§8> §8<§7lease duration (in days)§8> §8<§7amount of items§8> §8<§7player§8> §8<§7--natural(optional)§8>");
     }
+
+    public ItemSubCommand() {}
 
     public ItemSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);

@@ -8,6 +8,7 @@ import com.modnmetl.virtualrealty.managers.ConfirmationManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.data.Confirmation;
+import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -16,13 +17,15 @@ import java.util.*;
 
 public class RemoveSubCommand extends SubCommand {
 
-    public static final LinkedList<String> HELP = new LinkedList<>();
+    public static LinkedList<String> HELP = new LinkedList<>();
 
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot remove §8<§7plot§8>");
+        HELP.add(" §a/vrplot %command% §8<§7plot§8>");
     }
+
+    public RemoveSubCommand() {}
 
     public RemoveSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);

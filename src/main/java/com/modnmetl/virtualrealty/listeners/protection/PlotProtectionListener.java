@@ -616,6 +616,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
         Plot plot = PlotManager.getPlot(player.getLocation());
+        if (!(e.getRightClicked() instanceof ItemFrame)) return;
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {

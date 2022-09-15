@@ -2,11 +2,13 @@ package com.modnmetl.virtualrealty.commands.plot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.enums.ConfirmationType;
 import com.modnmetl.virtualrealty.enums.Direction;
 import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.enums.items.VItem;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.listeners.stake.DraftListener;
+import com.modnmetl.virtualrealty.managers.ConfirmationManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.data.PlotItem;
@@ -26,6 +28,8 @@ import java.util.LinkedList;
 
 public class DraftSubCommand extends SubCommand {
 
+    public DraftSubCommand() {}
+
     public DraftSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());
     }
@@ -39,6 +43,7 @@ public class DraftSubCommand extends SubCommand {
             player.getInventory().addItem(DraftListener.DRAFT_MAP.get(player).getValue().getKey().getItemStack());
             DraftListener.DRAFT_MAP.get(player).getKey().removeGrid();
             DraftListener.DRAFT_MAP.remove(player);
+            ConfirmationManager.removeStakeConfirmations(ConfirmationType.STAKE, player.getUniqueId());
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().draftModeDisabled);
             return;
         }
@@ -60,8 +65,37 @@ public class DraftSubCommand extends SubCommand {
         }
         PlotItem plotItem = PlotItem.fromItemStack(claimItem);
         Plot plot = PlotManager.getPlot(player.getLocation());
-        if (plot != null) {
+        String replacement = null;
+        if (plot == null) {
+            replacement = VirtualRealty.getMessages().createFeature;
+        } else {
+            if (plotItem.getPlotSize().equals(plot.getPlotSize())) {
+                if (((plot.isOwnershipExpired() && plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) || plot.getPlotOwner() == null)) {
+                    replacement = VirtualRealty.getMessages().claimFeature;
+                } else if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) {
+                    replacement = VirtualRealty.getMessages().extendFeature;
+                }
+            } else {
+                replacement = VirtualRealty.getMessages().createFeature;
+            }
+        }
+        String finalReplacement = replacement;
+        if (plot != null && plotItem.getPlotSize().equals(plot.getPlotSize())) {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().standingOnPlot);
+            GridStructure previewStructure = new GridStructure(((Player) sender), plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 0, plot.getCreatedLocation());
+            previewStructure.preview(player.getLocation(), true, false);
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().visualBoundaryDisplayed);
+            PlotItem draftItem = PlotItem.fromItemStack(claimItem, VItem.DRAFT);
+            DraftListener.DRAFT_MAP.put(player, new AbstractMap.SimpleEntry<>(previewStructure, new AbstractMap.SimpleEntry<>(plotItem, draftItem)));
+            inv.remove(claimItem);
+            if (VirtualRealty.legacyVersion) {
+                player.setItemInHand(draftItem.getItemStack());
+            } else {
+                inv.setItemInMainHand(draftItem.getItemStack());
+            }
+            VirtualRealty.getMessages().draftEnabled.forEach((message) -> player.sendMessage(message.replaceAll("&", "§")
+                    .replaceAll("%feature%", finalReplacement)
+            ));
             return;
         }
         PlotSize plotSize = PlotSize.valueOf(claimNbtItem.getString("vrplot_size"));
@@ -70,7 +104,6 @@ public class DraftSubCommand extends SubCommand {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().draftModeCancelledCollision);
             if (!GridStructure.isCuboidGridDisplaying(player, 0)) {
                 new GridStructure(player, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), 0, ((Player) sender).getWorld(), 20 * 6, player.getLocation()).preview(player.getLocation(),true, true);
-
             }
             return;
         }
@@ -92,7 +125,9 @@ public class DraftSubCommand extends SubCommand {
             inv.setItemInMainHand(draftItem.getItemStack());
         }
         draftStructure.preview(player.getLocation(), true, false);
-        VirtualRealty.getMessages().draftModeEnabled.forEach((message) -> player.sendMessage(message.replaceAll("&", "§")));
+        VirtualRealty.getMessages().draftEnabled.forEach((message) -> player.sendMessage(message.replaceAll("&", "§")
+                .replaceAll("%feature%", finalReplacement)
+        ));
     }
 
 }

@@ -3,6 +3,7 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
+import lombok.NoArgsConstructor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -12,6 +13,8 @@ import org.bukkit.command.CommandSender;
 import java.util.LinkedList;
 
 public class VersionSubCommand extends SubCommand {
+
+    public VersionSubCommand() {}
 
     public VersionSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, new LinkedList<>());

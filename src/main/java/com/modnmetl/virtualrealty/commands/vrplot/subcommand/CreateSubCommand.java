@@ -12,6 +12,7 @@ import com.modnmetl.virtualrealty.objects.region.GridStructure;
 import com.modnmetl.virtualrealty.utils.RegionUtil;
 import com.modnmetl.virtualrealty.utils.multiversion.Chat;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
+import lombok.NoArgsConstructor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -27,15 +28,17 @@ import java.util.*;
 
 public class CreateSubCommand extends SubCommand {
 
-    public static final LinkedList<String> HELP = new LinkedList<>();
+    public static LinkedList<String> HELP = new LinkedList<>();
 
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot create §8<§7small/medium/large§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
-        HELP.add(" §a/vrplot create area §8<§7length§8> §8<§7height§8> §8<§7width§8>");
-        HELP.add(" §a/vrplot create §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot %command% §8<§7small/medium/large§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
+        HELP.add(" §a/vrplot %command% area §8<§7length§8> §8<§7height§8> §8<§7width§8>");
+        HELP.add(" §a/vrplot %command% §8<§7length§8> §8<§7height§8> §8<§7width§8> §8<§7floor (optional)§8> §8<§7border (optional)§8> §8<§7--natural(optional)§8>");
     }
+
+    public CreateSubCommand() {}
 
     public CreateSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);

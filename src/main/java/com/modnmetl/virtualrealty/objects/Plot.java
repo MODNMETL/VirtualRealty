@@ -678,7 +678,6 @@ public class Plot {
 
     public void updateMarker() {
         DynmapManager.resetPlotMarker(this);
-        VirtualRealty.debug("Updated marker #" + this.ID);
     }
 
     @Override

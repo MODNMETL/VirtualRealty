@@ -6,6 +6,7 @@ import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.UUIDUtils;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -18,13 +19,15 @@ import java.util.UUID;
 
 public class AssignSubCommand extends SubCommand {
 
-    public static final LinkedList<String> HELP = new LinkedList<>();
+    public static LinkedList<String> HELP = new LinkedList<>();
 
     static {
         HELP.add(" ");
         HELP.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        HELP.add(" §a/vrplot assign §8<§7plot§8> §8<§7username§8>");
+        HELP.add(" §a/vrplot %command% §8<§7plot§8> §8<§7username§8>");
     }
+
+    public AssignSubCommand() {}
 
     public AssignSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);
@@ -34,9 +37,7 @@ public class AssignSubCommand extends SubCommand {
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPermission();
         if (args.length < 2) {
-            for (String helpMessage : HELP) {
-                sender.sendMessage(helpMessage);
-            }
+            printHelp();
             return;
         }
         int plotID;
