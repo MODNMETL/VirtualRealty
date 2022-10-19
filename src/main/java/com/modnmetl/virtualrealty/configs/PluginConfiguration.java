@@ -1,5 +1,6 @@
 package com.modnmetl.virtualrealty.configs;
 
+import com.modnmetl.virtualrealty.enums.WorldsSetting;
 import com.modnmetl.virtualrealty.enums.dynmap.HighlightType;
 import com.modnmetl.virtualrealty.enums.ServerVersion;
 import eu.okaeri.configs.OkaeriConfig;
@@ -7,6 +8,11 @@ import eu.okaeri.configs.annotation.*;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import lombok.NoArgsConstructor;
 import org.bukkit.GameMode;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 
 @Header("-------------------------------------------------------------- #")
 @Header("                                                               #")
@@ -47,8 +53,33 @@ public class PluginConfiguration extends OkaeriConfig {
     @CustomKey("default-plot-gamemode")
     public String plotGamemode = "SURVIVAL";
 
-    @Comment("Disable natural spawning of hostile mobs in plots/areas")
+    @Comment("Disable natural spawning of monster mobs in plots/areas")
     public boolean disablePlotMobsSpawn = false;
+
+    @Comment("Disable natural spawning of all mobs in plots/areas")
+    public boolean disablePlotMonsterSpawn = false;
+
+    @Comment("Worlds restrictions setting ( ALL | INCLUDED | EXCLUDED )")
+    @Comment("ALL - all worlds are capable of creating plots with plot claim items and 'worlds-list' setting is skipped")
+    @Comment("INCLUDED - only worlds included in 'worlds-list' setting are capable of creating plots with plot claim items")
+    @Comment("EXCLUDED - all worlds mentioned in 'worlds-list' setting won't be capable of creating plots with plot claim items")
+    public String worldsSetting = WorldsSetting.ALL.name();
+    @Comment("List of worlds")
+    public List<String> worldsList = Arrays.asList("%world%", "%world%_nether", "%world%_the_end");
+
+    public List<String> getWorldsList() {
+        ArrayList<String> strings = new ArrayList<>();
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("server.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        for (String s : worldsList) {
+            strings.add(s.replaceAll("%world%", prop.getProperty("level-name")));
+        }
+        return strings;
+    }
 
     @Comment("Lock gamemode to plot default when player enters their plot (disables '/plot gm' command)")
     public boolean lockPlotGamemode = false;

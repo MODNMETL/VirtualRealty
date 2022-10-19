@@ -32,47 +32,42 @@ public class DraftListener extends VirtualListener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
         Player player = ((Player) e.getWhoClicked());
-        if (DRAFT_MAP.containsKey(player)) {
-            e.setCancelled(true);
-        }
+        if (!DRAFT_MAP.containsKey(player)) return;
+        e.setCancelled(true);
     }
 
     @EventHandler
     public void onInventoryClick(InventoryCreativeEvent e) {
         Player player = ((Player) e.getWhoClicked());
-        if (DRAFT_MAP.containsKey(player)) {
-            e.setCancelled(true);
-        }
+        if (!DRAFT_MAP.containsKey(player)) return;
+        e.setCancelled(true);
     }
 
     @EventHandler
     public void onItemDrop(PlayerDropItemEvent e) {
         Player player = e.getPlayer();
-        if (DRAFT_MAP.containsKey(player)) {
-            e.setCancelled(true);
-        }
+        if (!DRAFT_MAP.containsKey(player)) return;
+        e.setCancelled(true);
     }
 
     @EventHandler
     public void onSlotSwitch(PlayerItemHeldEvent e) {
         Player player = e.getPlayer();
-        if (DRAFT_MAP.containsKey(player)) {
-            e.setCancelled(true);
-        }
+        if (!DRAFT_MAP.containsKey(player)) return;
+        e.setCancelled(true);
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player player = e.getEntity();
-        if (DRAFT_MAP.containsKey(player)) {
-            e.getDrops().remove(DRAFT_MAP.get(player).getValue().getValue().getItemStack());
-            e.getDrops().add(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
-            player.getInventory().remove(DRAFT_MAP.get(player).getValue().getValue().getItemStack());
-            player.getInventory().addItem(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
-            DRAFT_MAP.get(player).getKey().removeGrid();
-            DRAFT_MAP.remove(player);
-            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().draftModeDisabledDueToDeath);
-        }
+        if (!DRAFT_MAP.containsKey(player)) return;
+        e.getDrops().remove(DRAFT_MAP.get(player).getValue().getValue().getItemStack());
+        e.getDrops().add(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
+        player.getInventory().remove(DRAFT_MAP.get(player).getValue().getValue().getItemStack());
+        player.getInventory().addItem(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
+        DRAFT_MAP.get(player).getKey().removeGrid();
+        DRAFT_MAP.remove(player);
+        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().draftModeDisabledDueToDeath);
     }
 
     @EventHandler
@@ -93,12 +88,11 @@ public class DraftListener extends VirtualListener {
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent e) {
         Player player = e.getPlayer();
-        if (DRAFT_MAP.containsKey(player)) {
-            player.getInventory().remove(DRAFT_MAP.get(player).getValue().getValue().getItemStack());
-            player.getInventory().addItem(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
-            DRAFT_MAP.get(player).getKey().removeGrid();
-            DRAFT_MAP.remove(player);
-        }
+        if (!DRAFT_MAP.containsKey(player)) return;
+        player.getInventory().remove(DRAFT_MAP.get(player).getValue().getValue().getItemStack());
+        player.getInventory().addItem(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
+        DRAFT_MAP.get(player).getKey().removeGrid();
+        DRAFT_MAP.remove(player);
     }
 
 }

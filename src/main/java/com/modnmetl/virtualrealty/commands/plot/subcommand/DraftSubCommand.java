@@ -67,6 +67,10 @@ public class DraftSubCommand extends SubCommand {
         Plot plot = PlotManager.getPlot(player.getLocation());
         String replacement = null;
         if (plot == null) {
+            if (!canCreateInWorld(player)) {
+                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().disabledPlotCreation);
+                return;
+            }
             replacement = VirtualRealty.getMessages().createFeature;
         } else {
             if (plotItem.getPlotSize().equals(plot.getPlotSize())) {
@@ -76,11 +80,15 @@ public class DraftSubCommand extends SubCommand {
                     replacement = VirtualRealty.getMessages().extendFeature;
                 }
             } else {
+                if (!canCreateInWorld(player)) {
+                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().disabledPlotCreation);
+                    return;
+                }
                 replacement = VirtualRealty.getMessages().createFeature;
             }
         }
         String finalReplacement = replacement;
-        if (plot != null && plotItem.getPlotSize().equals(plot.getPlotSize())) {
+        if (plot != null && plotItem.getPlotSize().equals(plot.getPlotSize()) && plot.getPlotSize() != PlotSize.CUSTOM) {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().standingOnPlot);
             GridStructure previewStructure = new GridStructure(((Player) sender), plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 0, plot.getCreatedLocation());
             previewStructure.preview(player.getLocation(), true, false);

@@ -12,9 +12,7 @@ public class PlotMemberManager {
     public static void loadMembers() {
         try {
             ResultSet rs = Database.getInstance().getStatement().executeQuery("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName + "`");
-            while (rs.next()) {
-                new PlotMember(rs);
-            }
+            while (rs.next()) new PlotMember(rs);
         } catch (SQLException e) {
             e.printStackTrace();
         }

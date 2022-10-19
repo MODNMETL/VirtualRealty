@@ -43,9 +43,9 @@ public class Cuboid {
 
     public List<Block> getBlocks() {
         List<Block> blocks = new ArrayList<>();
-        for(int x = this.xMin; x <= this.xMax; ++x) {
-            for(int y = this.yMin; y <= this.yMax; ++y) {
-                for(int z = this.zMin; z <= this.zMax; ++z) {
+        for (int x = this.xMin; x <= this.xMax; ++x) {
+            for (int y = this.yMin; y <= this.yMax; ++y) {
+                for (int z = this.zMin; z <= this.zMax; ++z) {
                     blocks.add(this.world.getBlockAt(x, y, z));
                 }
             }
@@ -55,8 +55,8 @@ public class Cuboid {
 
     public List<Block> getFlatBlocks() {
         List<Block> blocks = new ArrayList<>();
-        for(int x = this.xMin; x <= this.xMax; ++x) {
-            for(int z = this.zMin; z <= this.zMax; ++z) {
+        for (int x = this.xMin; x <= this.xMax; ++x) {
+            for (int z = this.zMin; z <= this.zMax; ++z) {
                 blocks.add(this.world.getBlockAt(x, 0, z));
             }
         }

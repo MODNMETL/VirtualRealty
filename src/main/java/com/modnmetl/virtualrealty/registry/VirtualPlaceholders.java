@@ -5,6 +5,7 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.objects.Plot;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class VirtualPlaceholders extends PlaceholderExpansion {
 
@@ -52,7 +53,7 @@ public class VirtualPlaceholders extends PlaceholderExpansion {
      * @return The name of the author as a String.
      */
     @Override
-    public String getAuthor(){
+    public @NotNull String getAuthor(){
         return plugin.getDescription().getAuthors().toString();
     }
 
@@ -66,7 +67,7 @@ public class VirtualPlaceholders extends PlaceholderExpansion {
      * @return The identifier in {@code %<identifier>_<value>%} as String.
      */
     @Override
-    public String getIdentifier(){
+    public @NotNull String getIdentifier(){
         return "virtualrealty";
     }
 
@@ -79,7 +80,7 @@ public class VirtualPlaceholders extends PlaceholderExpansion {
      * @return The version as a String.
      */
     @Override
-    public String getVersion(){
+    public @NotNull String getVersion(){
         return plugin.getDescription().getVersion();
     }
 
@@ -97,7 +98,7 @@ public class VirtualPlaceholders extends PlaceholderExpansion {
      * @return possibly-null String of the requested identifier.
      */
     @Override
-    public String onPlaceholderRequest(Player player, String identifier){
+    public String onPlaceholderRequest(Player player, @NotNull String identifier){
         if(player == null) return "";
 
         Plot plot = PlotManager.getBorderedPlot(player.getLocation());

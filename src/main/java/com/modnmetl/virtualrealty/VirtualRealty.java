@@ -30,10 +30,12 @@ import com.modnmetl.virtualrealty.utils.UpdateChecker;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.server.v1_13_R2.MinecraftServer;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -58,6 +60,9 @@ public final class VirtualRealty extends JavaPlugin {
     private static VirtualRealty instance;
     @Getter
     public MetricsManager metricsManager;
+
+    @Getter
+    public ConfigurationFactory configFactory = new ConfigurationFactory();
     public PluginConfiguration pluginConfiguration;
     public SizesConfiguration sizesConfiguration;
     public MessagesConfiguration messagesConfiguration;
@@ -212,7 +217,6 @@ public final class VirtualRealty extends JavaPlugin {
     }
 
     public void configureCommands() {
-        ConfigurationFactory configFactory = new ConfigurationFactory();
         commandsConfiguration = configFactory.loadCommandsConfiguration(commandsConfigurationFile);
         commandsConfiguration.refreshHelpMessages();
         commandsConfiguration.assignAliases();
@@ -221,7 +225,6 @@ public final class VirtualRealty extends JavaPlugin {
 
     public void reloadConfigs() {
         try {
-            ConfigurationFactory configFactory = new ConfigurationFactory();
             pluginConfiguration = configFactory.loadPluginConfiguration(pluginConfigurationFile);
             File messagesConfigurationFile = new File(languagesDirectory, "messages_" + pluginConfiguration.locale + ".yml");
             sizesConfiguration = configFactory.loadSizesConfiguration(sizesConfigurationFile);

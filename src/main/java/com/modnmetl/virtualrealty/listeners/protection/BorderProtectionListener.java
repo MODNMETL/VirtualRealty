@@ -20,10 +20,9 @@ public class BorderProtectionListener extends VirtualListener {
         Plot plot = PlotManager.getBorderedPlot(e.getBlock().getLocation());
         if (plot == null) return;
         if (e.getPlayer().isOp()) return;
-        if (plot.getBorderBlocks().contains(e.getBlock())) {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
-        }
+        if (!plot.getBorderBlocks().contains(e.getBlock())) return;
+        e.setCancelled(true);
+        e.getPlayer().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
     }
 
     @EventHandler
@@ -31,10 +30,9 @@ public class BorderProtectionListener extends VirtualListener {
         Plot plot = PlotManager.getBorderedPlot(e.getBlock().getLocation());
         if (plot == null) return;
         if (e.getPlayer().isOp()) return;
-        if (plot.getBorderBlocks().contains(e.getBlock())) {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
-        }
+        if (!plot.getBorderBlocks().contains(e.getBlock())) return;
+        e.setCancelled(true);
+        e.getPlayer().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantBuildHere);
     }
 
 }
