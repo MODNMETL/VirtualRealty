@@ -27,7 +27,7 @@ public class PlayerActionListener extends VirtualListener {
             public void run() {
                 player.sendMessage(VirtualRealty.PREFIX + "§7A new version of VirtualRealty plugin is available. §a[" + VirtualRealty.latestVersion + "]");
                 TextComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aDownload the new version of the plugin here!");
-                textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick here to download the update!")}));
+                textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{ new TextComponent("§a§oClick here to download the update!") }));
                 textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.spigotmc.org/resources/virtual-realty.95599/"));
                 player.spigot().sendMessage(textComponent);
             }

@@ -1,6 +1,7 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.enums.WorldsSetting;
 import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
@@ -112,6 +113,19 @@ public abstract class SubCommand {
             }
             throw new InsufficientPermissionsException();
         }
+    }
+
+    public boolean canCreateInWorld(Player player) {
+        switch (WorldsSetting.valueOf(VirtualRealty.getPluginConfiguration().worldsSetting.toUpperCase())) {
+            case ALL:
+                break;
+            case INCLUDED:
+                if (VirtualRealty.getPluginConfiguration().getWorldsList().stream().noneMatch(s -> player.getWorld().getName().equalsIgnoreCase(s))) return false;
+                break;
+            case EXCLUDED:
+                if (VirtualRealty.getPluginConfiguration().getWorldsList().stream().anyMatch(s -> player.getWorld().getName().equalsIgnoreCase(s))) return false;
+        }
+        return true;
     }
 
     public boolean isBypass() {

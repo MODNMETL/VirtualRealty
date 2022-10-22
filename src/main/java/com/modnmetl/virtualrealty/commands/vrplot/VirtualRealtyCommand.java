@@ -6,13 +6,11 @@ import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.*;
+import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.logging.Level;

@@ -64,8 +64,7 @@ public class DynmapManager {
                     } else {
                         markerIcon = dapi.getMarkerAPI().getMarkerIcon("virtualrealty_main_icon");
                     }
-                } catch (IOException ignored) {
-                }
+                } catch (IOException ignored) {}
                 VirtualRealty.debug("Registering plots markers..");
                 for (Plot plot : PlotManager.getPlots()) {
                     resetPlotMarker(plot);

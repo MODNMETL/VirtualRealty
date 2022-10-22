@@ -47,6 +47,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String minPlotID = "§cMinimum plot ID is %min_id%!";
     public String maxPlotID = "§cMaximum plot ID is %max_id%!";
     public String noRegionFileFound = "No saved plot schema found, remove and restore not possible - deleting plot record only";
+    public String disabledPlotCreation = "Plot creation is not allowed in this world!";
 
     //Permissions
     public String cantDoAnyDMG = "§cYou can't do any damage here!";

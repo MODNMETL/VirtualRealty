@@ -29,21 +29,21 @@ public class PermissionsConfiguration extends OkaeriConfig {
     @Comment(" - DOORS")
     @Comment(" ")
     @Comment("Set permissions for players who are not members of the plot.")
-    private final List<RegionPermission> defaultNonMembers = new LinkedList<>();
+    private List<RegionPermission> defaultNonMembers = new LinkedList<>();
 
     public List<RegionPermission> getDefaultNonMemberPlotPerms() {
         return defaultNonMembers;
     }
 
     @Comment("Set permissions for players who are members of the plot.")
-    private final List<RegionPermission> defaultMembers = Arrays.asList(RegionPermission.values());
+    private List<RegionPermission> defaultMembers = Arrays.asList(RegionPermission.values());
 
     public List<RegionPermission> getDefaultMemberPerms() {
         return defaultMembers;
     }
 
     @Comment("Set permissions for all players to the world")
-    public final List<RegionPermission> worldProtection = Arrays.asList(RegionPermission.values());
+    public List<RegionPermission> worldProtection = Arrays.asList(RegionPermission.values());
 
     public List<RegionPermission> getWorldProtection() {
         return worldProtection;

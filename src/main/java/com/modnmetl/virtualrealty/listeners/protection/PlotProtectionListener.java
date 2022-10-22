@@ -82,7 +82,9 @@ public class PlotProtectionListener extends VirtualListener {
         Plot plot = PlotManager.getPlot(location);
         if (plot != null) {
             if (VirtualRealty.getPluginConfiguration().disablePlotMobsSpawn) {
-                if (e.getEntity() instanceof Monster) {
+                e.setCancelled(true);
+            } else if (VirtualRealty.getPluginConfiguration().disablePlotMonsterSpawn) {
+                if ((e.getEntity() instanceof Monster) || e.getEntityType() == EntityType.SLIME) {
                     e.setCancelled(true);
                 }
             }
@@ -460,10 +462,9 @@ public class PlotProtectionListener extends VirtualListener {
             if (plot.isOwnershipExpired()) {
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
-                return;
-            }
-            if (plotMember == null) return;
-            if (!plotMember.hasPermission(RegionPermission.ITEM_USE)) {
+            } else {
+                if (plotMember == null) return;
+                if (plotMember.hasPermission(RegionPermission.ITEM_USE)) return;
                 e.setCancelled(true);
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantInteract);
             }
@@ -496,9 +497,8 @@ public class PlotProtectionListener extends VirtualListener {
             Plot toPlot = PlotManager.getPlot(blockLocation);
             if (fromPlot != null) {
                 if (toPlot != null) {
-                    if (fromPlot.getID() != toPlot.getID()) {
-                        e.getBlocks().remove(block);
-                    }
+                    if (fromPlot.getID() == toPlot.getID()) return;
+                    e.getBlocks().remove(block);
                 } else {
                     e.getBlocks().remove(block);
                 }

@@ -12,7 +12,6 @@ import com.modnmetl.virtualrealty.objects.region.GridStructure;
 import com.modnmetl.virtualrealty.utils.RegionUtil;
 import com.modnmetl.virtualrealty.utils.multiversion.Chat;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
-import lombok.NoArgsConstructor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;

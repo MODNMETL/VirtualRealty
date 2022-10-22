@@ -43,7 +43,7 @@ public class PlotManager {
 
     public static Plot getPlot(int ID) {
         for (Plot plot : plots) {
-            if(plot.getID() == ID) {
+            if (plot.getID() == ID) {
                 return plot;
             }
         }
@@ -61,7 +61,7 @@ public class PlotManager {
     public static HashMap<Integer, Plot> getPlots(UUID owner) {
         HashMap<Integer, Plot> plotHashMap = new HashMap<>();
         for (Plot plot : plots) {
-            if(plot.getOwnedBy() != null && plot.getOwnedBy().equals(owner)) {
+            if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(owner)) {
                 plotHashMap.put(plot.getID(), plot);
             }
         }
@@ -104,7 +104,7 @@ public class PlotManager {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-            if(region.isIn(newVector, plot.getCreatedWorld())) {
+            if (region.isIn(newVector, plot.getCreatedWorld())) {
                 return plot;
             }
         }
@@ -125,7 +125,7 @@ public class PlotManager {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
-            if(region.isIn(newVector, plot.getCreatedWorld())) {
+            if (region.isIn(newVector, plot.getCreatedWorld())) {
                 return plot;
             }
         }

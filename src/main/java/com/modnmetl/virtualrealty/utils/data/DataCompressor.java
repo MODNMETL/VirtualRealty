@@ -9,9 +9,9 @@ public class DataCompressor {
         try (OutputStream outputStream = new FileOutputStream(file)) {
             Deflater d = new Deflater();
             d.setLevel(4);
-            DeflaterOutputStream dout = new DeflaterOutputStream(outputStream, d);
-            dout.write(data);
-            dout.close();
+            DeflaterOutputStream out = new DeflaterOutputStream(outputStream, d);
+            out.write(data);
+            out.close();
         }
     }
 
