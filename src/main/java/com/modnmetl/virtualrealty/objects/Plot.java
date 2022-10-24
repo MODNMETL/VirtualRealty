@@ -626,7 +626,7 @@ public class Plot {
             ps.setInt(1, this.ID);
             ps.setString(2, (this.ownedBy == null ? "" : this.ownedBy.toString()));
             ps.setString(3, permissions.toString());
-            ps.setString(4, this.assignedBy);
+            ps.setString(4, (this.assignedBy == null ? "null" : this.assignedBy));
             ps.setTimestamp(5, Timestamp.valueOf(this.ownedUntilDate));
             ps.setString(6, this.floorMaterial + ":" + this.floorData);
             ps.setString(7, this.borderMaterial + ":" + this.borderData);
@@ -670,7 +670,7 @@ public class Plot {
              )) {
             ps.setString(1, (this.ownedBy == null ? "" : this.ownedBy.toString()));
             ps.setString(2, permissions.toString());
-            ps.setString(3, this.assignedBy);
+            ps.setString(3, (this.assignedBy == null ? "null" : this.assignedBy));
             ps.setTimestamp(4, Timestamp.valueOf(this.ownedUntilDate));
             ps.setString(5, this.floorMaterial + ":" + this.floorData);
             ps.setString(6, this.borderMaterial + ":" + this.borderData);
