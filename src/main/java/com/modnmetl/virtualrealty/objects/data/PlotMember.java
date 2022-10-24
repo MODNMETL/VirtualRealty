@@ -11,7 +11,11 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import org.bukkit.GameMode;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -109,10 +113,21 @@ public class PlotMember {
         for (ManagementPermission permission : this.managementPermissions) {
             managementPermissions.append(permission.name()).append("¦");
         }
-        Database.getInstance().getStatement().execute("INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName +
-                "` (`uuid`, `plot`, `selectedGameMode`, `permissions`, `managementPermissions`) " +
-                "VALUES ('" + this.uuid.toString() + "', '" + this.plot.getID() + "', '" + this.getSelectedGameMode().name() + "', '" + permissions + "', '" + managementPermissions
-                + "')");
+        try (Connection conn = Database.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName +
+                             "` (`uuid`, `plot`, `selectedGameMode`, `permissions`, `managementPermissions`) " +
+                             "VALUES (?, ?, ?, ?, ?)"
+             )) {
+            ps.setString(1, this.uuid.toString());
+            ps.setInt(2, this.plot.getID());
+            ps.setString(3, this.getSelectedGameMode().name());
+            ps.setString(4, permissions.toString());
+            ps.setString(5, managementPermissions.toString());
+            ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @SneakyThrows
@@ -125,17 +140,39 @@ public class PlotMember {
         for (ManagementPermission permission : this.managementPermissions) {
             managementPermissions.append(permission.name()).append("¦");
         }
-        Database.getInstance().getStatement().execute("UPDATE `" +
-                VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName +
-                "` SET `permissions`='" + permissions + "'," +
-                "`managementPermissions`='" + managementPermissions + "'," +
-                "`selectedGameMode`='" + selectedGameMode.name() + "'" +
-                " WHERE `uuid`='" + this.uuid.toString() + "' AND `plot`='" + this.plot.getID() + "'");
+        try (Connection conn = Database.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE `" +
+                             VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName +
+                             "` SET `permissions`= ?," +
+                             "`managementPermissions`= ?," +
+                             "`selectedGameMode`= ?" +
+                             " WHERE `uuid`= ? AND `plot`= ?"
+             )) {
+            ps.setString(1, permissions.toString());
+            ps.setString(2, managementPermissions.toString());
+            ps.setString(3, selectedGameMode.name());
+            ps.setString(4, this.uuid.toString());
+            ps.setInt(5, this.plot.getID());
+            ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @SneakyThrows
     public void delete() {
-        Database.getInstance().getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName + "` WHERE `uuid` = '" + this.uuid + "' AND `plot`=" + plot.getID() + ";");
+        try (Connection conn = Database.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName + "`" +
+                             " WHERE `uuid` = ? AND `plot` = ?"
+             )) {
+            ps.setString(1, this.uuid.toString());
+            ps.setInt(2, plot.getID());
+            ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

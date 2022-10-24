@@ -115,19 +115,6 @@ public abstract class SubCommand {
         }
     }
 
-    public boolean canCreateInWorld(Player player) {
-        switch (WorldsSetting.valueOf(VirtualRealty.getPluginConfiguration().worldsSetting.toUpperCase())) {
-            case ALL:
-                break;
-            case INCLUDED:
-                if (VirtualRealty.getPluginConfiguration().getWorldsList().stream().noneMatch(s -> player.getWorld().getName().equalsIgnoreCase(s))) return false;
-                break;
-            case EXCLUDED:
-                if (VirtualRealty.getPluginConfiguration().getWorldsList().stream().anyMatch(s -> player.getWorld().getName().equalsIgnoreCase(s))) return false;
-        }
-        return true;
-    }
-
     public boolean isBypass() {
         return this.bypass;
     }

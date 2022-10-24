@@ -27,7 +27,6 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.material.Crops;
 import org.bukkit.permissions.Permission;
 
 import java.util.ArrayList;
@@ -776,8 +775,9 @@ public class PlotProtectionListener extends VirtualListener {
     @EventHandler
     public void onFireSpread(BlockSpreadEvent e) {
         Plot plot = PlotManager.getBorderedPlot(e.getNewState().getLocation());
-        if (plot != null)
-            e.setCancelled(true);
+        if (!(plot != null && (e.getSource().getType() == Material.FIRE && (e.getSource().getType() == e.getNewState().getType() || e.getNewState().getType() == Material.AIR)))) return;
+        e.setCancelled(true);
+        VirtualRealty.debug("Cancelled " + e.getClass().getSimpleName() + " [Fire Spread]: " + e.getSource().getLocation());
     }
 
     @EventHandler
@@ -787,9 +787,8 @@ public class PlotProtectionListener extends VirtualListener {
             Plot toPlot = PlotManager.getPlot(e.getBlock().getLocation());
             if (toPlot == null) return;
             if (fromPlot != null) {
-                if (toPlot.getID() != fromPlot.getID()) {
+                if (toPlot.getID() != fromPlot.getID())
                     e.setCancelled(true);
-                }
             } else {
                 e.setCancelled(true);
             }

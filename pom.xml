@@ -6,7 +6,7 @@
 
     <groupId>com.modnmetl</groupId>
     <artifactId>virtualrealty</artifactId>
-    <version>2.4.0</version>
+    <version>2.5.0</version>
     <packaging>jar</packaging>
 
     <description>A plot creation and management plugin for Minecraft</description>

@@ -19,7 +19,6 @@ import com.modnmetl.virtualrealty.listeners.stake.ConfirmationListener;
 import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.MetricsManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
-import com.modnmetl.virtualrealty.managers.PlotMemberManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.registry.VirtualPlaceholders;
 import com.modnmetl.virtualrealty.sql.Database;
@@ -30,12 +29,10 @@ import com.modnmetl.virtualrealty.utils.UpdateChecker;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.server.v1_13_R2.MinecraftServer;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -161,7 +158,7 @@ public final class VirtualRealty extends JavaPlugin {
             return;
         }
         PlotManager.loadPlots();
-        PlotMemberManager.loadMembers();
+        PlotManager.loadMembers();
         if (pluginConfiguration.dynmapMarkers) {
             dynmapManager = new DynmapManager(this);
             dynmapManager.registerDynmap();

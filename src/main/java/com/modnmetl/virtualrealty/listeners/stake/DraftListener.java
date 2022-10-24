@@ -16,7 +16,6 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +66,7 @@ public class DraftListener extends VirtualListener {
         player.getInventory().addItem(DRAFT_MAP.get(player).getValue().getKey().getItemStack());
         DRAFT_MAP.get(player).getKey().removeGrid();
         DRAFT_MAP.remove(player);
-        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().draftModeDisabledDueToDeath);
+        player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().claimModeDisabledDueToDeath);
     }
 
     @EventHandler
@@ -81,7 +80,7 @@ public class DraftListener extends VirtualListener {
         }
         if (itemInHand.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD) && (new NBTItem(itemInHand)).hasKey("vrplot_item")) {
             e.setCancelled(true);
-            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantPlaceDraftItems);
+            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantPlaceClaimItems);
         }
     }
 

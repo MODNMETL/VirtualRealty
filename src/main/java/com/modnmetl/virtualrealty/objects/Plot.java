@@ -24,9 +24,7 @@ import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -617,12 +615,33 @@ public class Plot {
         for (RegionPermission permission : this.nonMemberPermissions) {
             permissions.append(permission.name()).append("¦");
         }
-        Database.getInstance().getStatement().execute("INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
-                "` (`ID`, `ownedBy`, `nonMemberPermissions`, `assignedBy`, `ownedUntilDate`, `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`, `createdLocation`, `created`, `modified`, `selectedGameMode`) " +
-                "VALUES ('" + this.ID + "', '" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "', '" + permissions + "', '" + this.assignedBy + "', '" + Timestamp.valueOf(this.ownedUntilDate) + "', '" +
-                this.floorMaterial + ":" + this.floorData + "', '" + this.borderMaterial + ":" + this.borderData + "', '" + this.plotSize + "', '" + this.length + "', '" + this.width + "', '" +
-                this.height + "', '" + serializedLocation + "', '" + Timestamp.from(Instant.now()) + "', '" + Timestamp.from(Instant.now()) + "', '" + this.selectedGameMode.name()
-                + "')");
+        try (Connection conn = Database.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
+                             "` (`ID`, `ownedBy`, `nonMemberPermissions`, `assignedBy`, `ownedUntilDate`," +
+                             " `floorMaterial`, `borderMaterial`, `plotSize`, `length`, `width`, `height`," +
+                             " `createdLocation`, `created`, `modified`, `selectedGameMode`) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             )) {
+            ps.setInt(1, this.ID);
+            ps.setString(2, (this.ownedBy == null ? "" : this.ownedBy.toString()));
+            ps.setString(3, permissions.toString());
+            ps.setString(4, this.assignedBy);
+            ps.setTimestamp(5, Timestamp.valueOf(this.ownedUntilDate));
+            ps.setString(6, this.floorMaterial + ":" + this.floorData);
+            ps.setString(7, this.borderMaterial + ":" + this.borderData);
+            ps.setString(8, this.plotSize.toString());
+            ps.setInt(9, this.length);
+            ps.setInt(10, this.width);
+            ps.setInt(11, this.height);
+            ps.setString(12, serializedLocation);
+            ps.setTimestamp(13, Timestamp.from(Instant.now()));
+            ps.setTimestamp(14, Timestamp.from(Instant.now()));
+            ps.setString(15, this.selectedGameMode.name());
+            ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @SneakyThrows
@@ -631,21 +650,41 @@ public class Plot {
         for (RegionPermission permission : this.nonMemberPermissions) {
             permissions.append(permission.name()).append("¦");
         }
-        Database.getInstance().getStatement().execute("UPDATE `" +
-                VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
-                "` SET `ownedBy`='" + (this.ownedBy == null ? "" : this.ownedBy.toString()) + "'," +
-                " `nonMemberPermissions`='" + permissions + "'," +
-                " `assignedBy`='" + this.assignedBy + "'," +
-                " `ownedUntilDate`='" + Timestamp.valueOf(this.ownedUntilDate) + "'," +
-                " `floorMaterial`='" + this.floorMaterial + ":" + this.floorData + "'," +
-                " `borderMaterial`='" + this.borderMaterial + ":" + this.borderData + "'," +
-                " `plotSize`='" + this.plotSize + "'," +
-                " `length`='" + this.length + "'," +
-                " `width`='" + this.width + "'," +
-                " `height`='" + this.height + "'," +
-                " `modified`='" + (this.modified != null ? Timestamp.from(this.modified) : Timestamp.from(Instant.now())) + "'," +
-                " `selectedGameMode`='" + this.selectedGameMode.name() + "'" +
-                " WHERE `ID`='" + this.ID + "'");
+        try (Connection conn = Database.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE `" +
+                             VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
+                             "` SET `ownedBy`= ?," +
+                             " `nonMemberPermissions`= ?," +
+                             " `assignedBy`= ?," +
+                             " `ownedUntilDate`= ?," +
+                             " `floorMaterial`= ?," +
+                             " `borderMaterial`= ?," +
+                             " `plotSize`= ?," +
+                             " `length`= ?," +
+                             " `width`= ?," +
+                             " `height`= ?," +
+                             " `modified`= ?," +
+                             " `selectedGameMode`= ?" +
+                             " WHERE `ID`= ?"
+             )) {
+            ps.setString(1, (this.ownedBy == null ? "" : this.ownedBy.toString()));
+            ps.setString(2, permissions.toString());
+            ps.setString(3, this.assignedBy);
+            ps.setTimestamp(4, Timestamp.valueOf(this.ownedUntilDate));
+            ps.setString(5, this.floorMaterial + ":" + this.floorData);
+            ps.setString(6, this.borderMaterial + ":" + this.borderData);
+            ps.setString(7, this.plotSize.toString());
+            ps.setInt(8, this.length);
+            ps.setInt(9, this.width);
+            ps.setInt(10, this.height);
+            ps.setTimestamp(11, (this.modified != null ? Timestamp.from(this.modified) : Timestamp.from(Instant.now())));
+            ps.setString(12, this.selectedGameMode.name());
+            ps.setInt(13, this.ID);
+            ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void remove(CommandSender sender) {
@@ -663,9 +702,13 @@ public class Plot {
         if (VirtualRealty.getDynmapManager() != null) {
             DynmapManager.removeDynMapMarker(this);
         }
-        try {
-            Database.getInstance().getStatement().execute("DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = '" + ID + "';");
-        } catch (SQLException e) {
+        try (Connection conn = Database.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "DELETE FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` WHERE `ID` = ?"
+             )) {
+            ps.setInt(1, this.ID);
+            ps.execute();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         PlotManager.removePlotFromList(this);

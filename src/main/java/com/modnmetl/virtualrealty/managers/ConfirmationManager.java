@@ -13,6 +13,10 @@ public class ConfirmationManager {
     @Getter
     public static final List<Confirmation> confirmations = new ArrayList<>();
 
+    public static boolean doesConfirmationExist(ConfirmationType confirmationType, UUID player) {
+        return confirmations.stream().anyMatch(confirmation -> confirmation.getConfirmationType() == confirmationType && confirmation.getSender().getUniqueId().equals(player));
+    }
+
     public static void removeConfirmations(int plotID, ConfirmationType confirmationType) {
         confirmations.removeIf(confirmation -> confirmation.getPlotID() == plotID && confirmation.getConfirmationType() == confirmationType);
     }

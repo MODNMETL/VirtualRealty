@@ -1,16 +1,20 @@
 package com.modnmetl.virtualrealty.managers;
 
 import com.modnmetl.virtualrealty.enums.PlotSize;
+import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import com.modnmetl.virtualrealty.objects.math.BlockVector2;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.math.BlockVector3;
 import com.modnmetl.virtualrealty.sql.Database;
+import lombok.Data;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -21,14 +25,21 @@ public class PlotManager {
     private static final Set<Plot> plots = new LinkedHashSet<>();
 
     public static void loadPlots() {
-        plots.clear();
-        try {
-            ResultSet rs = Database.getInstance().getStatement().executeQuery("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "`");
+        try (Connection conn = Database.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "`"); ResultSet rs = ps.executeQuery()) {
+            plots.clear();
             while (rs.next()) {
                 plots.add(new Plot(rs));
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadMembers() {
+        try (Connection conn = Database.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName + "`"); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) new PlotMember(rs);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
