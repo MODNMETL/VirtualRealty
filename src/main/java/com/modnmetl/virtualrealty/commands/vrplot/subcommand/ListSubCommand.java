@@ -43,7 +43,7 @@ public class ListSubCommand extends SubCommand {
             LocalDateTime localDateTime = plot.getOwnedUntilDate();
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             StringBuilder ownedBy = new StringBuilder();
-            ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : VirtualRealty.getMessages().available));
+            ownedBy.append((plot.getOwnedBy() != null ? ((Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName()) : VirtualRealty.getMessages().available));
             boolean isOwned = !ownedBy.toString().equals(VirtualRealty.getMessages().available);
             for (int i = ownedBy.length(); i < 16; i++) {
                 ownedBy.append(" ");

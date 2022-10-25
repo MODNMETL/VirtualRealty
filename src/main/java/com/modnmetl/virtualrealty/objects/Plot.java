@@ -103,9 +103,14 @@ public class Plot {
         this.assignedBy = rs.getString("assignedBy").equalsIgnoreCase("null") ? null : rs.getString("assignedBy");
         DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder().parseCaseInsensitive().append(DateTimeFormatter.ISO_LOCAL_DATE).appendLiteral(' ').append(DateTimeFormatter.ISO_LOCAL_TIME).toFormatter();
         if (VirtualRealty.getPluginConfiguration().dataModel == PluginConfiguration.DataModel.SQLITE) {
-            this.ownedUntilDate = LocalDateTime.parse(rs.getString("ownedUntilDate"), dateTimeFormatter);
-            if (rs.getString("created") != null)
-                this.createdAt = LocalDateTime.parse(rs.getString("created"), dateTimeFormatter);
+            this.ownedUntilDate = rs.getTimestamp("ownedUntilDate").toLocalDateTime();
+            if (rs.getString("created") != null) {
+                try {
+                    this.createdAt = rs.getTimestamp("created").toLocalDateTime();
+                } catch (Exception ignored) {
+                    this.createdAt = LocalDateTime.parse(rs.getString("created"), dateTimeFormatter);
+                }
+            }
         } else {
             this.ownedUntilDate = rs.getTimestamp("ownedUntilDate").toLocalDateTime();
             if (rs.getTimestamp("created") != null)

@@ -66,6 +66,7 @@ public class PlayerActionListener extends VirtualListener {
         if (!player.isOp()) return;
         if (!(e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) return;
         if (!DraftListener.DRAFT_MAP.containsKey(player)) return;
+        e.setCancelled(true);
         GridStructure gridStructure = DraftListener.DRAFT_MAP.get(player).getKey();
         PlotItem plotItem =  DraftListener.DRAFT_MAP.get(player).getValue().getKey();
         Cuboid cuboid = RegionUtil.getRegion(gridStructure.getPreviewLocation(), Direction.byYaw(gridStructure.getPreviewLocation().getYaw()), plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth());
@@ -254,6 +255,7 @@ public class PlayerActionListener extends VirtualListener {
         if (!player.isOp()) return;
         if (!(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
         if (DraftListener.DRAFT_MAP.containsKey(player)) {
+            e.setCancelled(true);
             player.getInventory().remove(DraftListener.DRAFT_MAP.get(player).getValue().getValue().getItemStack());
             player.getInventory().addItem(DraftListener.DRAFT_MAP.get(player).getValue().getKey().getItemStack());
             DraftListener.DRAFT_MAP.get(player).getKey().removeGrid();
@@ -278,6 +280,7 @@ public class PlayerActionListener extends VirtualListener {
             //player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notHoldingPlotClaim);
             return;
         }
+        e.setCancelled(true);
         PlotItem plotItem = PlotItem.fromItemStack(claimItem);
         Plot plot = PlotManager.getPlot(player.getLocation());
         String replacement = null;

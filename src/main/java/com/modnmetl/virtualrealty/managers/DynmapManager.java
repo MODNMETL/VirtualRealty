@@ -116,7 +116,6 @@ public class DynmapManager {
         marker.setFillStyle(opacity, color);
         marker.setLineStyle(2, 0.8, 0x474747);
         marker.setMarkerSet(VirtualRealty.getDynmapManager().markerset);
-        VirtualRealty.debug("Updated dynmap marker #" + plot.getID());
     }
 
     public static void removeDynMapMarker(Plot plot) {

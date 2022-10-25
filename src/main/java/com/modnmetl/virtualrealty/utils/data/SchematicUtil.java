@@ -92,7 +92,9 @@ public class SchematicUtil {
                     e.printStackTrace();
                 }
             } else {
-                oldBlock.setBlockData(Bukkit.createBlockData("minecraft:" + block.getBlockData()), false);
+                oldBlock.setBlockData(
+                        Bukkit.createBlockData("minecraft:" +
+                                block.getBlockData()), false);
             }
         }
         VirtualRealty.debug("Pasted " + blocks.size() + " blocks in: " + (System.currentTimeMillis() - time) + " ms");
