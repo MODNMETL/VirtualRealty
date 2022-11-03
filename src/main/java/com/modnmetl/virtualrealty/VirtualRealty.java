@@ -56,7 +56,9 @@ public final class VirtualRealty extends JavaPlugin {
     @Getter
     private static VirtualRealty instance;
     @Getter
-    public MetricsManager metricsManager;
+    private MetricsManager metricsManager;
+    @Getter
+    private PlotManager plotManager;
 
     @Getter
     public ConfigurationFactory configFactory = new ConfigurationFactory();
@@ -77,6 +79,7 @@ public final class VirtualRealty extends JavaPlugin {
     private static Object premium;
     public static boolean upToDate;
     public static String latestVersion;
+    public static boolean developmentBuild;
 
     //FILES
     @Getter
@@ -94,8 +97,8 @@ public final class VirtualRealty extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        classLoader = getClassLoader();
         instance = this;
+        classLoader = getClassLoader();
         try {
             jarFiles.add(new JarFile(getFile()));
         } catch (IOException e) {
@@ -108,47 +111,32 @@ public final class VirtualRealty extends JavaPlugin {
         plotsSchemaFolder = new File(plotsFolder.getAbsolutePath(), "primary-terrain");
         plotsSchemaFolder.mkdirs();
         reloadConfigs();
-        this.locale = new Locale(pluginConfiguration.locale.split("_")[0], pluginConfiguration.locale.split("_")[1]);
+        this.locale = new Locale(getPluginConfiguration().locale.split("_")[0], getPluginConfiguration().locale.split("_")[1]);
         configureMessages();
-        if (ServerVersion.valueOf(pluginConfiguration.initServerVersion) == ServerVersion.LEGACY && currentServerVersion == ServerVersion.MODERN) {
+        if (ServerVersion.valueOf(getPluginConfiguration().initServerVersion) == ServerVersion.LEGACY && currentServerVersion == ServerVersion.MODERN) {
             this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
-            this.getLogger().severe(" You cannot migrate existing legacy plots (1.8-1.12) to a non-legacy server version (1.13 and higher)");
-            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
-            this.getPluginLoader().disablePlugin(this);
-            return;
-        }
-        if (ServerVersion.valueOf(pluginConfiguration.initServerVersion) == ServerVersion.MODERN && currentServerVersion == ServerVersion.LEGACY) {
-            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
-            this.getLogger().severe(" You cannot migrate existing non-legacy plots (1.13 and higher) to a legacy server version (1.8-1.12)");
+            this.getLogger().severe(" You cannot migrate existing legacy plots (<1.13) to a non-legacy server version (1.13 and higher)");
             this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
             this.getPluginLoader().disablePlugin(this);
             return;
         }
-        String[] updateCheck = UpdateChecker.getUpdate();
-        if (updateCheck != null) {
-            if (!updateCheck[0].equals(this.getDescription().getVersion())) {
-                upToDate = false;
-                latestVersion = updateCheck[0];
-                this.getLogger().info("A newer version is available!");
-                this.getLogger().info("The current version you use: " + this.getDescription().getVersion());
-                this.getLogger().info("Latest version available: " + updateCheck[0]);
-                this.getLogger().info("Download link: https://www.spigotmc.org/resources/virtual-realty.95599/");
-            } else {
-                upToDate = true;
-                latestVersion = this.getDescription().getVersion();
-                this.getLogger().info("Plugin is up to date!");
-            }
+        if (ServerVersion.valueOf(getPluginConfiguration().initServerVersion) == ServerVersion.MODERN && currentServerVersion == ServerVersion.LEGACY) {
+            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
+            this.getLogger().severe(" You cannot migrate existing non-legacy plots (1.13 and higher) to a legacy server version (<1.13)");
+            this.getLogger().severe(" » ------------------------------------------------------------------------------------------------ « ");
+            this.getPluginLoader().disablePlugin(this);
+            return;
         }
+        checkUpdates();
         if (!pluginConfiguration.license.key.isEmpty() && !pluginConfiguration.license.email.isEmpty()) {
             try {
-                new Loader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion(), getLoader(), VirtualRealty.getPluginConfiguration().loaderDebugMode);
+                new Loader(pluginConfiguration.license.key, pluginConfiguration.license.email, this.getDescription().getVersion(), getLoader(), pluginConfiguration.loaderDebugMode);
             } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                 e.printStackTrace();
                 getLogger().log(Level.WARNING, "Load of premium features failed.");
             }
         }
-        metricsManager = new MetricsManager(this, 14066);
-        metricsManager.registerMetrics();
+        loadMetrics();
         loadSizesConfiguration();
         try {
             Database.connectToDatabase(databaseFile);
@@ -157,19 +145,12 @@ public final class VirtualRealty extends JavaPlugin {
             this.getPluginLoader().disablePlugin(this);
             return;
         }
-        PlotManager.loadPlots();
-        PlotManager.loadMembers();
-        if (pluginConfiguration.dynmapMarkers) {
-            dynmapManager = new DynmapManager(this);
-            dynmapManager.registerDynmap();
-        }
+        loadPlotsData();
+        loadDynMapHook();
         registerCommands();
-        configureCommands();
+        loadCommandsConfiguration();
         registerListeners();
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            new VirtualPlaceholders(this).register();
-            debug("Registered new placeholders");
-        }
+        registerPlaceholders();
         debug("Server version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
     }
 
@@ -186,7 +167,7 @@ public final class VirtualRealty extends JavaPlugin {
             gridStructureEntryEntry.getKey().removeGrid();
         });
         DraftListener.DRAFT_MAP.clear();
-        PlotManager.getPlots().forEach(Plot::update);
+        plotManager.getPlots().forEach(Plot::update);
         tasks.forEach(BukkitTask::cancel);
         try {
             DataSource dataSource;
@@ -203,8 +184,93 @@ public final class VirtualRealty extends JavaPlugin {
         FileUtils.deleteQuietly(loaderFile);
     }
 
-    public static void debug(String message) {
-        if (VirtualRealty.getPluginConfiguration().debugMode) VirtualRealty.getInstance().getLogger().warning("DEBUG > " + message);
+    public void registerPlaceholders() {
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
+        new VirtualPlaceholders(this).register();
+        debug("Registered new placeholders");
+    }
+
+    public void checkUpdates() {
+        String[] currentVersionNumbers = this.getDescription().getVersion().split("\\.");
+        String[] updateCheck = UpdateChecker.getUpdate();
+        if (updateCheck != null) {
+            String updateVersion = updateCheck[0];
+            String[] cloudVersionNumbers = updateVersion.split("\\.");
+            int currentMajor = Integer.parseInt(currentVersionNumbers[0]);
+            int currentMinor = Integer.parseInt(currentVersionNumbers[1]);
+            int currentPatch = Integer.parseInt(currentVersionNumbers[2]);
+
+            int updateMajor = Integer.parseInt(cloudVersionNumbers[0]);
+            int updateMinor = Integer.parseInt(cloudVersionNumbers[1]);
+            int updatePatch = Integer.parseInt(cloudVersionNumbers[2]);
+
+            boolean patchUpdate = updatePatch > currentPatch;
+            boolean minorUpdate = updateMinor > currentMinor;
+            boolean majorUpdate = updateMajor > currentMajor;
+
+            boolean majorDevelopment = currentMajor > updateMajor;
+            boolean minorDevelopment = currentMinor > updateMinor;
+
+            if (currentMajor == updateMajor && currentMinor == updateMinor && currentPatch == updatePatch) {
+                upToDate = true;
+                latestVersion = this.getDescription().getVersion();
+                this.getLogger().info("Plugin is up to date!");
+                return;
+            }
+            if (majorUpdate) {
+                registerUpdate(updateVersion, false);
+            } else {
+                if (minorUpdate) {
+                    if (majorDevelopment) {
+                        registerUpdate(updateVersion, true);
+                        return;
+                    }
+                    registerUpdate(updateVersion, false);
+                } else {
+                    if (patchUpdate) {
+                        if (majorDevelopment || minorDevelopment) {
+                            registerUpdate(updateVersion, true);
+                            return;
+                        }
+                        registerUpdate(updateVersion, false);
+                    } else {
+                        registerUpdate(updateVersion, true);
+                    }
+                }
+            }
+        }
+    }
+
+    private void registerUpdate(String version, boolean development) {
+        upToDate = false;
+        latestVersion = version;
+        if (development) {
+            developmentBuild = true;
+            this.getLogger().warning("You are running a development build!");
+            return;
+        }
+        this.getLogger().info("A newer version is available!");
+        this.getLogger().info("The current version you use: " + this.getDescription().getVersion());
+        this.getLogger().info("Latest version available: " + version);
+        this.getLogger().info("Download link: https://www.spigotmc.org/resources/virtual-realty.95599/");
+    }
+
+    public void loadPlotsData() {
+        plotManager = new PlotManager(this);
+        plotManager.loadPlots();
+        plotManager.loadMembers();
+    }
+
+    public void loadDynMapHook() {
+        if (getPluginConfiguration().dynmapMarkers) {
+            dynmapManager = new DynmapManager(this);
+            dynmapManager.registerDynmap();
+        }
+    }
+
+    public void loadMetrics() {
+        metricsManager = new MetricsManager(this, 14066);
+        metricsManager.registerMetrics();
     }
 
     public void configureMessages() {
@@ -213,7 +279,7 @@ public final class VirtualRealty extends JavaPlugin {
         configFactory.loadMessagesConfiguration(messagesConfigurationFile);
     }
 
-    public void configureCommands() {
+    public void loadCommandsConfiguration() {
         commandsConfiguration = configFactory.loadCommandsConfiguration(commandsConfigurationFile);
         commandsConfiguration.refreshHelpMessages();
         commandsConfiguration.assignAliases();
@@ -384,6 +450,11 @@ public final class VirtualRealty extends JavaPlugin {
 
     public void setClassLoader(ClassLoader newClassLoader) {
         classLoader = newClassLoader;
+    }
+
+    public static void debug(String message) {
+        if (!VirtualRealty.getPluginConfiguration().debugMode) return;
+        VirtualRealty.getInstance().getLogger().warning("DEBUG > " + message);
     }
 
 }

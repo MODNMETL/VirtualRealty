@@ -79,6 +79,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String unassigned = "§aPlot has been unassigned!";
     public String cantAddYourself = "§cYou can't add yourself to the plot!";
     public String cantKickYourself = "§cYou can't kick yourself from the plot!";
+    public String cantKickOwner = "§cYou can't kick the owner!";
     public String alreadyInMembers = "§cThis player is already one of the plot members!";
     public String standingOnPlot = "§cYou are standing on a plot!";
     public String notStandingOnPlot = "§cYou aren't standing on any plot!";

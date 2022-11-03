@@ -34,7 +34,7 @@ public class MetricsManager {
             int largePlots = 0;
             int customPlots = 0;
             int areas = 0;
-            for (Plot plot : PlotManager.getPlots()) {
+            for (Plot plot : PlotManager.getInstance().getPlots()) {
                 switch (plot.getPlotSize()) {
                     case SMALL: {
                         smallPlots++;

@@ -50,11 +50,15 @@ public class PlayerActionListener extends VirtualListener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                player.sendMessage(VirtualRealty.PREFIX + "§7A new version of VirtualRealty plugin is available. §a[" + VirtualRealty.latestVersion + "]");
-                TextComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aDownload the new version of the plugin here!");
-                textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{ new TextComponent("§a§oClick here to download the update!") }));
-                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.spigotmc.org/resources/virtual-realty.95599/"));
-                player.spigot().sendMessage(textComponent);
+                if (VirtualRealty.developmentBuild) {
+                    player.sendMessage(VirtualRealty.PREFIX + "§6You are running a development build of VirtualRealty plugin. §7[" + VirtualRealty.getInstance().getDescription().getVersion() + "]");
+                } else {
+                    player.sendMessage(VirtualRealty.PREFIX + "§7A new version of VirtualRealty plugin is available. §a[" + VirtualRealty.latestVersion + "]");
+                    TextComponent textComponent = new TextComponent(VirtualRealty.PREFIX + "§aDownload the new version of the plugin here!");
+                    textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick here to download the update!")}));
+                    textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.spigotmc.org/resources/virtual-realty.95599/"));
+                    player.spigot().sendMessage(textComponent);
+                }
             }
         }.runTaskLater(VirtualRealty.getInstance(), 5);
     }
@@ -63,14 +67,13 @@ public class PlayerActionListener extends VirtualListener {
     @EventHandler
     public void onPlotItemStake(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!player.isOp()) return;
         if (!(e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) return;
         if (!DraftListener.DRAFT_MAP.containsKey(player)) return;
         e.setCancelled(true);
         GridStructure gridStructure = DraftListener.DRAFT_MAP.get(player).getKey();
         PlotItem plotItem =  DraftListener.DRAFT_MAP.get(player).getValue().getKey();
         Cuboid cuboid = RegionUtil.getRegion(gridStructure.getPreviewLocation(), Direction.byYaw(gridStructure.getPreviewLocation().getYaw()), plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth());
-        Plot plot = PlotManager.getPlot(gridStructure.getPreviewLocation());
+        Plot plot = PlotManager.getInstance().getPlot(gridStructure.getPreviewLocation());
         if (plot != null) {
             if (plotItem.getPlotSize().equals(plot.getPlotSize())) {
                 if (((plot.isOwnershipExpired() && plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) || plot.getPlotOwner() == null)) {
@@ -112,7 +115,7 @@ public class PlayerActionListener extends VirtualListener {
                             ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
                         }
                     };
-                    ConfirmationManager.confirmations.add(confirmation);
+                    ConfirmationManager.addConfirmation(confirmation);
                     return;
                 } else if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) {
                     if (ConfirmationManager.doesConfirmationExist(ConfirmationType.EXTEND, player.getUniqueId())) {
@@ -156,7 +159,7 @@ public class PlayerActionListener extends VirtualListener {
                             ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
                         }
                     };
-                    ConfirmationManager.confirmations.add(confirmation);
+                    ConfirmationManager.addConfirmation(confirmation);
                     return;
                 }
             }
@@ -190,7 +193,7 @@ public class PlayerActionListener extends VirtualListener {
                 gridStructure.removeGrid();
                 this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                 long timeStart = System.currentTimeMillis();
-                Plot plot = PlotManager.createPlot(gridStructure.getPreviewLocation().subtract(0, 1, 0), plotSize, plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth(), plotItem.isNatural());
+                Plot plot = PlotManager.getInstance().createPlot(gridStructure.getPreviewLocation().subtract(0, 1, 0), plotSize, plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth(), plotItem.isNatural());
                 AbstractMap.SimpleEntry<String, Byte> floorData = new AbstractMap.SimpleEntry<>(item.getString("vrplot_floor_material"), item.getByte("vrplot_floor_data"));
                 AbstractMap.SimpleEntry<String, Byte> borderData = new AbstractMap.SimpleEntry<>(item.getString("vrplot_border_material"), item.getByte("vrplot_border_data"));
                 if (!plotItem.isNatural()) {
@@ -246,13 +249,12 @@ public class PlayerActionListener extends VirtualListener {
                 ConfirmationManager.removeStakeConfirmations(this.getConfirmationType(), this.getSender().getUniqueId());
             }
         };
-        ConfirmationManager.confirmations.add(confirmation);
+        ConfirmationManager.addConfirmation(confirmation);
     }
 
     @EventHandler
     public void onPlotItemDraft(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!player.isOp()) return;
         if (!(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
         if (DraftListener.DRAFT_MAP.containsKey(player)) {
             e.setCancelled(true);
@@ -277,12 +279,11 @@ public class PlayerActionListener extends VirtualListener {
         if (!(claimItem.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD)
                 &&
                 (claimNbtItem = new NBTItem(claimItem)).getString("vrplot_item") != null && claimNbtItem.getString("vrplot_item").equals("CLAIM"))) {
-            //player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notHoldingPlotClaim);
             return;
         }
         e.setCancelled(true);
         PlotItem plotItem = PlotItem.fromItemStack(claimItem);
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         String replacement = null;
         if (plot == null) {
             if (!canCreateInWorld(player)) {
@@ -308,7 +309,16 @@ public class PlayerActionListener extends VirtualListener {
         String finalReplacement = replacement;
         if (plot != null && plotItem.getPlotSize().equals(plot.getPlotSize()) && plot.getPlotSize() != PlotSize.CUSTOM) {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().standingOnPlot);
-            GridStructure previewStructure = new GridStructure((player), plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), player.getWorld(), 0, plot.getCreatedLocation());
+            GridStructure previewStructure = new GridStructure(
+                    player,
+                    plot.getLength(),
+                    plot.getHeight(),
+                    plot.getWidth(),
+                    plot.getID(),
+                    player.getWorld(),
+                    0,
+                    plot.getCreatedLocation()
+            );
             previewStructure.preview(player.getLocation(), true, false);
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().visualBoundaryDisplayed);
             PlotItem draftItem = PlotItem.fromItemStack(claimItem, VItem.DRAFT);
@@ -329,7 +339,16 @@ public class PlayerActionListener extends VirtualListener {
         if (RegionUtil.isCollidingWithAnotherPlot(cuboid)) {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().claimModeCancelledCollision);
             if (!GridStructure.isCuboidGridDisplaying(player, 0)) {
-                new GridStructure(player, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), 0, player.getWorld(), 20 * 6, player.getLocation()).preview(player.getLocation(),true, true);
+                new GridStructure(
+                        player,
+                        plotSize.getLength(),
+                        plotSize.getHeight(),
+                        plotSize.getWidth(),
+                        0,
+                        player.getWorld(),
+                        GridStructure.DISPLAY_TICKS,
+                        player.getLocation()
+                ).preview(player.getLocation(),true, true);
             }
             return;
         }
@@ -337,12 +356,30 @@ public class PlayerActionListener extends VirtualListener {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().claimModeCancelledBedrock);
             GridStructure.isCuboidGridDisplaying(player, 0);
             if (!GridStructure.isCuboidGridDisplaying(player, 0)) {
-                new GridStructure(player, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), 0, player.getWorld(), 20 * 6, player.getLocation()).preview(player.getLocation(),true, true);
+                new GridStructure(
+                        player,
+                        plotSize.getLength(),
+                        plotSize.getHeight(),
+                        plotSize.getWidth(),
+                        0,
+                        player.getWorld(),
+                        GridStructure.DISPLAY_TICKS,
+                        player.getLocation()
+                ).preview(player.getLocation(),true, true);
             }
             return;
         }
         PlotItem draftItem = PlotItem.fromItemStack(claimItem, VItem.DRAFT);
-        GridStructure draftStructure = new GridStructure(player, plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth(), 0, player.getWorld(), 0, player.getLocation());
+        GridStructure draftStructure = new GridStructure(
+                player,
+                plotItem.getLength(),
+                plotItem.getHeight(),
+                plotItem.getWidth(),
+                0,
+                player.getWorld(),
+                0,
+                player.getLocation()
+        );
         DraftListener.DRAFT_MAP.put(player, new AbstractMap.SimpleEntry<>(draftStructure, new AbstractMap.SimpleEntry<>(plotItem, draftItem)));
         inv.remove(claimItem);
         if (VirtualRealty.legacyVersion) {

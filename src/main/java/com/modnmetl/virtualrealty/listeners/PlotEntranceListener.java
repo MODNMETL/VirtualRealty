@@ -34,7 +34,7 @@ public class PlotEntranceListener extends VirtualListener {
         Player player = e.getPlayer();
         Location to = e.getTo();
         if (to == null) return;
-        Plot plot = PlotManager.getPlot(to);
+        Plot plot = PlotManager.getInstance().getPlot(to);
         if (plot != null) {
             OfflinePlayer offlinePlayer;
             String enterPlotString = VirtualRealty.getMessages().enteredAvailablePlot;

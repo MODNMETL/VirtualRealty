@@ -19,12 +19,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+@Data
 public class PlotManager {
 
-    @Getter
-    private static final Set<Plot> plots = new LinkedHashSet<>();
+    private final VirtualRealty plugin;
 
-    public static void loadPlots() {
+    private final Set<Plot> plots;
+
+    private final List<PlotMember> plotMembers;
+
+    public PlotManager(VirtualRealty plugin) {
+        this.plugin = plugin;
+        this.plots = new LinkedHashSet<>();
+        this.plotMembers = new ArrayList<>();
+    }
+
+
+    public void loadPlots() {
         try (Connection conn = Database.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "`"); ResultSet rs = ps.executeQuery()) {
             plots.clear();
             while (rs.next()) {
@@ -35,15 +46,30 @@ public class PlotManager {
         }
     }
 
-    public static void loadMembers() {
+    public void loadMembers() {
         try (Connection conn = Database.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotMembersTableName + "`"); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) new PlotMember(rs);
+            while (rs.next()) {
+                plotMembers.add(new PlotMember(rs));
+            }
+            checkDupes();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static Plot createPlot(Location creationLocation, PlotSize plotSize, int length, int height, int width, boolean natural) {
+    public void checkDupes() {
+        HashMap<UUID, Integer> dupes = new HashMap<>();
+        for (PlotMember plotMember : plotMembers) {
+            if (dupes.containsKey(plotMember.getUuid()) && dupes.get(plotMember.getUuid()) == plotMember.getPlot().getID()) {
+                VirtualRealty.debug("Found duped plot member: " + plotMember.getUuid() + " | " + plotMember.getPlot().getID() + " - Removing..");
+                plotMember.getPlot().removeMember(plotMember);
+            } else {
+                dupes.put(plotMember.getUuid(), plotMember.getPlot().getID());
+            }
+        }
+    }
+
+    public Plot createPlot(Location creationLocation, PlotSize plotSize, int length, int height, int width, boolean natural) {
         Plot plot = new Plot(creationLocation, Material.matchMaterial(VirtualRealty.legacyVersion ? "GRASS" : "GRASS_BLOCK"), Material.matchMaterial(VirtualRealty.legacyVersion ? "STEP" : "STONE_BRICK_SLAB"), plotSize, length, width, height, natural);
         plots.add(plot);
         long time = System.currentTimeMillis();
@@ -52,7 +78,7 @@ public class PlotManager {
         return plot;
     }
 
-    public static Plot getPlot(int ID) {
+    public Plot getPlot(int ID) {
         for (Plot plot : plots) {
             if (plot.getID() == ID) {
                 return plot;
@@ -61,7 +87,7 @@ public class PlotManager {
         return null;
     }
 
-    public static List<Plot> getPlots(String world) {
+    public List<Plot> getPlots(String world) {
         List<Plot> newPlots = new LinkedList<>();
         for (Plot plot : plots) {
             if (plot.getCreatedWorldString().equals(world)) newPlots.add(plot);
@@ -69,7 +95,7 @@ public class PlotManager {
         return newPlots;
     }
 
-    public static HashMap<Integer, Plot> getPlots(UUID owner) {
+    public HashMap<Integer, Plot> getPlots(UUID owner) {
         HashMap<Integer, Plot> plotHashMap = new HashMap<>();
         for (Plot plot : plots) {
             if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(owner)) {
@@ -79,7 +105,7 @@ public class PlotManager {
         return plotHashMap;
     }
 
-    public static HashMap<Integer, Plot> getAccessPlots(UUID player) {
+    public HashMap<Integer, Plot> getAccessPlots(UUID player) {
         HashMap<Integer, Plot> plotHashMap = new HashMap<>();
         for (Plot plot : plots) {
             if (plot.getMember(player) != null || (plot.getOwnedBy() != null && plot.getPlotOwner().getUniqueId() == player)) {
@@ -89,17 +115,17 @@ public class PlotManager {
         return plotHashMap;
     }
 
-    public static int getPlotMinID() {
+    public int getPlotMinID() {
         return plots.isEmpty() ? 0 : plots.stream().findFirst().get().getID();
     }
 
-    public static int getPlotMaxID() {
-        Plot[] plotArray = PlotManager.plots.toArray(new Plot[0]);
+    public int getPlotMaxID() {
+        Plot[] plotArray = plots.toArray(new Plot[0]);
         Plot lastPlot = plotArray[plotArray.length - 1];
         return lastPlot.getID();
     }
 
-    public static List<Plot> getPlayerPlots(UUID owner) {
+    public List<Plot> getPlayerPlots(UUID owner) {
         LinkedList<Plot> playerPlots = new LinkedList<>();
         for (Plot plot : plots) {
             if (plot.getOwnedBy() != null) {
@@ -111,7 +137,7 @@ public class PlotManager {
         return playerPlots;
     }
 
-    public static Plot getPlot(Location location) {
+    public Plot getPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
@@ -122,17 +148,17 @@ public class PlotManager {
         return null;
     }
 
-    public static void removePlotFromList(Plot plot) {
+    public void removePlotFromList(Plot plot) {
         plots.remove(plot);
     }
 
-    public static boolean isLocationInPlot(Location location, Plot plot) {
+    public boolean isLocationInPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
         return region.isIn(newVector, location.getWorld());
     }
 
-    public static Plot getBorderedPlot(Location location) {
+    public Plot getBorderedPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
             Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
@@ -143,10 +169,14 @@ public class PlotManager {
         return null;
     }
 
-    public static boolean isLocationInBorderedPlot(Location location, Plot plot) {
+    public boolean isLocationInBorderedPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
         return region.isIn(newVector, plot.getCreatedWorld());
+    }
+
+    public static PlotManager getInstance() {
+        return VirtualRealty.getInstance().getPlotManager();
     }
 
 }

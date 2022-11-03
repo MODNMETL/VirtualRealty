@@ -40,7 +40,7 @@ public class PlotMember {
     @SneakyThrows
     public PlotMember(ResultSet rs) {
         this.uuid = UUID.fromString(rs.getString("uuid"));
-        Plot plot = PlotManager.getPlot(rs.getInt("plot"));
+        Plot plot = PlotManager.getInstance().getPlot(rs.getInt("plot"));
         this.plot = plot;
         this.selectedGameMode = GameMode.valueOf(rs.getString("selectedGameMode"));
         Set<RegionPermission> plotPermissions = new HashSet<>();

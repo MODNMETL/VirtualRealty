@@ -38,12 +38,9 @@ public class PlotItem {
     private UUID uuid;
 
     public ItemStack getItemStack() {
-        ItemBuilder itemBuilder;
-        if (uuid == null) {
-            itemBuilder = new ItemBuilder(SkullUtil.getSkull("16bb9fb97ba87cb727cd0ff477f769370bea19ccbfafb581629cd5639f2fec2b"));
-        } else {
-            itemBuilder = new ItemBuilder(SkullUtil.getSkull("16bb9fb97ba87cb727cd0ff477f769370bea19ccbfafb581629cd5639f2fec2b", uuid));
-        }
+        ItemBuilder itemBuilder = (uuid == null)
+                ? new ItemBuilder(SkullUtil.getSkull("16bb9fb97ba87cb727cd0ff477f769370bea19ccbfafb581629cd5639f2fec2b"))
+                : new ItemBuilder(SkullUtil.getSkull("16bb9fb97ba87cb727cd0ff477f769370bea19ccbfafb581629cd5639f2fec2b", uuid));
         switch (itemType) {
             case CLAIM: {
                 itemBuilder

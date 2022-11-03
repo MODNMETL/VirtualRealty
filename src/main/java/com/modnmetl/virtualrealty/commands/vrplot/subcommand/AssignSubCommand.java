@@ -62,7 +62,7 @@ public class AssignSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
             return;
         }
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
             return;

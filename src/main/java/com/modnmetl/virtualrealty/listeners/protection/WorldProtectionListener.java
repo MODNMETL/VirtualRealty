@@ -45,7 +45,7 @@ public class WorldProtectionListener extends VirtualListener {
             if (e.getHand() == EquipmentSlot.OFF_HAND) return;
             if (!e.getClickedBlock().getType().isInteractable()) return;
         }
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         try {
@@ -75,7 +75,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (e.getClickedBlock().getType() != Material.CHEST) return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (player.isSneaking() && e.isBlockInHand()) return;
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.CHEST_ACCESS)) return;
@@ -87,7 +87,7 @@ public class WorldProtectionListener extends VirtualListener {
     public void onBlockPlace(BlockPlaceEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getPlot(e.getBlockPlaced().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getBlockPlaced().getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.PLACE)) return;
@@ -99,7 +99,7 @@ public class WorldProtectionListener extends VirtualListener {
     public void onBlockBreak(BlockBreakEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getPlot(e.getBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getBlock().getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.BREAK)) return;
@@ -113,7 +113,7 @@ public class WorldProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         if (player == null) return;
         if (e.getIgnitingBlock() == null) return;
-        Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getIgnitingBlock().getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.ITEM_USE)) return;
@@ -124,7 +124,7 @@ public class WorldProtectionListener extends VirtualListener {
     @EventHandler(priority = EventPriority.LOW)
     public void onArmorStandChange(PlayerArmorStandManipulateEvent e) {
         if (e.isCancelled()) return;
-        Plot plot = PlotManager.getPlot(e.getPlayer().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getPlayer().getLocation());
         Player player = e.getPlayer();
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
@@ -138,7 +138,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         if (!(e.getRemover() instanceof Player)) return;
         Player player = (Player) e.getRemover();
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.ENTITY_DAMAGE)) return;
@@ -151,7 +151,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         if (!e.getRightClicked().getType().equals(EntityType.ITEM_FRAME)) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (plot != null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.ITEM_USE)) return;
@@ -165,7 +165,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         if (!(e.getDamager() instanceof Player)) return;
         Player player = (Player) e.getDamager();
-        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getEntity().getLocation());
         if (plot == null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.ENTITY_DAMAGE)) return;
@@ -179,7 +179,7 @@ public class WorldProtectionListener extends VirtualListener {
         if (!((e.getDamager() instanceof Projectile) && ((Projectile) e.getDamager()).getShooter() instanceof Player))
             return;
         Player player = ((Player) ((Projectile) e.getDamager()).getShooter());
-        Plot plot = PlotManager.getBorderedPlot(e.getDamager().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getDamager().getLocation());
         if (plot == null) return;
         if (hasPermission(player, WORLD_BUILD)) return;
         if (WorldUtil.hasPermission(RegionPermission.ENTITY_DAMAGE)) return;

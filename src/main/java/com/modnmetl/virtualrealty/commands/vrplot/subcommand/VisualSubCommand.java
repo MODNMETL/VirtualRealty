@@ -26,7 +26,7 @@ public class VisualSubCommand extends SubCommand {
         assertPlayer();
         assertPermission();
         Player player = ((Player) sender);
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notStandingOnPlot);
             return;
@@ -35,7 +35,16 @@ public class VisualSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().visualBoundaryActive);
             return;
         }
-        GridStructure previewStructure = new GridStructure(((Player) sender), plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation());
+        GridStructure previewStructure = new GridStructure(
+                ((Player) sender),
+                plot.getLength(),
+                plot.getHeight(),
+                plot.getWidth(),
+                plot.getID(),
+                ((Player) sender).getWorld(),
+                GridStructure.DISPLAY_TICKS,
+                plot.getCreatedLocation()
+        );
         previewStructure.preview(player.getLocation(), true, false);
         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().visualBoundaryDisplayed);
     }

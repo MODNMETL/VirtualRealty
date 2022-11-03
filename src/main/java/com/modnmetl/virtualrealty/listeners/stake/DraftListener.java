@@ -72,15 +72,9 @@ public class DraftListener extends VirtualListener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
         Player player = e.getPlayer();
-        ItemStack itemInHand;
-        if (VirtualRealty.legacyVersion) {
-            itemInHand = player.getItemInHand();
-        } else {
-            itemInHand = player.getInventory().getItemInMainHand();
-        }
+        ItemStack itemInHand = VirtualRealty.legacyVersion ? player.getItemInHand() : player.getInventory().getItemInMainHand();
         if (itemInHand.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD) && (new NBTItem(itemInHand)).hasKey("vrplot_item")) {
             e.setCancelled(true);
-            player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantPlaceClaimItems);
         }
     }
 

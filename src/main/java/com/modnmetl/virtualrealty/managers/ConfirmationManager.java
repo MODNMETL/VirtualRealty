@@ -11,7 +11,11 @@ import java.util.UUID;
 public class ConfirmationManager {
 
     @Getter
-    public static final List<Confirmation> confirmations = new ArrayList<>();
+    private static final List<Confirmation> confirmations = new ArrayList<>();
+
+    public static void addConfirmation(Confirmation confirmation) {
+        confirmations.add(confirmation);
+    }
 
     public static boolean doesConfirmationExist(ConfirmationType confirmationType, UUID player) {
         return confirmations.stream().anyMatch(confirmation -> confirmation.getConfirmationType() == confirmationType && confirmation.getSender().getUniqueId().equals(player));

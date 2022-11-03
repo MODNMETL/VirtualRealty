@@ -23,6 +23,8 @@ import java.util.*;
 @Data
 public class GridStructure {
 
+    public static final long DISPLAY_TICKS = 20 * 10;
+
     public static final HashMap<UUID, Set<Integer>> ACTIVE_GRIDS = new HashMap<>();
 
     private final Player viewer;
@@ -69,7 +71,7 @@ public class GridStructure {
         if (!VirtualRealty.legacyVersion)
             maxDistance = viewer.getClientViewDistance() * 16;
         changedBlocks.clear();
-        Plot plot = PlotManager.getPlot(cuboidId);
+        Plot plot = PlotManager.getInstance().getPlot(cuboidId);
         LinkedList<Block> blocks = new LinkedList<>();
         LinkedList<Block> borderBlocks = new LinkedList<>();
         Direction direction = Direction.byYaw(previewLocation.getYaw());
@@ -109,10 +111,7 @@ public class GridStructure {
             default:
                 throw new IllegalStateException("Unexpected value: " + direction);
         }
-        Location distanceCalculateLoc = previewLocation;
-        if (playerPreviewLocation != null) {
-            distanceCalculateLoc = playerPreviewLocation;
-        }
+        Location distanceCalculateLoc = playerPreviewLocation != null ? playerPreviewLocation : previewLocation;
         for (int x = minX - 1; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 if (x == minX - 1 || z == minZ || x == maxX - 1 || z == maxZ - 1) {
@@ -213,27 +212,35 @@ public class GridStructure {
         for (VirtualBlock changedBlock : changedBlocks) {
             Block changedBukkitBlock = changedBlock.getBlock(getCreatedWorld());
             if (VirtualRealty.legacyVersion) {
-                viewer.sendBlockChange(changedBukkitBlock.getLocation(), changedBukkitBlock.getType(), changedBukkitBlock.getData());
+                Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+                    viewer.sendBlockChange(changedBukkitBlock.getLocation(), changedBukkitBlock.getType(), changedBukkitBlock.getData());
+                });
             } else {
-                viewer.sendBlockChange(changedBukkitBlock.getLocation(), changedBukkitBlock.getBlockData());
+                Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+                    viewer.sendBlockChange(changedBukkitBlock.getLocation(), changedBukkitBlock.getBlockData());
+                });
             }
         }
     }
 
     private void swapBlocks(LinkedList<Block> blocks, boolean collidingArea) {
-        Plot plot = PlotManager.getPlot(previewLocation);
+        Plot plot = PlotManager.getInstance().getPlot(previewLocation);
         for (Block block : blocks) {
             Location blockLocation = block.getLocation();
             VirtualBlock convertedBlock;
             if (VirtualRealty.legacyVersion) {
                 convertedBlock = new VirtualBlock(block.getX(), block.getY(), block.getZ(), block.getType().getId(), block.getData());
-                viewer.sendBlockChange(blockLocation, Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS")), ((plot != null && plot.getID() == cuboidId) ? (byte)1 : collidingArea ? (byte)14 : (byte)5));
+                Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+                    viewer.sendBlockChange(blockLocation, Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS")), ((plot != null && plot.getID() == cuboidId) ? (byte) 1 : collidingArea ? (byte) 14 : (byte) 5));
+                });
             } else {
                 convertedBlock = new VirtualBlock(block.getX(), block.getY(), block.getZ(), block.getBlockData().getAsString());
                 BlockData greenBlockData = Material.LIME_STAINED_GLASS.createBlockData();
                 BlockData redBlockData = Material.RED_STAINED_GLASS.createBlockData();
                 BlockData orangeBlockData = Material.ORANGE_STAINED_GLASS.createBlockData();
-                viewer.sendBlockChange(blockLocation, ((plot != null && plot.getID() == cuboidId) ? orangeBlockData : collidingArea ? redBlockData : greenBlockData));
+                Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+                    viewer.sendBlockChange(blockLocation, ((plot != null && plot.getID() == cuboidId) ? orangeBlockData : collidingArea ? redBlockData : greenBlockData));
+                });
             }
             changedBlocks.add(convertedBlock);
         }

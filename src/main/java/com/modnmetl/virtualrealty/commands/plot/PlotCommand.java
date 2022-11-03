@@ -26,8 +26,6 @@ public class PlotCommand implements CommandExecutor {
         HELP_LIST.add(" ");
         HELP_LIST.add(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
         HELP_LIST.add(" §a/plot %panel_command% §8- §7Opens your plots panel");
-        HELP_LIST.add(" §a/plot %draft_command% §8- §7Shows layout of potential new plot");
-        HELP_LIST.add(" §a/plot %stake_command% §8- §7Creates the plot shown with draft");
         HELP_LIST.add(" §a/plot %info_command% §8- §7Shows plot info");
         HELP_LIST.add(" §a/plot %gm_command% §8- §7Changes gamemode");
         HELP_LIST.add(" §a/plot %add_command% §8- §7Adds a member");

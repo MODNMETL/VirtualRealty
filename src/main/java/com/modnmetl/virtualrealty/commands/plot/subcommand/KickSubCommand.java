@@ -53,7 +53,7 @@ public class KickSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
             return;
         }
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
             return;
@@ -69,7 +69,7 @@ public class KickSubCommand extends SubCommand {
                 return;
             }
         } else {
-            if (plot.getPlotOwner().getUniqueId() != player.getUniqueId()) {
+            if (!plot.getOwnedBy().equals(player.getUniqueId())) {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
                 return;
             }
@@ -79,7 +79,11 @@ public class KickSubCommand extends SubCommand {
             return;
         }
         if (plot.getOwnedBy().equals(offlinePlayer.getUniqueId())) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickYourself);
+            if (plot.getOwnedBy().equals(player.getUniqueId())) {
+                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickYourself);
+            } else {
+                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickOwner);
+            }
             return;
         }
         PlotMember member = plot.getMember(offlinePlayer.getUniqueId());

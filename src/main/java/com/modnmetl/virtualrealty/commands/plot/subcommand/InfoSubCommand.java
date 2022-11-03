@@ -28,7 +28,7 @@ public class InfoSubCommand extends SubCommand {
     public void exec(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         assertPlayer();
         Player player = ((Player) sender);
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notStandingOnPlot);
             return;

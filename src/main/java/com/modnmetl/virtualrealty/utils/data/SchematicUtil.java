@@ -4,6 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang.SerializationUtils;
 import org.bukkit.Bukkit;
@@ -11,10 +12,15 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.scheduler.BukkitRunnable;
 
+import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SchematicUtil {
 
@@ -52,7 +58,7 @@ public class SchematicUtil {
     public static void paste(int plotID) {
         List<VirtualBlock> blocks = load(plotID);
         if (blocks == null) return;
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) return;
         long time = System.currentTimeMillis();
         Location location = plot.getBorderBottomLeftCorner().toLocation(plot.getCreatedWorld());
@@ -67,50 +73,99 @@ public class SchematicUtil {
         int maxY = Math.max(pos1Block.getY(), pos2Block.getY());
         World world = location.getWorld();
         if (world == null) return;
-        int i = 0;
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                for (int y = maxY; y > minY; y--) {
-                    Block block = world.getBlockAt(x, y, z);
+        List<VirtualLocation> virtualLocations = new ArrayList<>();
+        Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    for (int y = maxY; y > minY; y--) {
+                        virtualLocations.add(new VirtualLocation(x,y,z));
+                    }
+                }
+            }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(VirtualRealty.getInstance(), () -> {
+                int i = 0;
+                for (VirtualLocation virtualLocation : virtualLocations) {
+                    Block block = world.getBlockAt(virtualLocation.getX(), virtualLocation.getY(), virtualLocation.getZ());
                     if (block.getType() == Material.AIR) continue;
                     block.setType(Material.AIR);
                     i++;
                 }
-            }
+                VirtualRealty.debug("Pasted " + i + " air blocks in: " + (System.currentTimeMillis() - time) + " ms");
+                Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+                    List<List<VirtualBlock>> chunks = chunkArrayList(blocks, 15000);
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(VirtualRealty.getInstance(), () -> {
+                        for (int j = 0; j < chunks.size(); j++) {
+                            int finalJ = j;
+                            new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    List<VirtualBlock> virtualBlocks = chunks.get(finalJ);
+                                    for (VirtualBlock block : virtualBlocks) {
+                                        Location blockLocation = new Location(plot.getCreatedWorld(), block.getX(), block.getY(), block.getZ());
+                                        Block oldBlock = blockLocation.getBlock();
+                                        if (VirtualRealty.legacyVersion) {
+                                            try {
+                                                oldBlock.setType(VMaterial.getMaterial(block.getMaterial()));
+                                                Method m = Block.class.getDeclaredMethod("setData", byte.class);
+                                                m.setAccessible(true);
+                                                m.invoke(oldBlock, block.getData());
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                            }
+                                        } else {
+                                            oldBlock.setBlockData(
+                                                    Bukkit.createBlockData("minecraft:" + block.getBlockData()),
+                                                    false
+                                            );
+                                        }
+                                    }
+                                    VirtualRealty.debug("Pasted chunk #" + finalJ);
+                                }
+                            }.runTaskLater(VirtualRealty.getInstance(), 2L * finalJ);
+                        }
+                        VirtualRealty.debug("Pasted " + blocks.size() + " blocks in: " + (System.currentTimeMillis() - time) + " ms");
+                        VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms");
+                    });
+                });
+            });
+        });
+    }
+
+    private static ArrayList<List<VirtualBlock>> chunkArrayList(List<VirtualBlock> arrayToChunk, int chunkSize) {
+        ArrayList<List<VirtualBlock>> chunkList = new ArrayList<>();
+        int guide = arrayToChunk.size();
+        int index = 0;
+        int tale = chunkSize;
+        while (tale < arrayToChunk.size()){
+            chunkList.add(arrayToChunk.subList(index, tale));
+            guide = guide - chunkSize;
+            index = index + chunkSize;
+            tale = tale + chunkSize;
         }
-        VirtualRealty.debug("Pasted " + i + " air blocks in: " + (System.currentTimeMillis() - time) + " ms");
-        for (VirtualBlock block : blocks) {
-            Location blockLocation = new Location(plot.getCreatedWorld(), block.getX(), block.getY(), block.getZ());
-            Block oldBlock = blockLocation.getBlock();
-            if (VirtualRealty.legacyVersion) {
-                try {
-                    oldBlock.setType(VMaterial.getMaterial(block.getMaterial()));
-                    Method m = Block.class.getDeclaredMethod("setData", byte.class);
-                    m.setAccessible(true);
-                    m.invoke(oldBlock, block.getData());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                oldBlock.setBlockData(
-                        Bukkit.createBlockData("minecraft:" +
-                                block.getBlockData()), false);
-            }
+        if (guide >0) {
+            chunkList.add(arrayToChunk.subList(index, index + guide));
         }
-        VirtualRealty.debug("Pasted " + blocks.size() + " blocks in: " + (System.currentTimeMillis() - time) + " ms");
+        return chunkList;
     }
 
     @SneakyThrows
-    public static void save(int plotID, LinkedList<VirtualBlock> blocks) {
+    public static void save(int plotID, Block block1, Block block2) {
         long time = System.currentTimeMillis();
-        File f = new File(VirtualRealty.plotsSchemaFolder, (VirtualRealty.legacyVersion ? LEGACY_REGION_PREFIX : REGION_PREFIX) + plotID + REGION_SUFFIX);
-        long serialization = System.currentTimeMillis();
-        byte[] data = SerializationUtils.serialize(blocks);
-        VirtualRealty.debug("Serialized in: " + (System.currentTimeMillis() - serialization) + " ms");
-        long compression = System.currentTimeMillis();
-        new DataCompressor().compressData(data, f);
-        VirtualRealty.debug("Compressed in: " + (System.currentTimeMillis() - compression) + " ms");
-        VirtualRealty.debug("Region saved in: " + (System.currentTimeMillis() - time) + " ms");
+        LinkedList<VirtualBlock> blocks = SchematicUtil.getStructure(block1, block2);
+        Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
+            File f = new File(VirtualRealty.plotsSchemaFolder, (VirtualRealty.legacyVersion ? LEGACY_REGION_PREFIX : REGION_PREFIX) + plotID + REGION_SUFFIX);
+            long serialization = System.currentTimeMillis();
+            byte[] data = SerializationUtils.serialize(blocks);
+            VirtualRealty.debug("Serialized in: " + (System.currentTimeMillis() - serialization) + " ms");
+            long compression = System.currentTimeMillis();
+            try {
+                new DataCompressor().compressData(data, f);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            VirtualRealty.debug("Compressed in: " + (System.currentTimeMillis() - compression) + " ms");
+            VirtualRealty.debug("Region saved in: " + (System.currentTimeMillis() - time) + " ms");
+        });
     }
 
     @SneakyThrows

@@ -17,7 +17,7 @@ public class BorderProtectionListener extends VirtualListener {
 
     @EventHandler
     public void onBorderBreak(BlockBreakEvent e) {
-        Plot plot = PlotManager.getBorderedPlot(e.getBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getBlock().getLocation());
         if (plot == null) return;
         if (e.getPlayer().isOp()) return;
         if (!plot.getBorderBlocks().contains(e.getBlock())) return;
@@ -27,7 +27,7 @@ public class BorderProtectionListener extends VirtualListener {
 
     @EventHandler
     public void onBorderPlace(BlockPlaceEvent e) {
-        Plot plot = PlotManager.getBorderedPlot(e.getBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getBlock().getLocation());
         if (plot == null) return;
         if (e.getPlayer().isOp()) return;
         if (!plot.getBorderBlocks().contains(e.getBlock())) return;

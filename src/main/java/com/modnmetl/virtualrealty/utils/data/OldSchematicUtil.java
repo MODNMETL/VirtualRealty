@@ -26,7 +26,7 @@ public class OldSchematicUtil {
         long time = System.currentTimeMillis();
         String[] blocks = load(plotID);
         if (blocks == null) return;
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         Location location = new Location(plot.getCreatedWorld(), plot.getBorderBottomLeftCorner().getBlockX(), plot.getBorderBottomLeftCorner().getBlockY(), plot.getBorderBottomLeftCorner().getBlockZ());
         Location location2 = new Location(plot.getCreatedWorld(), plot.getBorderTopRightCorner().getBlockX(), plot.getBorderTopRightCorner().getBlockY(), plot.getBorderTopRightCorner().getBlockZ());
         Block pos1Block = location.getBlock();

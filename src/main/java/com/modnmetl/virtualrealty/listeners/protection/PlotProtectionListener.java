@@ -78,7 +78,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         if (e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) return;
         Location location = e.getLocation();
-        Plot plot = PlotManager.getPlot(location);
+        Plot plot = PlotManager.getInstance().getPlot(location);
         if (plot != null) {
             if (VirtualRealty.getPluginConfiguration().disablePlotMobsSpawn) {
                 e.setCancelled(true);
@@ -101,7 +101,7 @@ public class PlotProtectionListener extends VirtualListener {
         } else {
             if (e.getClickedBlock().getType() != Material.FARMLAND) return;
         }
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -137,7 +137,7 @@ public class PlotProtectionListener extends VirtualListener {
             if (e.getHand() == EquipmentSlot.OFF_HAND) return;
             if (!e.getClickedBlock().getType().isInteractable() && !(e.getClickedBlock().getType().name().endsWith("PRESSURE_PLATE"))) return;
         }
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         boolean isModernSwitch = !VirtualRealty.legacyVersion && e.getClickedBlock().getBlockData() instanceof Switch;
@@ -206,7 +206,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (!STORAGES.contains(e.getClickedBlock().getType())) return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (player.isSneaking() && e.isBlockInHand()) return;
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -235,7 +235,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         if (e.getClickedBlock() == null) return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -278,7 +278,7 @@ public class PlotProtectionListener extends VirtualListener {
     public void onLiquidPlace(PlayerBucketEmptyEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getBorderedPlot(e.getBlockClicked().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getBlockClicked().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -306,7 +306,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         if (!(e.getAttacker() instanceof Player)) return;
         Player player = (Player) e.getAttacker();
-        Plot plot = PlotManager.getBorderedPlot(e.getVehicle().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getVehicle().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -333,7 +333,7 @@ public class PlotProtectionListener extends VirtualListener {
     public void onLiquidTake(PlayerBucketFillEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getBorderedPlot(e.getBlockClicked().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getBlockClicked().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -359,7 +359,7 @@ public class PlotProtectionListener extends VirtualListener {
     @EventHandler(priority = EventPriority.LOW)
     public void onBlockPlace(BlockPlaceEvent e) {
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getBorderedPlot(e.getBlockPlaced().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getBlockPlaced().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -386,7 +386,7 @@ public class PlotProtectionListener extends VirtualListener {
     public void onBlockBreak(BlockBreakEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getBorderedPlot(e.getBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -413,11 +413,11 @@ public class PlotProtectionListener extends VirtualListener {
     public void onPistonRetract(BlockPistonRetractEvent e) {
         if (e.isCancelled()) return;
         Block piston = e.getBlock();
-        Plot fromPlot = PlotManager.getPlot(piston.getLocation());
+        Plot fromPlot = PlotManager.getInstance().getPlot(piston.getLocation());
         e.getBlocks().forEach(block -> {
             Location toLocation = block.getLocation();
-            Plot toPlot = PlotManager.getPlot(toLocation);
-            Plot toBorderedPlot = PlotManager.getBorderedPlot(toLocation);
+            Plot toPlot = PlotManager.getInstance().getPlot(toLocation);
+            Plot toBorderedPlot = PlotManager.getInstance().getBorderedPlot(toLocation);
             if (fromPlot != null) {
                 if (toPlot == null) {
                     e.setCancelled(true);
@@ -435,8 +435,8 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         for (Block block : e.getBlocks()) {
             Location blockLocation = block.getLocation();
-            Plot plot = PlotManager.getPlot(blockLocation);
-            Plot borderedPlot = PlotManager.getBorderedPlot(blockLocation);
+            Plot plot = PlotManager.getInstance().getPlot(blockLocation);
+            Plot borderedPlot = PlotManager.getInstance().getBorderedPlot(blockLocation);
             if (borderedPlot != null) {
                 if (plot == null) {
                     e.setCancelled(true);
@@ -453,7 +453,7 @@ public class PlotProtectionListener extends VirtualListener {
         Player player = e.getPlayer();
         if (player == null) return;
         if (e.getIgnitingBlock() == null) return;
-        Plot plot = PlotManager.getBorderedPlot(e.getIgnitingBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getIgnitingBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -479,8 +479,8 @@ public class PlotProtectionListener extends VirtualListener {
     public void onBlockIgnite(BlockIgniteEvent e){
         if (e.isCancelled()) return;
         if (e.getCause() != BlockIgniteEvent.IgniteCause.SPREAD) return;
-        Plot fromPlot = PlotManager.getPlot(e.getBlock().getLocation());
-        Plot toPlot = PlotManager.getPlot(e.getIgnitingBlock().getLocation());
+        Plot fromPlot = PlotManager.getInstance().getPlot(e.getBlock().getLocation());
+        Plot toPlot = PlotManager.getInstance().getPlot(e.getIgnitingBlock().getLocation());
         if (toPlot != null && fromPlot == null) {
             e.setCancelled(true);
         }
@@ -492,8 +492,8 @@ public class PlotProtectionListener extends VirtualListener {
         for (BlockState block : new ArrayList<>(e.getBlocks())) {
             Location saplingLocation = e.getLocation();
             Location blockLocation = block.getLocation();
-            Plot fromPlot = PlotManager.getPlot(saplingLocation);
-            Plot toPlot = PlotManager.getPlot(blockLocation);
+            Plot fromPlot = PlotManager.getInstance().getPlot(saplingLocation);
+            Plot toPlot = PlotManager.getInstance().getPlot(blockLocation);
             if (fromPlot != null) {
                 if (toPlot != null) {
                     if (fromPlot.getID() == toPlot.getID()) return;
@@ -514,8 +514,8 @@ public class PlotProtectionListener extends VirtualListener {
         if (block == Material.DRAGON_EGG || block == Material.LAVA || block == Material.WATER) {
             Location fromLocation = e.getBlock().getLocation();
             Location toLocation = e.getToBlock().getLocation();
-            Plot fromPlot = PlotManager.getPlot(fromLocation);
-            Plot toPlot = PlotManager.getPlot(toLocation);
+            Plot fromPlot = PlotManager.getInstance().getPlot(fromLocation);
+            Plot toPlot = PlotManager.getInstance().getPlot(toLocation);
             if (toPlot != null) {
                 if (fromPlot == null) {
                     e.setCancelled(true);
@@ -532,7 +532,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.getEntity().getShooter() == null) return;
         if (!(e.getEntity().getShooter() instanceof Player)) return;
         Player shooter = ((Player) e.getEntity().getShooter());
-        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getEntity().getLocation());
         if (plot == null) return;
         if (hasPermission(shooter, PLOT_BUILD)) return;
         if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(((Player) e.getEntity().getShooter()).getUniqueId()))
@@ -546,7 +546,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.getEntity().getShooter() == null) return;
         if (!(e.getEntity().getShooter() instanceof Player)) return;
         Player shooter = ((Player) e.getEntity().getShooter());
-        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getEntity().getLocation());
         if (plot == null) return;
         if (hasPermission(shooter, PLOT_BUILD)) return;
         if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(((Player) e.getEntity().getShooter()).getUniqueId()))
@@ -558,7 +558,7 @@ public class PlotProtectionListener extends VirtualListener {
     @EventHandler(priority = EventPriority.LOW)
     public void onArmorStandChange(PlayerArmorStandManipulateEvent e) {
         if (e.isCancelled()) return;
-        Plot plot = PlotManager.getPlot(e.getPlayer().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getPlayer().getLocation());
         Player player = e.getPlayer();
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
@@ -587,7 +587,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         if (!(e.getRemover() instanceof Player)) return;
         Player player = (Player) e.getRemover();
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -614,7 +614,7 @@ public class PlotProtectionListener extends VirtualListener {
     public void onItemFrameRotate(PlayerInteractEntityEvent e) {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
-        Plot plot = PlotManager.getPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (!(e.getRightClicked() instanceof ItemFrame)) return;
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
@@ -645,7 +645,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.getItem() == null) return;
         if (e.getItem().getType() != Material.ARMOR_STAND) return;
         if (e.getClickedBlock() == null) return;
-        Plot plot = PlotManager.getPlot(e.getClickedBlock().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getClickedBlock().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -673,7 +673,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.isCancelled()) return;
         Player player = e.getPlayer();
         if (player == null) return;
-        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getEntity().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -702,7 +702,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (!(e.getDamager() instanceof Player)) return;
         if (!(e.getEntity() instanceof Creature) && !(e.getEntity() instanceof Player)) return;
         Player player = (Player) e.getDamager();
-        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getEntity().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -731,7 +731,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (e.getEntity() instanceof Creature || e.getEntity() instanceof Player) return;
         if (!(e.getDamager() instanceof Player)) return;
         Player player = (Player) e.getDamager();
-        Plot plot = PlotManager.getPlot(e.getEntity().getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(e.getEntity().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {
@@ -757,7 +757,7 @@ public class PlotProtectionListener extends VirtualListener {
     @EventHandler(priority = EventPriority.LOW)
     public void onEntityExplode(EntityExplodeEvent e) {
         for (Block block : new ArrayList<>(e.blockList())) {
-            Plot plot = PlotManager.getBorderedPlot(block.getLocation());
+            Plot plot = PlotManager.getInstance().getBorderedPlot(block.getLocation());
             if (plot != null)
                 e.blockList().remove(block);
         }
@@ -766,7 +766,7 @@ public class PlotProtectionListener extends VirtualListener {
     @EventHandler(priority = EventPriority.LOW)
     public void onBlockExplode(BlockExplodeEvent e) {
         for (Block block : new ArrayList<>(e.blockList())) {
-            Plot plot = PlotManager.getBorderedPlot(block.getLocation());
+            Plot plot = PlotManager.getInstance().getBorderedPlot(block.getLocation());
             if (plot != null)
                 e.blockList().remove(block);
         }
@@ -774,7 +774,7 @@ public class PlotProtectionListener extends VirtualListener {
 
     @EventHandler
     public void onFireSpread(BlockSpreadEvent e) {
-        Plot plot = PlotManager.getBorderedPlot(e.getNewState().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getNewState().getLocation());
         if (!(plot != null && (e.getSource().getType() == Material.FIRE && (e.getSource().getType() == e.getNewState().getType() || e.getNewState().getType() == Material.AIR)))) return;
         e.setCancelled(true);
         VirtualRealty.debug("Cancelled " + e.getClass().getSimpleName() + " [Fire Spread]: " + e.getSource().getLocation());
@@ -783,8 +783,8 @@ public class PlotProtectionListener extends VirtualListener {
     @EventHandler
     public void onFireBurn(BlockBurnEvent e) {
         if (!VirtualRealty.legacyVersion) {
-            Plot fromPlot = PlotManager.getPlot(e.getIgnitingBlock().getLocation());
-            Plot toPlot = PlotManager.getPlot(e.getBlock().getLocation());
+            Plot fromPlot = PlotManager.getInstance().getPlot(e.getIgnitingBlock().getLocation());
+            Plot toPlot = PlotManager.getInstance().getPlot(e.getBlock().getLocation());
             if (toPlot == null) return;
             if (fromPlot != null) {
                 if (toPlot.getID() != fromPlot.getID())
@@ -801,7 +801,7 @@ public class PlotProtectionListener extends VirtualListener {
         if (!((e.getDamager() instanceof Projectile) && ((Projectile) e.getDamager()).getShooter() instanceof Player))
             return;
         Player player = ((Player) ((Projectile) e.getDamager()).getShooter());
-        Plot plot = PlotManager.getBorderedPlot(e.getDamager().getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(e.getDamager().getLocation());
         if (plot == null) return;
         if (hasPermission(player, PLOT_BUILD)) return;
         if (plot.hasMembershipAccess(player.getUniqueId())) {

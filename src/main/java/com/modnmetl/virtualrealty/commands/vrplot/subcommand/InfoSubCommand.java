@@ -5,7 +5,6 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -30,7 +29,7 @@ public class InfoSubCommand extends SubCommand {
         assertPermission();
         if (args.length < 2) {
             assertPlayer();
-            Plot plot = PlotManager.getPlot(((Player) sender).getLocation());
+            Plot plot = PlotManager.getInstance().getPlot(((Player) sender).getLocation());
             if (plot == null) {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notStandingOnPlot);
                 return;
@@ -45,19 +44,19 @@ public class InfoSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
             return;
         }
-        if (PlotManager.getPlots().isEmpty()) {
+        if (PlotManager.getInstance().getPlots().isEmpty()) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
             return;
         }
-        if (plotID < PlotManager.getPlotMinID()) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().minPlotID.replaceAll("%min_id%", String.valueOf(PlotManager.getPlotMinID())));
+        if (plotID < PlotManager.getInstance().getPlotMinID()) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().minPlotID.replaceAll("%min_id%", String.valueOf(PlotManager.getInstance().getPlotMinID())));
             return;
         }
-        if (plotID > PlotManager.getPlotMaxID()) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().maxPlotID.replaceAll("%max_id%", String.valueOf(PlotManager.getPlotMaxID())));
+        if (plotID > PlotManager.getInstance().getPlotMaxID()) {
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().maxPlotID.replaceAll("%max_id%", String.valueOf(PlotManager.getInstance().getPlotMaxID())));
             return;
         }
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
             return;

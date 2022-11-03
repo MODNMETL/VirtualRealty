@@ -53,7 +53,7 @@ public class RegionUtil {
 
     public static boolean isCollidingWithAnotherPlot(Cuboid cuboid) {
         long time = System.currentTimeMillis();
-        for (Plot plot : PlotManager.getPlots(cuboid.getWorld().getName())) {
+        for (Plot plot : PlotManager.getInstance().getPlots(cuboid.getWorld().getName())) {
             for (BlockVector2 blockVector2 : plot.getCuboid().getFlatRegion()) {
                 if (cuboid.isIn(blockVector2, cuboid.getWorld(), VirtualRealty.getPluginConfiguration().plotSpacing)) {
                     VirtualRealty.debug("Collision checked! (Found) " + (System.currentTimeMillis() - time) + " ms | Spacing: " + VirtualRealty.getPluginConfiguration().plotSpacing);

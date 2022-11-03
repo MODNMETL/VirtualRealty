@@ -49,7 +49,7 @@ public class RemoveSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
             return;
         }
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
             return;
@@ -81,7 +81,7 @@ public class RemoveSubCommand extends SubCommand {
                         ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
                     }
                 };
-                ConfirmationManager.confirmations.add(confirmation);
+                ConfirmationManager.addConfirmation(confirmation);
             }
         } else {
             plot.remove(sender);

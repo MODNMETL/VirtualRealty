@@ -31,7 +31,7 @@ public class ReloadSubCommand extends SubCommand {
                         VirtualRealty.getDynmapManager().markerset.deleteMarkerSet();
                     }
                     VirtualRealty.getDynmapManager().registerDynmap();
-                    for (Plot plot : PlotManager.getPlots()) {
+                    for (Plot plot : PlotManager.getInstance().getPlots()) {
                         DynmapManager.resetPlotMarker(plot);
                     }
                 } else {
@@ -40,7 +40,7 @@ public class ReloadSubCommand extends SubCommand {
                     }
                 }
             }
-            PlotManager.loadPlots();
+            PlotManager.getInstance().loadPlots();
             VirtualRealty.getInstance().loadSizesConfiguration();
         } catch (Exception exception) {
             exception.printStackTrace();

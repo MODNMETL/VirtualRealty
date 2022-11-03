@@ -57,7 +57,7 @@ public class Plot {
     private LocalDateTime createdAt;
 
     public Plot(Location location, Material floorMaterial, Material borderMaterial, PlotSize plotSize, int length, int width, int height, boolean natural) {
-        this.ID =  PlotManager.getPlots().isEmpty() ? 10000 : PlotManager.getPlotMaxID() + 1;
+        this.ID =  PlotManager.getInstance().getPlots().isEmpty() ? 10000 : PlotManager.getInstance().getPlotMaxID() + 1;
         this.ownedBy = null;
         this.members = new LinkedList<>();
         this.nonMemberPermissions = new HashSet<>(VirtualRealty.getPermissions().getDefaultNonMemberPlotPerms());
@@ -236,10 +236,7 @@ public class Plot {
     public void setOwnedBy(UUID ownedBy) {
         modified();
         this.ownedBy = ownedBy;
-        PlotMember plotMember = getMember(ownedBy);
-        if (plotMember != null) {
-            removeMember(plotMember);
-        }
+        members.clear();
         updateMarker();
     }
 
@@ -478,25 +475,25 @@ public class Plot {
             case SOUTH: {
                 location1 = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() - 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() - width, location.getBlockY() + height, location.getBlockZ() + length);
-                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
+                SchematicUtil.save(ID, location1.getBlock(), location2.getBlock());
                 break;
             }
             case WEST: {
                 location1 = new Location(location.getWorld(), location.getBlockX() + 1, location.getBlockY() - 10, location.getBlockZ() + 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() - length, location.getBlockY() + height, location.getBlockZ() - width);
-                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
+                SchematicUtil.save(ID, location1.getBlock(), location2.getBlock());
                 break;
             }
             case NORTH: {
                 location1 = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() - 10, location.getBlockZ() + 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() + width, location.getBlockY() + height, location.getBlockZ() - length);
-                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
+                SchematicUtil.save(ID, location1.getBlock(), location2.getBlock());
                 break;
             }
             case EAST: {
                 location1 = new Location(location.getWorld(), location.getBlockX() + length, location.getBlockY() - 10, location.getBlockZ() - 1);
                 location2 = new Location(location.getWorld(), location.getBlockX() - 1, location.getBlockY() + height, location.getBlockZ() + width);
-                SchematicUtil.save(ID, SchematicUtil.getStructure(location1.getBlock(), location2.getBlock()));
+                SchematicUtil.save(ID, location1.getBlock(), location2.getBlock());
                 break;
             }
         }
@@ -599,7 +596,6 @@ public class Plot {
         } else {
             long time = System.currentTimeMillis();
             SchematicUtil.paste(ID);
-            VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms");
         }
     }
 
@@ -716,7 +712,7 @@ public class Plot {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        PlotManager.removePlotFromList(this);
+        PlotManager.getInstance().removePlotFromList(this);
         VirtualRealty.debug("Removed plot #" + this.ID);
     }
 

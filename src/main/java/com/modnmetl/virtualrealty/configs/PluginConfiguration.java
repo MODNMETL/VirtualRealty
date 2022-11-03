@@ -22,14 +22,14 @@ import java.util.*;
 @Names(strategy = NameStrategy.HYPHEN_CASE, modifier = NameModifier.TO_LOWER_CASE)
 public class PluginConfiguration extends OkaeriConfig {
 
-    @Comment("Changing this value will break your plugin!")
+    @Comment("Changing this value might break your plugin!")
     @CustomKey("initial-version")
     public String initServerVersion = VirtualRealty.legacyVersion ? ServerVersion.LEGACY.toString() : ServerVersion.MODERN.toString();
 
-    @Comment("Debug mode")
+    @Comment("Debug mode (Displays more detailed info about plugin executions)")
     public boolean debugMode = false;
 
-    @Comment("Loader debug mode (only for devs)")
+    @Comment("Local loader mode (for devs)")
     public boolean loaderDebugMode = false;
 
     @Comment("Here you put your license details")
@@ -47,6 +47,9 @@ public class PluginConfiguration extends OkaeriConfig {
     public boolean enablePlotGamemode = false;
 
     @Comment("Set your wanted language (locale)")
+    @Comment("You can create your own configuration for your language")
+    @Comment("To do so: go into the `messages` folder and create new file called `messages_%locale%.yml`")
+    @Comment("Replace `%locale%` with your locale (It doesn't matter if it conforms to the standard, it should just match the locale here in `config.yml`)")
     public String locale = "en_GB";
 
     @Comment("Set which gamemode players change to when they enter their plot")
@@ -88,7 +91,8 @@ public class PluginConfiguration extends OkaeriConfig {
         try {
             return GameMode.valueOf(plotGamemode);
         } catch (Exception e) {
-            VirtualRealty.getInstance().getLogger().warning("Couldn't parse plot-gamemode from config.yml\nUsing default: SURVIVAL");
+            VirtualRealty.getInstance().getLogger().warning("Couldn't parse plot-gamemode from config.yml");
+            VirtualRealty.getInstance().getLogger().warning("Using default: SURVIVAL");
             return GameMode.SURVIVAL;
         }
     }

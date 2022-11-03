@@ -128,7 +128,7 @@ public class CommandManager implements TabCompleter {
                 case "SET": {
                     if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length == 2) {
-                        for (Plot plot : PlotManager.getPlots()) {
+                        for (Plot plot : PlotManager.getInstance().getPlots()) {
                             if (args[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(args[1].toLowerCase())) {
@@ -226,7 +226,7 @@ public class CommandManager implements TabCompleter {
                 case "UNASSIGN": {
                     if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length == 2) {
-                        for (Plot plot : PlotManager.getPlots()) {
+                        for (Plot plot : PlotManager.getInstance().getPlots()) {
                             if (args[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(args[1].toLowerCase())) {
@@ -252,7 +252,7 @@ public class CommandManager implements TabCompleter {
                 case "TP": {
                     if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length == 2) {
-                        for (Plot plot : PlotManager.getPlots()) {
+                        for (Plot plot : PlotManager.getInstance().getPlots()) {
                             if (args[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(args[1].toLowerCase())) {
@@ -372,7 +372,7 @@ public class CommandManager implements TabCompleter {
                 case "KICK":
                 case "ADD": {
                     if (args.length == 2) {
-                        PlotManager.getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
+                        PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
                             if (finalArgs[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs[0].toLowerCase())) {
@@ -383,6 +383,7 @@ public class CommandManager implements TabCompleter {
                     }
                     if (args.length == 3) {
                         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                            if (onlinePlayer.getName().equals(player.getName())) continue;
                             if (args[2].isEmpty()) {
                                 tabCompleter.add(onlinePlayer.getName());
                             } else if (onlinePlayer.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
@@ -394,7 +395,7 @@ public class CommandManager implements TabCompleter {
                 }
                 case "TP": {
                     if (args.length == 2) {
-                        PlotManager.getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
+                        PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
                             if (finalArgs1[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs1[0].toLowerCase())) {

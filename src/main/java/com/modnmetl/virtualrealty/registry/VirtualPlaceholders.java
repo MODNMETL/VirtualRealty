@@ -101,7 +101,7 @@ public class VirtualPlaceholders extends PlaceholderExpansion {
     public String onPlaceholderRequest(Player player, @NotNull String identifier){
         if(player == null) return "";
 
-        Plot plot = PlotManager.getBorderedPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(player.getLocation());
         if (identifier.equals("plot_id")) {
             if (plot == null) return "";
             return String.valueOf(plot.getID());

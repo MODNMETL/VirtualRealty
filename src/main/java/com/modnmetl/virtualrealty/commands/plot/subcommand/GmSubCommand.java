@@ -64,7 +64,7 @@ public class GmSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeDisabled);
             return;
         }
-        Plot plot = PlotManager.getBorderedPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getBorderedPlot(player.getLocation());
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantSwitchGamemode);
             return;

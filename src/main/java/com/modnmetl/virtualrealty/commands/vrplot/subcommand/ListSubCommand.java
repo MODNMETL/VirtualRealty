@@ -30,7 +30,7 @@ public class ListSubCommand extends SubCommand {
     @Override
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPermission();
-        if (PlotManager.getPlots().isEmpty()) {
+        if (PlotManager.getInstance().getPlots().isEmpty()) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
             return;
         }
@@ -39,7 +39,7 @@ public class ListSubCommand extends SubCommand {
         sender.sendMessage(" ");
         sender.sendMessage("§7§m                                                                                ");
         sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
-        for (Plot plot : PlotManager.getPlots()) {
+        for (Plot plot : PlotManager.getInstance().getPlots()) {
             LocalDateTime localDateTime = plot.getOwnedUntilDate();
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             StringBuilder ownedBy = new StringBuilder();

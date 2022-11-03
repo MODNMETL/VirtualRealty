@@ -84,7 +84,7 @@ public class CreateSubCommand extends SubCommand {
                     } else {
                         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                         long timeStart = System.currentTimeMillis();
-                        Plot plot = PlotManager.createPlot(location, PlotSize.AREA, length, height, width, true);
+                        Plot plot = PlotManager.getInstance().createPlot(location, PlotSize.AREA, length, height, width, true);
                         long timeEnd = System.currentTimeMillis();
                         BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
                         BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
@@ -97,7 +97,16 @@ public class CreateSubCommand extends SubCommand {
                         new BukkitRunnable() {
                             @Override
                             public void run() {
-                                new GridStructure(player, plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview(true, false);
+                                new GridStructure(
+                                        player,
+                                        plot.getLength(),
+                                        plot.getHeight(),
+                                        plot.getWidth(),
+                                        plot.getID(),
+                                        ((Player) sender).getWorld(),
+                                        GridStructure.DISPLAY_TICKS,
+                                        plot.getCreatedLocation()
+                                ).preview(true, false);
                             }
                         }.runTaskLater(VirtualRealty.getInstance(), 20);
                     }
@@ -143,7 +152,7 @@ public class CreateSubCommand extends SubCommand {
                         }
                         sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                         long timeStart = System.currentTimeMillis();
-                        Plot plot = PlotManager.createPlot(location, plotSize, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), natural);
+                        Plot plot = PlotManager.getInstance().createPlot(location, plotSize, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), natural);
                         if (!natural) {
                             if (floorMaterial != null) {
                                 plot.setFloorMaterial(floorMaterial, floorData);
@@ -164,7 +173,16 @@ public class CreateSubCommand extends SubCommand {
                         new BukkitRunnable() {
                             @Override
                             public void run() {
-                                new GridStructure(player, plot.getPlotSize().getLength(), plot.getPlotSize().getHeight(), plot.getPlotSize().getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview(true, false);
+                                new GridStructure(
+                                        player,
+                                        plot.getPlotSize().getLength(),
+                                        plot.getPlotSize().getHeight(),
+                                        plot.getPlotSize().getWidth(),
+                                        plot.getID(),
+                                        ((Player) sender).getWorld(),
+                                        GridStructure.DISPLAY_TICKS,
+                                        plot.getCreatedLocation()
+                                ).preview(true, false);
                             }
                         }.runTaskLater(VirtualRealty.getInstance(), 20);
                     }
@@ -233,7 +251,7 @@ public class CreateSubCommand extends SubCommand {
                 }
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                 long timeStart = System.currentTimeMillis();
-                Plot plot = PlotManager.createPlot(location, PlotSize.CUSTOM, length, height, width, natural);
+                Plot plot = PlotManager.getInstance().createPlot(location, PlotSize.CUSTOM, length, height, width, natural);
                 if (!natural) {
                     if (floorMaterial != null) {
                         plot.setFloorMaterial(floorMaterial, floorData);
@@ -254,7 +272,16 @@ public class CreateSubCommand extends SubCommand {
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        new GridStructure(player, plot.getLength(), plot.getHeight(), plot.getWidth(), plot.getID(), ((Player) sender).getWorld(), 20 * 6, plot.getCreatedLocation()).preview(true, false);
+                        new GridStructure(
+                                player,
+                                plot.getLength(),
+                                plot.getHeight(),
+                                plot.getWidth(),
+                                plot.getID(),
+                                ((Player) sender).getWorld(),
+                                GridStructure.DISPLAY_TICKS,
+                                plot.getCreatedLocation()
+                        ).preview(true, false);
                     }
                 }.runTaskLater(VirtualRealty.getInstance(), 20);
             }

@@ -66,7 +66,7 @@ public class DynmapManager {
                     }
                 } catch (IOException ignored) {}
                 VirtualRealty.debug("Registering plots markers..");
-                for (Plot plot : PlotManager.getPlots()) {
+                for (Plot plot : PlotManager.getInstance().getPlots()) {
                     resetPlotMarker(plot);
                 }
                 VirtualRealty.debug("Registered plots markers");

@@ -30,14 +30,14 @@ public class ListSubCommand extends SubCommand {
         assertPlayer();
         Player player = ((Player) sender);
         boolean hasPlot = false;
-        for (Plot plot : PlotManager.getPlots()) {
+        for (Plot plot : PlotManager.getInstance().getPlots()) {
             if (plot.getOwnedBy() != null && plot.getOwnedBy().equals(player.getUniqueId()) && plot.getOwnedUntilDate().isAfter(LocalDateTime.now())) {
                 hasPlot = true;
                 break;
             }
         }
         boolean isMember = false;
-        for (Plot plot : PlotManager.getPlots()) {
+        for (Plot plot : PlotManager.getInstance().getPlots()) {
             if (plot.getMember(player.getUniqueId()) != null) {
                 isMember = true;
                 break;
@@ -53,7 +53,7 @@ public class ListSubCommand extends SubCommand {
         if (hasPlot) {
             sender.sendMessage("§7§m                                                                                ");
             sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned Until§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
-            for (Plot plot : PlotManager.getPlots()) {
+            for (Plot plot : PlotManager.getInstance().getPlots()) {
                 if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) {
                     LocalDateTime localDateTime = plot.getOwnedUntilDate();
                     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -79,7 +79,7 @@ public class ListSubCommand extends SubCommand {
             sender.sendMessage(" ");
             sender.sendMessage("§7§m                                                                                ");
             sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
-            for (Plot plot : PlotManager.getPlots()) {
+            for (Plot plot : PlotManager.getInstance().getPlots()) {
                 if (plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(player.getUniqueId()) && plot.hasMembershipAccess(player.getUniqueId())) {
                     StringBuilder ownedBy = new StringBuilder();
                     ownedBy.append((plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : VirtualRealty.getMessages().available));
