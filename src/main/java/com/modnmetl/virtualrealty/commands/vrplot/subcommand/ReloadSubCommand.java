@@ -6,6 +6,7 @@ import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -45,7 +46,7 @@ public class ReloadSubCommand extends SubCommand {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().reloadComplete);
+        ChatMessage.of(VirtualRealty.getMessages().reloadComplete).sendWithPrefix(sender);
     }
 
 }

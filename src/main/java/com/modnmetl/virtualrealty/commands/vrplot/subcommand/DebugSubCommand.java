@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -33,32 +34,32 @@ public class DebugSubCommand extends SubCommand {
         assertPermission();
         VirtualRealty instance = VirtualRealty.getInstance();
         if (System.currentTimeMillis() - LAST_REQUEST < 1500) {
-            sender.sendMessage(VirtualRealty.PREFIX + "§cPlease wait " + Math.abs(System.currentTimeMillis() - LAST_REQUEST - 1500) + "ms. §7(Rate limiting)");
+            ChatMessage.of("§cPlease wait " + Math.abs(System.currentTimeMillis() - LAST_REQUEST - 1500) + "ms. §7(Rate limiting)").sendWithPrefix(sender);
             return;
         }
-        sender.sendMessage(" ");
-        sender.sendMessage(" §8§l«§8§m                    §8[§aDebug§8]§m                    §8§l»");
-        sender.sendMessage(" §8┏ §7Operating System: §a" + System.getProperty("os.name") + " §7(" + System.getProperty("os.version") + "-" + System.getProperty("os.arch") + ")");
-        sender.sendMessage(" §8┣ §7Java Version: §a" + System.getProperty("java.version"));
-        sender.sendMessage(" §8┣ §7Engine: §a" + instance.getServer().getName() + " §7(" + instance.getServer().getBukkitVersion() + ")");
-        sender.sendMessage(" §8┣ §7Core count: §a" + Runtime.getRuntime().availableProcessors());
-        sender.sendMessage(" §8┣ §7RAM: §a" + format(Runtime.getRuntime().totalMemory()) + "§7/§a" + format(Runtime.getRuntime().maxMemory()) + " §7MB");
+        ChatMessage.of(" ").send(sender);
+        ChatMessage.of(" §8§l«§8§m                    §8[§aDebug§8]§m                    §8§l»").send(sender);
+        ChatMessage.of(" §8┏ §7Operating System: §a" + System.getProperty("os.name") + " §7(" + System.getProperty("os.version") + "-" + System.getProperty("os.arch") + ")").send(sender);
+        ChatMessage.of(" §8┣ §7Java Version: §a" + System.getProperty("java.version")).send(sender);
+        ChatMessage.of(" §8┣ §7Engine: §a" + instance.getServer().getName() + " §7(" + instance.getServer().getBukkitVersion() + ")").send(sender);
+        ChatMessage.of(" §8┣ §7Core count: §a" + Runtime.getRuntime().availableProcessors()).send(sender);
+        ChatMessage.of(" §8┣ §7RAM: §a" + format(Runtime.getRuntime().totalMemory()) + "§7/§a" + format(Runtime.getRuntime().maxMemory()) + " §7MB").send(sender);
         try {
             // API Rate Limit is 45 requests per minute
             URL url = new URL("http://ip-api.com/json/?fields=org,isp,country,countryCode");
             URLConnection urlConnection = url.openConnection();
             JsonObject jsonObject = new JsonParser().parse(new InputStreamReader(urlConnection.getInputStream())).getAsJsonObject();
             LAST_REQUEST = System.currentTimeMillis();
-            sender.sendMessage(" §8┣ §7Location: §a" + jsonObject.get("country").getAsString() + " §7(" + jsonObject.get("countryCode").getAsString() + ")");
-            sender.sendMessage(" §8┣ §7ISP: §a" + jsonObject.get("isp").getAsString());
-            sender.sendMessage(" §8┣ §7Host: §a" + jsonObject.get("org").getAsString());
+            ChatMessage.of(" §8┣ §7Location: §a" + jsonObject.get("country").getAsString() + " §7(" + jsonObject.get("countryCode").getAsString() + ")").send(sender);
+            ChatMessage.of(" §8┣ §7ISP: §a" + jsonObject.get("isp").getAsString()).send(sender);
+            ChatMessage.of(" §8┣ §7Host: §a" + jsonObject.get("org").getAsString()).send(sender);
         } catch (IOException ignored) {
-            sender.sendMessage(" §8┣ §7Couldn't connect to the IP-API");
+            ChatMessage.of(" §8┣ §7Couldn't connect to the IP-API").send(sender);
         }
-        sender.sendMessage(" §8┣ §7Default GM: §a" + instance.getServer().getDefaultGameMode().name().charAt(0) + instance.getServer().getDefaultGameMode().name().substring(1).toLowerCase());
+        ChatMessage.of(" §8┣ §7Default GM: §a" + instance.getServer().getDefaultGameMode().name().charAt(0) + instance.getServer().getDefaultGameMode().name().substring(1).toLowerCase()).send(sender);
         Plugin[] plugins = instance.getServer().getPluginManager().getPlugins();
-        sender.sendMessage(" §8┣ §7Version: §a" + VirtualRealty.currentServerVersion.name().substring(0, 1).toUpperCase() + VirtualRealty.currentServerVersion.name().substring(1).toLowerCase());
-        sender.sendMessage(" §8┣ §7Plugins (§a" + plugins.length + "§7):");
+        ChatMessage.of(" §8┣ §7Version: §a" + VirtualRealty.currentServerVersion.name().substring(0, 1).toUpperCase() + VirtualRealty.currentServerVersion.name().substring(1).toLowerCase()).send(sender);
+        ChatMessage.of(" §8┣ §7Plugins (§a" + plugins.length + "§7):").send(sender);
         int limit = sender instanceof Player ? 2 : 3;
         int lastRow = (plugins.length / limit + (plugins.length % limit == 0 ? 0 : 1));
         int pluginIndex = 0;
@@ -72,12 +73,11 @@ public class DebugSubCommand extends SubCommand {
                         Object o = Arrays.stream(plugins).skip((long) row * limit).limit(index + 2).toArray()[index + 1];
                         if (pluginIndex % limit != (limit == 2 ? 1 : 2))
                             sb.append(" §8| ");
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 } else break;
                 pluginIndex++;
             }
-            sender.sendMessage(sb.toString());
+            ChatMessage.of(sb.toString()).send(sender);
         }
     }
 

@@ -30,14 +30,14 @@ public class ListSubCommand extends SubCommand {
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPermission();
         if (PlotManager.getInstance().getPlots().isEmpty()) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
+            ChatMessage.of(VirtualRealty.getMessages().noPlots).sendWithPrefix(sender);
             return;
         }
-        sender.sendMessage(" ");
-        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        sender.sendMessage(" ");
-        sender.sendMessage("§7§m                                                                                ");
-        sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |");
+        ChatMessage.of(" ").send(sender);
+        ChatMessage.of(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»").send(sender);
+        ChatMessage.of(" ").send(sender);
+        ChatMessage.of("§7§m                                                                                ").send(sender);
+        ChatMessage.of("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oOwned Until§7 |  §a§l§oSize§7 |  §a§l§oPlot Center§7  |").send(sender);
         for (Plot plot : PlotManager.getInstance().getPlots()) {
             LocalDateTime localDateTime = plot.getOwnedUntilDate();
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -56,7 +56,7 @@ public class ListSubCommand extends SubCommand {
             textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
             ChatMessage.of(textComponent).send(sender);
         }
-        sender.sendMessage("§7§m                                                                                ");
+        ChatMessage.of("§7§m                                                                                ").send(sender);
     }
 
 }

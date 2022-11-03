@@ -47,43 +47,36 @@ public class KickSubCommand extends SubCommand {
             plotID = Integer.parseInt(args[1]);
         } catch (IllegalArgumentException e) {
             ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
             return;
         }
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
         if (offlinePlayer.getName() == null) {
-            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+            ChatMessage.of(VirtualRealty.getMessages().playerNotFoundWithUsername).sendWithPrefix(sender);
             return;
         }
         Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
-            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
+            ChatMessage.of(VirtualRealty.getMessages().noPlotFound).sendWithPrefix(sender);
             return;
         }
         if (!plot.hasMembershipAccess(player.getUniqueId())) {
-            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
+            ChatMessage.of(VirtualRealty.getMessages().notYourPlot).sendWithPrefix(sender);
             return;
         }
         PlotMember plotMember = plot.getMember(player.getUniqueId());
         if (plotMember != null) {
             if (!plotMember.hasManagementPermission(ManagementPermission.KICK_MEMBER)) {
-                ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
+                ChatMessage.of(VirtualRealty.getMessages().noAccess).sendWithPrefix(sender);
                 return;
             }
         } else {
             if (!plot.getOwnedBy().equals(player.getUniqueId())) {
-                ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
+                ChatMessage.of(VirtualRealty.getMessages().noAccess).sendWithPrefix(sender);
                 return;
             }
         }
         if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
-            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+            ChatMessage.of(VirtualRealty.getMessages().ownershipExpired).sendWithPrefix(sender);
             return;
         }
         if (plot.getOwnedBy().equals(offlinePlayer.getUniqueId())) {

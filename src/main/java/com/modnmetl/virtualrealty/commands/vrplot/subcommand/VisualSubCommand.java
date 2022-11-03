@@ -6,6 +6,7 @@ import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.region.GridStructure;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -46,7 +47,7 @@ public class VisualSubCommand extends SubCommand {
                 plot.getCreatedLocation()
         );
         previewStructure.preview(player.getLocation(), true, false);
-        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().visualBoundaryDisplayed);
+        ChatMessage.of(VirtualRealty.getMessages().visualBoundaryDisplayed).sendWithPrefix(sender);
     }
 
 

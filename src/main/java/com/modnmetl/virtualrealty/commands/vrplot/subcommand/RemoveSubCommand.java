@@ -47,47 +47,42 @@ public class RemoveSubCommand extends SubCommand {
         try {
             plotID = Integer.parseInt(args[1]);
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             return;
         }
         Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
+            ChatMessage.of(VirtualRealty.getMessages().noPlotFound).sendWithPrefix(sender);
             return;
         }
-        if (!(sender instanceof Player)) {
+        if (this.isBypass() || !(sender instanceof Player)) {
             plot.remove(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
+            ChatMessage.of(VirtualRealty.getMessages().removedPlot).sendWithPrefix(sender);
             return;
         }
-        if (this.isBypass()) {
-            plot.remove(sender);
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
-        } else {
-            for (String s : VirtualRealty.getMessages().removeConfirmation) {
-                sender.sendMessage(VirtualRealty.PREFIX + s.replaceAll("%plot_id%", String.valueOf(plot.getID())));
+        for (String s : VirtualRealty.getMessages().removeConfirmation) {
+            ChatMessage.of(s.replaceAll("%plot_id%", String.valueOf(plot.getID()))).sendWithPrefix(sender);
+        }
+        Confirmation confirmation = new Confirmation(ConfirmationType.REMOVE, (Player) sender, plot.getID(), "YES") {
+            @Override
+            public void success() {
+                plot.remove(((Player) sender).getKiller());
+                ChatMessage.of(VirtualRealty.getMessages().removedPlot).sendWithPrefix(sender);
+                ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
             }
-            Confirmation confirmation = new Confirmation(ConfirmationType.REMOVE, (Player) sender, plot.getID(), "YES") {
-                @Override
-                public void success() {
-                    plot.remove(((Player) sender).getKiller());
-                    ChatMessage.of(VirtualRealty.getMessages().removedPlot).sendWithPrefix(sender);
-                    ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
-                }
 
-                @Override
-                public void failed() {
-                    ChatMessage.of(VirtualRealty.getMessages().removalCancelled).sendWithPrefix(sender);
-                    ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
-                }
+            @Override
+            public void failed() {
+                ChatMessage.of(VirtualRealty.getMessages().removalCancelled).sendWithPrefix(sender);
+                ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
+            }
 
-                @Override
-                public void expiry() {
-                    ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
-                }
-            };
-            ConfirmationManager.addConfirmation(confirmation);
-        }
+            @Override
+            public void expiry() {
+                ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
+            }
+        };
+        ConfirmationManager.addConfirmation(confirmation);
     }
 
 }

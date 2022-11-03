@@ -29,7 +29,7 @@ public class VersionSubCommand extends SubCommand {
             textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§a§oClick here to download new version!")}));
             textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.spigotmc.org/resources/virtual-realty.95599/"));
         }
-        ChatMessage.of(new TextComponent("Version: §a" + VirtualRealty.getInstance().getDescription().getVersion()), textComponent).send(sender);
+        ChatMessage.of(new TextComponent("Version: §a" + VirtualRealty.getInstance().getDescription().getVersion()), textComponent).sendWithPrefix(sender);
     }
 
 }
