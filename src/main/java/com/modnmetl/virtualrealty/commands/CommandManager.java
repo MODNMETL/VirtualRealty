@@ -5,12 +5,14 @@ import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.enums.commands.CommandType;
+import com.modnmetl.virtualrealty.enums.permissions.ManagementPermission;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
@@ -369,13 +371,13 @@ public class CommandManager implements TabCompleter {
             @NotNull String[] finalArgs = args;
             @NotNull String[] finalArgs1 = args;
             switch (args[0].toUpperCase(Locale.ROOT)) {
-                case "KICK":
                 case "ADD": {
                     if (args.length == 2) {
                         PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
+                            if (plot.getMember(player.getUniqueId()) != null && !plot.getMember(player.getUniqueId()).hasManagementPermission(ManagementPermission.ADD_MEMBER)) return;
                             if (finalArgs[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
-                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs[0].toLowerCase())) {
+                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs[1].toLowerCase())) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             }
                         });
@@ -386,24 +388,53 @@ public class CommandManager implements TabCompleter {
                             if (onlinePlayer.getName().equals(player.getName())) continue;
                             if (args[2].isEmpty()) {
                                 tabCompleter.add(onlinePlayer.getName());
-                            } else if (onlinePlayer.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
+                            } else if (onlinePlayer.getName().toLowerCase().startsWith(args[2].toLowerCase())) {
                                 tabCompleter.add(onlinePlayer.getName());
                             }
                         }
                         return tabCompleter;
                     }
+                    break;
+                }
+                case "KICK": {
+                    if (args.length == 2) {
+                        PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
+                            if (plot.getMember(player.getUniqueId()) != null && !plot.getMember(player.getUniqueId()).hasManagementPermission(ManagementPermission.KICK_MEMBER)) return;
+                            if (finalArgs[1].isEmpty()) {
+                                tabCompleter.add(String.valueOf(plot.getID()));
+                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs[1].toLowerCase())) {
+                                tabCompleter.add(String.valueOf(plot.getID()));
+                            }
+                        });
+                        return tabCompleter;
+                    }
+                    if (args.length == 3) {
+                        Plot plot = PlotManager.getInstance().getPlot(Integer.parseInt(args[1]));
+                        if (plot == null) return null;
+                        for (OfflinePlayer offlinePlayer : plot.getPlayerMembers()) {
+                            if (Objects.equals(offlinePlayer.getName(), player.getName())) continue;
+                            if (args[2].isEmpty()) {
+                                tabCompleter.add(offlinePlayer.getName());
+                            } else if (offlinePlayer.getName().toLowerCase().startsWith(args[2].toLowerCase())) {
+                                tabCompleter.add(offlinePlayer.getName());
+                            }
+                        }
+                        return tabCompleter;
+                    }
+                    break;
                 }
                 case "TP": {
                     if (args.length == 2) {
                         PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
                             if (finalArgs1[1].isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
-                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs1[0].toLowerCase())) {
+                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(finalArgs1[1].toLowerCase())) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             }
                         });
                         return tabCompleter;
                     }
+                    break;
                 }
             }
             return tabCompleter;
