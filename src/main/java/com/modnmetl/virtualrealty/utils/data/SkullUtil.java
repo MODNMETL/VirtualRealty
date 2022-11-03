@@ -10,6 +10,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.lang.reflect.Field;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.UUID;
 
 public class SkullUtil {
@@ -17,7 +18,7 @@ public class SkullUtil {
     public static ItemStack getSkull(String url) {
         ItemStack skull;
         if (VirtualRealty.legacyVersion) {
-            skull = new ItemStack(VMaterial.getMaterial("SKULL_ITEM"), 1, (short) 3);
+            skull = new ItemStack(Objects.requireNonNull(Material.getMaterial("SKULL_ITEM")), 1, (short) 3);
         } else {
             skull = new ItemStack(Material.PLAYER_HEAD, 1, (short) 3);
         }
@@ -47,7 +48,7 @@ public class SkullUtil {
     public static ItemStack getSkull(String url, UUID uuid) {
         ItemStack skull;
         if (VirtualRealty.legacyVersion) {
-            skull = new ItemStack(VMaterial.getMaterial("SKULL_ITEM"), 1, (short) 3);
+            skull = new ItemStack(Objects.requireNonNull(Material.getMaterial("SKULL_ITEM")), 1, (short) 3);
         } else {
             skull = new ItemStack(Material.PLAYER_HEAD, 1, (short) 3);
         }

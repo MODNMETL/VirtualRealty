@@ -4,7 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.enums.ConfirmationType;
 import com.modnmetl.virtualrealty.enums.Direction;
 import com.modnmetl.virtualrealty.enums.PlotSize;
-import com.modnmetl.virtualrealty.enums.WorldsSetting;
+import com.modnmetl.virtualrealty.enums.WorldSetting;
 import com.modnmetl.virtualrealty.enums.items.VItem;
 import com.modnmetl.virtualrealty.listeners.VirtualListener;
 import com.modnmetl.virtualrealty.listeners.stake.DraftListener;
@@ -16,7 +16,7 @@ import com.modnmetl.virtualrealty.objects.data.PlotItem;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.objects.region.GridStructure;
 import com.modnmetl.virtualrealty.utils.RegionUtil;
-import com.modnmetl.virtualrealty.utils.multiversion.Chat;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import de.tr7zw.nbtapi.NBTItem;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -220,7 +220,7 @@ public class PlayerActionListener extends VirtualListener {
                 textComponent2.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
                 textComponent.addExtra(textComponent2);
                 textComponent.addExtra(textComponent3);
-                new Chat(textComponent).sendTo(this.getSender());
+                ChatMessage.of(textComponent).send(this.getSender());
                 new BukkitRunnable() {
                     @Override
                     public void run() {
@@ -266,15 +266,8 @@ public class PlayerActionListener extends VirtualListener {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().claimModeDisabled);
             return;
         }
-        PlayerInventory inv;
-        ItemStack claimItem;
-        if (VirtualRealty.legacyVersion) {
-            inv = player.getInventory();
-            claimItem = player.getItemInHand();
-        } else {
-            inv = player.getInventory();
-            claimItem = inv.getItemInMainHand();
-        }
+        PlayerInventory inv = player.getInventory();
+        ItemStack claimItem = VirtualRealty.legacyVersion ? player.getItemInHand() : inv.getItemInMainHand();
         NBTItem claimNbtItem;
         if (!(claimItem.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD)
                 &&
@@ -284,29 +277,29 @@ public class PlayerActionListener extends VirtualListener {
         e.setCancelled(true);
         PlotItem plotItem = PlotItem.fromItemStack(claimItem);
         Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
-        String replacement = null;
+        String featureName = null;
         if (plot == null) {
             if (!canCreateInWorld(player)) {
                 player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().disabledPlotCreation);
                 return;
             }
-            replacement = VirtualRealty.getMessages().createFeature;
+            featureName = VirtualRealty.getMessages().createFeature;
         } else {
             if (plotItem.getPlotSize().equals(plot.getPlotSize())) {
                 if (((plot.isOwnershipExpired() && plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) || plot.getPlotOwner() == null)) {
-                    replacement = VirtualRealty.getMessages().claimFeature;
+                    featureName = VirtualRealty.getMessages().claimFeature;
                 } else if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) {
-                    replacement = VirtualRealty.getMessages().extendFeature;
+                    featureName = VirtualRealty.getMessages().extendFeature;
                 }
             } else {
                 if (!canCreateInWorld(player)) {
                     player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().disabledPlotCreation);
                     return;
                 }
-                replacement = VirtualRealty.getMessages().createFeature;
+                featureName = VirtualRealty.getMessages().createFeature;
             }
         }
-        String finalReplacement = replacement;
+        String finalFeatureName = featureName;
         if (plot != null && plotItem.getPlotSize().equals(plot.getPlotSize()) && plot.getPlotSize() != PlotSize.CUSTOM) {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().standingOnPlot);
             GridStructure previewStructure = new GridStructure(
@@ -324,13 +317,14 @@ public class PlayerActionListener extends VirtualListener {
             PlotItem draftItem = PlotItem.fromItemStack(claimItem, VItem.DRAFT);
             DraftListener.DRAFT_MAP.put(player, new AbstractMap.SimpleEntry<>(previewStructure, new AbstractMap.SimpleEntry<>(plotItem, draftItem)));
             inv.remove(claimItem);
+            ItemStack draftItemStack = draftItem.getItemStack();
             if (VirtualRealty.legacyVersion) {
-                player.setItemInHand(draftItem.getItemStack());
+                player.setItemInHand(draftItemStack);
             } else {
-                inv.setItemInMainHand(draftItem.getItemStack());
+                inv.setItemInMainHand(draftItemStack);
             }
             VirtualRealty.getMessages().claimEnabled.forEach((message) -> player.sendMessage(message.replaceAll("&", "§")
-                    .replaceAll("%feature%", finalReplacement)
+                    .replaceAll("%feature%", finalFeatureName)
             ));
             return;
         }
@@ -389,12 +383,12 @@ public class PlayerActionListener extends VirtualListener {
         }
         draftStructure.preview(player.getLocation(), true, false);
         VirtualRealty.getMessages().claimEnabled.forEach((message) -> player.sendMessage(message.replaceAll("&", "§")
-                .replaceAll("%feature%", finalReplacement)
+                .replaceAll("%feature%", finalFeatureName)
         ));
     }
 
     public boolean canCreateInWorld(Player player) {
-        switch (WorldsSetting.valueOf(VirtualRealty.getPluginConfiguration().worldsSetting.toUpperCase())) {
+        switch (WorldSetting.valueOf(VirtualRealty.getPluginConfiguration().worldsSetting.toUpperCase())) {
             case ALL:
                 break;
             case INCLUDED:

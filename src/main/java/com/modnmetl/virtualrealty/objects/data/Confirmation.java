@@ -4,6 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.enums.ConfirmationType;
 import com.modnmetl.virtualrealty.managers.ConfirmationManager;
 import com.modnmetl.virtualrealty.objects.Executable;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -41,7 +42,7 @@ public abstract class Confirmation implements Executable {
             @Override
             public void run() {
                 if (ConfirmationManager.isConfirmationAvailable(confirmationUUID)) {
-                    sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().confirmationExpired);
+                    ChatMessage.of(VirtualRealty.getMessages().confirmationExpired).sendWithPrefix(sender);
                     expiry();
                 }
             }

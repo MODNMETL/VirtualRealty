@@ -5,8 +5,7 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.multiversion.Chat;
-import lombok.NoArgsConstructor;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -55,7 +54,7 @@ public class ListSubCommand extends SubCommand {
             BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8   §f" + ownedBy.substring(0, 14) + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8  §f" + plot.getCenter().toSimpleString());
             textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(VirtualRealty.getMessages().clickToShowDetailedInfo.replaceAll("%plot_id%", String.valueOf(plot.getID())))}));
             textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vrplot info " + plot.getID()));
-            new Chat(textComponent).sendTo(sender);
+            ChatMessage.of(textComponent).send(sender);
         }
         sender.sendMessage("§7§m                                                                                ");
     }

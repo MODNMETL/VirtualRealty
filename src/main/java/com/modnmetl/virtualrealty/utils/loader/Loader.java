@@ -1,4 +1,4 @@
-package com.modnmetl.virtualrealty.utils;
+package com.modnmetl.virtualrealty.utils.loader;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;

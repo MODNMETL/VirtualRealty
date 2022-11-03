@@ -8,6 +8,7 @@ import com.modnmetl.virtualrealty.managers.ConfirmationManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.data.Confirmation;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -54,38 +55,38 @@ public class RemoveSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
             return;
         }
-        if (sender instanceof Player) {
-            if (this.isBypass()) {
-                plot.remove(sender);
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
-            } else {
-                for (String s : VirtualRealty.getMessages().removeConfirmation) {
-                    sender.sendMessage(VirtualRealty.PREFIX + s.replaceAll("%plot_id%", String.valueOf(plot.getID())));
-                }
-                Confirmation confirmation = new Confirmation(ConfirmationType.REMOVE, (Player) sender, plot.getID(), "YES") {
-                    @Override
-                    public void success() {
-                        plot.remove(((Player) sender).getKiller());
-                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
-                        ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
-                    }
-
-                    @Override
-                    public void failed() {
-                        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removalCancelled);
-                        ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
-                    }
-
-                    @Override
-                    public void expiry() {
-                        ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
-                    }
-                };
-                ConfirmationManager.addConfirmation(confirmation);
-            }
-        } else {
+        if (!(sender instanceof Player)) {
             plot.remove(sender);
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
+            return;
+        }
+        if (this.isBypass()) {
+            plot.remove(sender);
+            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().removedPlot);
+        } else {
+            for (String s : VirtualRealty.getMessages().removeConfirmation) {
+                sender.sendMessage(VirtualRealty.PREFIX + s.replaceAll("%plot_id%", String.valueOf(plot.getID())));
+            }
+            Confirmation confirmation = new Confirmation(ConfirmationType.REMOVE, (Player) sender, plot.getID(), "YES") {
+                @Override
+                public void success() {
+                    plot.remove(((Player) sender).getKiller());
+                    ChatMessage.of(VirtualRealty.getMessages().removedPlot).sendWithPrefix(sender);
+                    ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
+                }
+
+                @Override
+                public void failed() {
+                    ChatMessage.of(VirtualRealty.getMessages().removalCancelled).sendWithPrefix(sender);
+                    ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
+                }
+
+                @Override
+                public void expiry() {
+                    ConfirmationManager.removeConfirmations(plot.getID(), this.getConfirmationType());
+                }
+            };
+            ConfirmationManager.addConfirmation(confirmation);
         }
     }
 

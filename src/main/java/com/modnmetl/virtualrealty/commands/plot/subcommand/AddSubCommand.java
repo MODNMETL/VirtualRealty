@@ -7,6 +7,7 @@ import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.data.PlotMember;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -46,53 +47,50 @@ public class AddSubCommand extends SubCommand {
         try {
             plotID = Integer.parseInt(args[1]);
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(player);
             return;
         }
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
         if (offlinePlayer.getFirstPlayed() == 0) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+            ChatMessage.of(VirtualRealty.getMessages().playerNotFoundWithUsername).sendWithPrefix(player);
             return;
         }
         Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
+            ChatMessage.of(VirtualRealty.getMessages().noPlotFound).sendWithPrefix(sender);
             return;
         }
         if (!plot.hasMembershipAccess(player.getUniqueId())) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
+            ChatMessage.of(VirtualRealty.getMessages().notYourPlot).sendWithPrefix(sender);
             return;
         }
         PlotMember plotMember = plot.getMember(player.getUniqueId());
         if (plotMember != null) {
             if (!plotMember.hasManagementPermission(ManagementPermission.ADD_MEMBER)) {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
+                ChatMessage.of(VirtualRealty.getMessages().noAccess).sendWithPrefix(sender);
                 return;
             }
         } else {
             if (!plot.getOwnedBy().equals(player.getUniqueId())) {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
+                ChatMessage.of(VirtualRealty.getMessages().noAccess).sendWithPrefix(sender);
                 return;
             }
         }
         if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
+            ChatMessage.of(VirtualRealty.getMessages().ownershipExpired).sendWithPrefix(sender);
             return;
         }
         if (plot.getOwnedBy().equals(offlinePlayer.getUniqueId())) {
-            if (plot.getOwnedBy().equals(player.getUniqueId())) {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantAddYourself);
-            } else {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().alreadyInMembers);
-            }
+            boolean equals = plot.getOwnedBy().equals(player.getUniqueId());
+            ChatMessage.of(equals ? VirtualRealty.getMessages().cantAddYourself : VirtualRealty.getMessages().alreadyInMembers).sendWithPrefix(sender);
             return;
         }
         if (plot.getMember(offlinePlayer.getUniqueId()) != null) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().alreadyInMembers);
+            ChatMessage.of(VirtualRealty.getMessages().alreadyInMembers).sendWithPrefix(sender);
             return;
         }
         plot.addMember(offlinePlayer.getUniqueId());
-        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerAdd.replaceAll("%player%", offlinePlayer.getName()));
+        ChatMessage.of(VirtualRealty.getMessages().playerAdd.replaceAll("%player%", offlinePlayer.getName())).sendWithPrefix(sender);
     }
     
 }

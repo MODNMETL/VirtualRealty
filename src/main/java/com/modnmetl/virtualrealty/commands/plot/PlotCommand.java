@@ -5,6 +5,7 @@ import com.modnmetl.virtualrealty.commands.CommandRegistry;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.Command;
@@ -52,10 +53,10 @@ public class PlotCommand implements CommandExecutor {
             try {
                 Class.forName("com.modnmetl.virtualrealty.premiumloader.PremiumLoader", true, VirtualRealty.getLoader());
             } catch (Exception e) {
-                sender.sendMessage("§aThis function is available with a valid license key");
+                ChatMessage.of("§aThis function is available with a valid license key").send(sender);
                 TextComponent linkComponent = new TextComponent("§fhttps://modnmetl.com/");
                 linkComponent.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modnmetl.com/category/virtual-realty-plugin-61eef16fe2eeab00116a3e64"));
-                sender.spigot().sendMessage(new TextComponent("§aPlease visit "), linkComponent, new TextComponent(" §ato purchase one"));
+                ChatMessage.of(new TextComponent("§aPlease visit "), linkComponent, new TextComponent(" §ato purchase one")).send(sender);
                 return false;
             }
         }
@@ -72,8 +73,8 @@ public class PlotCommand implements CommandExecutor {
                 e.printStackTrace();
             } else {
                 if (e.getCause() instanceof FailedCommandException) return false;
-                sender.sendMessage("§cAn error occurred while executing the command.");
-                sender.sendMessage("§cCheck console for details.");
+                ChatMessage.of("§cAn error occurred while executing the command.").send(sender);
+                ChatMessage.of("§cCheck console for details.").send(sender);
                 VirtualRealty.getInstance().getLogger().log(Level.SEVERE, "Failed command execution | Command Sender: " + sender.getName());
                 VirtualRealty.getInstance().getLogger().log(Level.SEVERE, "To print more details add \"--error\" argument at the end of the command.");
             }

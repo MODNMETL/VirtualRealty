@@ -5,6 +5,7 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -47,12 +48,12 @@ public class ListSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlayerPlotsFound);
             return;
         }
-        sender.sendMessage(" ");
-        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        sender.sendMessage(" ");
+        ChatMessage.of(" ").send(sender);
+        ChatMessage.of(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»").send(sender);
+        ChatMessage.of(" ").send(sender);
         if (hasPlot) {
-            sender.sendMessage("§7§m                                                                                ");
-            sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned Until§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
+            ChatMessage.of("§7§m                                                                                ").send(sender);
+            ChatMessage.of("§7|  §a§l§oID§7  |  §a§l§oOwned Until§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |").send(sender);
             for (Plot plot : PlotManager.getInstance().getPlots()) {
                 if (plot.getPlotOwner() != null && plot.getPlotOwner().getUniqueId().equals(player.getUniqueId())) {
                     LocalDateTime localDateTime = plot.getOwnedUntilDate();
@@ -68,17 +69,17 @@ public class ListSubCommand extends SubCommand {
                         size.append(" ");
                     }
                     BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8  §f" + (isOwned ? " " : "") + dateTimeFormatter.format(localDateTime) + "§8    §f" + size + "§8   §f" + plot.getCenter().toSimpleString());
-                    sender.sendMessage(textComponent.toLegacyText());
+                    ChatMessage.of(textComponent.toLegacyText()).send(sender);
                 }
             }
-            sender.sendMessage("§7§m                                                                                ");
+            ChatMessage.of("§7§m                                                                                ").send(sender);
         }
         if (isMember) {
-            sender.sendMessage(" ");
-            sender.sendMessage("§7                            §fMember of §8§l↴");
-            sender.sendMessage(" ");
-            sender.sendMessage("§7§m                                                                                ");
-            sender.sendMessage("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |");
+            ChatMessage.of(" ").send(sender);
+            ChatMessage.of("§7                            §fMember of §8§l↴").send(sender);
+            ChatMessage.of(" ").send(sender);
+            ChatMessage.of("§7§m                                                                                ").send(sender);
+            ChatMessage.of("§7|  §a§l§oID§7  |  §a§l§oOwned By§7 |  §a§l§oSize§7  |  §a§l§oPlot Center§7  |").send(sender);
             for (Plot plot : PlotManager.getInstance().getPlots()) {
                 if (plot.getPlotOwner() != null && !plot.getPlotOwner().getUniqueId().equals(player.getUniqueId()) && plot.hasMembershipAccess(player.getUniqueId())) {
                     StringBuilder ownedBy = new StringBuilder();
@@ -92,11 +93,12 @@ public class ListSubCommand extends SubCommand {
                         size.append(" ");
                     }
                     BaseComponent textComponent = new TextComponent("§f" + plot.getID() + "§8  §f" + (isOwned ? " " : "") + ownedBy + "§8 §f" + size + "§8   §f" + plot.getCenter().toSimpleString());
-                    sender.sendMessage(textComponent.toLegacyText());
+                    ChatMessage.of(textComponent.toLegacyText()).send(sender);
                 }
             }
-            sender.sendMessage("§7§m                                                                                ");
+            ChatMessage.of("§7§m                                                                                ").send(sender);
         }
+
     }
 
 }

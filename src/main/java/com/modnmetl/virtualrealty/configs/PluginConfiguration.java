@@ -1,6 +1,6 @@
 package com.modnmetl.virtualrealty.configs;
 
-import com.modnmetl.virtualrealty.enums.WorldsSetting;
+import com.modnmetl.virtualrealty.enums.WorldSetting;
 import com.modnmetl.virtualrealty.enums.dynmap.HighlightType;
 import com.modnmetl.virtualrealty.enums.ServerVersion;
 import eu.okaeri.configs.OkaeriConfig;
@@ -9,7 +9,6 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import lombok.NoArgsConstructor;
 import org.bukkit.GameMode;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
@@ -66,7 +65,7 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("ALL - all worlds are capable of creating plots with plot claim items and 'worlds-list' setting is skipped")
     @Comment("INCLUDED - only worlds included in 'worlds-list' setting are capable of creating plots with plot claim items")
     @Comment("EXCLUDED - all worlds mentioned in 'worlds-list' setting won't be capable of creating plots with plot claim items")
-    public String worldsSetting = WorldsSetting.ALL.name();
+    public String worldsSetting = WorldSetting.ALL.name();
     @Comment("List of worlds")
     public List<String> worldsList = Arrays.asList("%world%", "%world%_nether", "%world%_the_end");
 

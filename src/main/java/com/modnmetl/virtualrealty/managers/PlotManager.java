@@ -2,21 +2,18 @@ package com.modnmetl.virtualrealty.managers;
 
 import com.modnmetl.virtualrealty.enums.PlotSize;
 import com.modnmetl.virtualrealty.objects.data.PlotMember;
-import com.modnmetl.virtualrealty.objects.math.BlockVector2;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.math.BlockVector3;
 import com.modnmetl.virtualrealty.sql.Database;
 import lombok.Data;
-import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 
 @Data
@@ -148,7 +145,7 @@ public class PlotManager {
         return null;
     }
 
-    public void removePlotFromList(Plot plot) {
+    public void removePlotFromCollection(Plot plot) {
         plots.remove(plot);
     }
 

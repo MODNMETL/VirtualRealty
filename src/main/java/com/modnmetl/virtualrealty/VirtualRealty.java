@@ -22,7 +22,7 @@ import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.registry.VirtualPlaceholders;
 import com.modnmetl.virtualrealty.sql.Database;
-import com.modnmetl.virtualrealty.utils.Loader;
+import com.modnmetl.virtualrealty.utils.loader.Loader;
 import com.modnmetl.virtualrealty.utils.configuration.ConfigurationFactory;
 import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
 import com.modnmetl.virtualrealty.utils.UpdateChecker;

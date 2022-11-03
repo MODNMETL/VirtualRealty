@@ -78,9 +78,7 @@ public class DynmapManager {
     private static AreaMarker getAreaMarker(String areaMarkerName) {
         if (VirtualRealty.getDynmapManager() == null) return null;
         for (AreaMarker areaMarker : VirtualRealty.getDynmapManager().markerset.getAreaMarkers()) {
-            if (areaMarker.getMarkerID().equalsIgnoreCase(areaMarkerName)) {
-                return areaMarker;
-            }
+            if (areaMarker.getMarkerID().equalsIgnoreCase(areaMarkerName)) return areaMarker;
         }
         return null;
     }
@@ -119,12 +117,12 @@ public class DynmapManager {
     }
 
     public static void removeDynMapMarker(Plot plot) {
-        if (VirtualRealty.getDynmapManager() == null || !VirtualRealty.getDynmapManager().isDynmapPresent() || VirtualRealty.getDynmapManager().dapi == null || VirtualRealty.getDynmapManager().markerset == null) return;
+        if (VirtualRealty.getDynmapManager() == null || !VirtualRealty.getDynmapManager().isDynmapPresent() || VirtualRealty.getDynmapManager().dapi == null || VirtualRealty.getDynmapManager().markerset == null)
+            return;
         AreaMarker marker = VirtualRealty.getDynmapManager().markerset.findAreaMarker("virtualrealty.plots." + plot.getID());
-        if (marker != null) {
-            areaMarkers.remove(marker);
-            marker.deleteMarker();
-        }
+        if (marker == null) return;
+        areaMarkers.remove(marker);
+        marker.deleteMarker();
     }
 
 }

@@ -8,6 +8,7 @@ import com.modnmetl.virtualrealty.managers.DynmapManager;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.data.PlotMember;
 import com.modnmetl.virtualrealty.objects.region.Cuboid;
+import com.modnmetl.virtualrealty.objects.region.GridStructure;
 import com.modnmetl.virtualrealty.sql.Database;
 import com.modnmetl.virtualrealty.utils.EnumUtils;
 import com.modnmetl.virtualrealty.utils.data.OldSchematicUtil;
@@ -176,11 +177,10 @@ public class Plot {
 
     public void togglePermission(RegionPermission plotPermission) {
         modified();
-        if (nonMemberPermissions.contains(plotPermission)) {
+        if (nonMemberPermissions.contains(plotPermission))
             nonMemberPermissions.remove(plotPermission);
-        } else {
-            nonMemberPermissions.add(plotPermission);
-        }
+         else
+             nonMemberPermissions.add(plotPermission);
     }
 
     public boolean hasPermission(RegionPermission plotPermission) {
@@ -213,30 +213,36 @@ public class Plot {
         plotMember.delete();
     }
 
+    public void removeAllMembers() {
+        for (PlotMember member : members) {
+            removeMember(member);
+        }
+    }
+
     public boolean isOwnershipExpired() {
         return ownedUntilDate.isBefore(LocalDateTime.now());
     }
 
     public int getXMin() {
-        return Math.min(this.getBorderBottomLeftCorner().getBlockX(), this.borderTopRightCorner.getBlockX());
+        return Math.min(this.borderBottomLeftCorner.getBlockX(), this.borderTopRightCorner.getBlockX());
     }
 
     public int getXMax() {
-        return Math.max(this.getBorderBottomLeftCorner().getBlockX(), this.borderTopRightCorner.getBlockX());
+        return Math.max(this.borderBottomLeftCorner.getBlockX(), this.borderTopRightCorner.getBlockX());
     }
 
     public int getZMin() {
-        return Math.min(this.getBorderBottomLeftCorner().getBlockZ(), this.borderTopRightCorner.getBlockZ());
+        return Math.min(this.borderBottomLeftCorner.getBlockZ(), this.borderTopRightCorner.getBlockZ());
     }
 
     public int getZMax() {
-        return Math.max(this.getBorderBottomLeftCorner().getBlockZ(), this.borderTopRightCorner.getBlockZ());
+        return Math.max(this.borderBottomLeftCorner.getBlockZ(), this.borderTopRightCorner.getBlockZ());
     }
 
     public void setOwnedBy(UUID ownedBy) {
         modified();
         this.ownedBy = ownedBy;
-        members.clear();
+        removeAllMembers();
         updateMarker();
     }
 
@@ -366,7 +372,7 @@ public class Plot {
         long time = System.currentTimeMillis();
         prepareCorners();
         if (plotSize != PlotSize.AREA) prepareBlocks(createdLocation, natural);
-        VirtualRealty.debug("Plot initialize time: " + (System.currentTimeMillis() - time) + " ms");
+        VirtualRealty.debug("Plot initialization time: " + (System.currentTimeMillis() - time) + " ms");
     }
 
     public Set<Block> getBorderBlocks() {
@@ -570,52 +576,57 @@ public class Plot {
     }
 
     public void unloadPlot() {
-        if (SchematicUtil.isOldSerialization(ID)) {
-            long time = System.currentTimeMillis();
-            Location location = null;
-            switch (createdDirection) {
-                case SOUTH: {
-                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
-                    break;
-                }
-                case WEST: {
-                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width);
-                    break;
-                }
-                case NORTH: {
-                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length);
-                    break;
-                }
-                case EAST: {
-                    location = new Location(getCreatedWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
-                    break;
-                }
-            }
-            OldSchematicUtil.paste(ID, location);
-            VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms (Old Serialization)");
-        } else {
-            long time = System.currentTimeMillis();
+        if (!SchematicUtil.isOldSerialization(ID)) {
             SchematicUtil.paste(ID);
+            return;
         }
+        long time = System.currentTimeMillis();
+        Location location = null;
+        switch (createdDirection) {
+            case SOUTH: {
+                location = new Location(getCreatedWorld(), createdLocation.getBlockX() - width, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
+                break;
+            }
+            case WEST: {
+                location = new Location(getCreatedWorld(), createdLocation.getBlockX() - length, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - width);
+                break;
+            }
+            case NORTH: {
+                location = new Location(getCreatedWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - length);
+                break;
+            }
+            case EAST: {
+                location = new Location(getCreatedWorld(), createdLocation.getBlockX() - 1, createdLocation.getBlockY() - 10, createdLocation.getBlockZ() - 1);
+                break;
+            }
+        }
+        OldSchematicUtil.paste(ID, location);
+        VirtualRealty.debug("Region pasted in: " + (System.currentTimeMillis() - time) + " ms (Old Serialization)");
     }
 
     private void modified() {
         modified = Instant.now();
     }
 
-    @SneakyThrows
-    public void insert() {
-        String serializedLocation =
-                        Objects.requireNonNull(this.getCreatedWorld()).getName() + ";" +
-                        this.createdLocation.getX() + ";" +
-                        this.createdLocation.getY() + ";" +
-                        this.createdLocation.getZ() + ";" +
-                        this.createdLocation.getYaw() + ";" +
-                        this.createdLocation.getPitch() + ";";
+    private String getNonMemberPermissionsString() {
         StringBuilder permissions = new StringBuilder();
         for (RegionPermission permission : this.nonMemberPermissions) {
             permissions.append(permission.name()).append("¦");
         }
+        return permissions.toString();
+    }
+
+    private String getSerializedCreatedLocation() {
+        return Objects.requireNonNull(this.getCreatedWorld()).getName() + ";" +
+                this.createdLocation.getX() + ";" +
+                this.createdLocation.getY() + ";" +
+                this.createdLocation.getZ() + ";" +
+                this.createdLocation.getYaw() + ";" +
+                this.createdLocation.getPitch() + ";";
+    }
+
+    @SneakyThrows
+    public void insert() {
         try (Connection conn = Database.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "INSERT INTO `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName +
@@ -626,7 +637,7 @@ public class Plot {
              )) {
             ps.setInt(1, this.ID);
             ps.setString(2, (this.ownedBy == null ? "" : this.ownedBy.toString()));
-            ps.setString(3, permissions.toString());
+            ps.setString(3, getNonMemberPermissionsString());
             ps.setString(4, (this.assignedBy == null ? "null" : this.assignedBy));
             ps.setTimestamp(5, Timestamp.valueOf(this.ownedUntilDate));
             ps.setString(6, this.floorMaterial + ":" + this.floorData);
@@ -635,7 +646,7 @@ public class Plot {
             ps.setInt(9, this.length);
             ps.setInt(10, this.width);
             ps.setInt(11, this.height);
-            ps.setString(12, serializedLocation);
+            ps.setString(12, getSerializedCreatedLocation());
             ps.setTimestamp(13, Timestamp.from(Instant.now()));
             ps.setTimestamp(14, Timestamp.from(Instant.now()));
             ps.setString(15, this.selectedGameMode.name());
@@ -647,10 +658,6 @@ public class Plot {
 
     @SneakyThrows
     public void update() {
-        StringBuilder permissions = new StringBuilder();
-        for (RegionPermission permission : this.nonMemberPermissions) {
-            permissions.append(permission.name()).append("¦");
-        }
         try (Connection conn = Database.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "UPDATE `" +
@@ -670,7 +677,7 @@ public class Plot {
                              " WHERE `ID`= ?"
              )) {
             ps.setString(1, (this.ownedBy == null ? "" : this.ownedBy.toString()));
-            ps.setString(2, permissions.toString());
+            ps.setString(2, getNonMemberPermissionsString());
             ps.setString(3, (this.assignedBy == null ? "null" : this.assignedBy));
             ps.setTimestamp(4, Timestamp.valueOf(this.ownedUntilDate));
             ps.setString(5, this.floorMaterial + ":" + this.floorData);
@@ -697,9 +704,7 @@ public class Plot {
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noRegionFileFound);
             }
         }
-        for (PlotMember member : this.getMembers()) {
-            removeMember(member);
-        }
+        removeAllMembers();
         if (VirtualRealty.getDynmapManager() != null) {
             DynmapManager.removeDynMapMarker(this);
         }
@@ -712,7 +717,7 @@ public class Plot {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        PlotManager.getInstance().removePlotFromList(this);
+        PlotManager.getInstance().removePlotFromCollection(this);
         VirtualRealty.debug("Removed plot #" + this.ID);
     }
 

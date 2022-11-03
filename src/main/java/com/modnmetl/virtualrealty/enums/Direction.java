@@ -18,7 +18,7 @@ public enum Direction {
     public static Direction byYaw(float yaw) {
         float absoluteYaw = Math.abs(yaw);
         Direction direction = null;
-        if(absoluteYaw > 315 || absoluteYaw <= 45) {
+        if (absoluteYaw > 315 || absoluteYaw <= 45) {
             //south
             direction = SOUTH;
         } else if(absoluteYaw > 45 && absoluteYaw <= 135) {

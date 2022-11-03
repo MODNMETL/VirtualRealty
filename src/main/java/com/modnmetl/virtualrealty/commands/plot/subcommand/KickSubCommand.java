@@ -7,6 +7,7 @@ import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
 import com.modnmetl.virtualrealty.managers.PlotManager;
 import com.modnmetl.virtualrealty.objects.Plot;
 import com.modnmetl.virtualrealty.objects.data.PlotMember;
+import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
 import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -45,54 +46,58 @@ public class KickSubCommand extends SubCommand {
         try {
             plotID = Integer.parseInt(args[1]);
         } catch (IllegalArgumentException e) {
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
             return;
         }
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
         if (offlinePlayer.getName() == null) {
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
             return;
         }
         Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
             return;
         }
         if (!plot.hasMembershipAccess(player.getUniqueId())) {
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notYourPlot);
             return;
         }
         PlotMember plotMember = plot.getMember(player.getUniqueId());
         if (plotMember != null) {
             if (!plotMember.hasManagementPermission(ManagementPermission.KICK_MEMBER)) {
+                ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
                 return;
             }
         } else {
             if (!plot.getOwnedBy().equals(player.getUniqueId())) {
+                ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
                 sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noAccess);
                 return;
             }
         }
         if (plot.getOwnedUntilDate().isBefore(LocalDateTime.now())) {
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().ownershipExpired);
             return;
         }
         if (plot.getOwnedBy().equals(offlinePlayer.getUniqueId())) {
-            if (plot.getOwnedBy().equals(player.getUniqueId())) {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickYourself);
-            } else {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantKickOwner);
-            }
+            boolean equals = plot.getOwnedBy().equals(player.getUniqueId());
+            ChatMessage.of(equals ? VirtualRealty.getMessages().cantKickYourself : VirtualRealty.getMessages().cantKickOwner).sendWithPrefix(sender);
             return;
         }
         PlotMember member = plot.getMember(offlinePlayer.getUniqueId());
         if (member == null) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+            ChatMessage.of(VirtualRealty.getMessages().playerNotFoundWithUsername).sendWithPrefix(sender);
             return;
         }
         plot.removeMember(member);
-        sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerKick.replaceAll("%player%", offlinePlayer.getName()));
+        ChatMessage.of(VirtualRealty.getMessages().playerKick.replaceAll("%player%", offlinePlayer.getName())).sendWithPrefix(sender);
     }
 
 }

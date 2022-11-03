@@ -1,6 +1,6 @@
 package com.modnmetl.virtualrealty.enums;
 
-public enum WorldsSetting {
+public enum WorldSetting {
 
     ALL,
     INCLUDED,
