@@ -122,8 +122,7 @@ public abstract class SubCommand {
     public void printHelp() throws FailedCommandException {
         for (String s : HELP_LIST) {
             String message = s.replaceAll("%command%", getSubCommandName());
-            if (message.contains("%command%"))
-                ChatMessage.of(message).send(commandSender);
+            ChatMessage.of(message).send(commandSender);
         }
         throw new FailedCommandException();
     }

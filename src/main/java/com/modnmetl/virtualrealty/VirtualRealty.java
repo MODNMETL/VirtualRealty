@@ -281,7 +281,6 @@ public final class VirtualRealty extends JavaPlugin {
 
     public void loadCommandsConfiguration() {
         commandsConfiguration = configFactory.loadCommandsConfiguration(commandsConfigurationFile);
-        commandsConfiguration.refreshHelpMessages();
         commandsConfiguration.assignAliases();
         CommandRegistry.setupPlaceholders();
     }

@@ -1,6 +1,8 @@
 package com.modnmetl.virtualrealty.utils.configuration;
 
+import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.configs.*;
+import com.modnmetl.virtualrealty.configs.migrations.C0001_Remove_Old_Plot_Sub_Commands;
 import eu.okaeri.configs.ConfigManager;
 import eu.okaeri.configs.postprocessor.SectionSeparator;
 import eu.okaeri.configs.validator.okaeri.OkaeriValidator;
@@ -17,6 +19,7 @@ public class ConfigurationFactory {
         return ConfigManager.create(PluginConfiguration.class, (it) -> {
             it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
             it.withBindFile(pluginConfigurationFile);
+            it.withRemoveOrphans(true);
             it.saveDefaults();
             it.load(true);
         });
@@ -26,6 +29,7 @@ public class ConfigurationFactory {
         return ConfigManager.create(SizesConfiguration.class, (it) -> {
             it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
             it.withBindFile(sizesConfigurationFile);
+            it.withRemoveOrphans(true);
             it.saveDefaults();
             it.load(true);
         });
@@ -35,6 +39,7 @@ public class ConfigurationFactory {
         return ConfigManager.create(MessagesConfiguration.class, (it) -> {
             it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
             it.withBindFile(messagesConfigurationFile);
+            it.withRemoveOrphans(true);
             it.saveDefaults();
             it.load(true);
         });
@@ -53,8 +58,13 @@ public class ConfigurationFactory {
         return ConfigManager.create(CommandsConfiguration.class, (it) -> {
             it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
             it.withBindFile(commandsConfigurationFile);
+            it.withLogger(VirtualRealty.getInstance().getLogger());
+            it.withRemoveOrphans(true);
             it.saveDefaults();
             it.load(true);
+            it.migrate(
+                    new C0001_Remove_Old_Plot_Sub_Commands()
+            );
         });
     }
 
@@ -62,6 +72,7 @@ public class ConfigurationFactory {
         return ConfigManager.create(PermissionsConfiguration.class, (it) -> {
             it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
             it.withBindFile(pluginConfigurationFile);
+            it.withRemoveOrphans(true);
             it.saveDefaults();
             it.update();
         });
@@ -90,6 +101,15 @@ public class ConfigurationFactory {
             it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
             it.withBindFile(permissionsConfigurationFile);
             it.saveDefaults();
+            it.update();
+        });
+    }
+
+    public CommandsConfiguration updateCommandsConfiguration(File commandsConfigurationFile) {
+        return ConfigManager.create(CommandsConfiguration.class, (it) -> {
+            it.withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer(), true), new SerdesBukkit());
+            it.withBindFile(commandsConfigurationFile);
+            it.withRemoveOrphans(true);
             it.update();
         });
     }

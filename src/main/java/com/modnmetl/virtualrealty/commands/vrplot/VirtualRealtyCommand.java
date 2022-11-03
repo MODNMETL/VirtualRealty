@@ -88,9 +88,10 @@ public class VirtualRealtyCommand implements CommandExecutor {
             CommandRegistry.VRPLOT_PLACEHOLDERS.forEach((s, s2) -> {
                 finalMessage[0] = finalMessage[0].replaceAll(s, s2);
             });
-            sender.sendMessage(
-                    finalMessage[0]
-            );
+            if (!finalMessage[0].contains("_command%"))
+                sender.sendMessage(
+                        finalMessage[0]
+                );
         }
     }
     

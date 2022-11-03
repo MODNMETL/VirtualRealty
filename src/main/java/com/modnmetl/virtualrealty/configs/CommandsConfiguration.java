@@ -8,6 +8,9 @@ import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.enums.commands.CommandType;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -20,24 +23,45 @@ import java.util.*;
 @Names(strategy = NameStrategy.HYPHEN_CASE, modifier = NameModifier.TO_LOWER_CASE)
 public class CommandsConfiguration extends OkaeriConfig {
 
-    public LinkedHashMap<String, String> plotAliases = getPlotAliasesHashMap();
-    public LinkedHashMap<String, String> vrplotAliases = getVRPlotAliasesHashMap();
+    public PlotAliases plotAliases = new PlotAliases();
+    public Map<String, String> vrplotAliases = getVRPlotAliasesHashMap();
 
-    public LinkedHashMap<String, LinkedList<String>> plotCommandsHelp = getCommandsHelp(CommandType.PLOT);
-    public LinkedHashMap<String, LinkedList<String>> vrplotCommandsHelp = getCommandsHelp(CommandType.VRPLOT);
+    public Map<String, LinkedList<String>> plotCommandsHelp = getCommandsHelp(CommandType.PLOT);
+    public Map<String, LinkedList<String>> vrplotCommandsHelp = getCommandsHelp(CommandType.VRPLOT);
+
+
+
+    @Names(strategy = NameStrategy.HYPHEN_CASE)
+    public static class PlotAliases extends OkaeriConfig  {
+
+        public String panel = "panel";
+        public String add = "add";
+        public String gm = "gm";
+        public String info = "info";
+        public String kick = "kick";
+        public String list = "list";
+        public String tp = "tp";
+
+        public PlotAliases() {
+            super.setRemoveOrphans(true);
+        }
+
+        @SneakyThrows
+        public Map<String, String> getAliasesMap() {
+            Map<String, String> aliasesMap = new HashMap<>();
+            for (Field field : this.getClass().getDeclaredFields()) {
+                String name = field.getName();
+                String alias = (String) field.get(this);
+                aliasesMap.put(name, alias);
+            }
+            return aliasesMap;
+        }
+
+    }
 
     public static LinkedHashMap<String, String> getVRPlotAliasesHashMap() {
         LinkedHashMap<String, String> aliasesHashMap = new LinkedHashMap<>();
         for (String s : CommandManager.SUBCOMMANDS.get(VirtualRealtyCommand.class)) {
-            if (s == null || s.isEmpty()) continue;
-            aliasesHashMap.put(s, s);
-        }
-        return aliasesHashMap;
-    }
-
-    public static LinkedHashMap<String, String> getPlotAliasesHashMap() {
-        LinkedHashMap<String, String> aliasesHashMap = new LinkedHashMap<>();
-        for (String s : CommandManager.SUBCOMMANDS.get(PlotCommand.class)) {
             if (s == null || s.isEmpty()) continue;
             aliasesHashMap.put(s, s);
         }
@@ -126,7 +150,7 @@ public class CommandsConfiguration extends OkaeriConfig {
             Optional<SubCommand> any = CommandRegistry.VRPLOT_SUB_COMMAND_LIST.stream().filter(subCommand -> subCommand.getSubCommandClassName().equalsIgnoreCase(original)).findAny();
             any.ifPresent(subCommand -> subCommand.setAlias(alias));
         });
-        plotAliases.forEach((original, alias) -> {
+        plotAliases.getAliasesMap().forEach((original, alias) -> {
             Optional<SubCommand> any = CommandRegistry.PLOT_SUB_COMMAND_LIST.stream().filter(subCommand -> subCommand.getSubCommandClassName().equalsIgnoreCase(original)).findAny();
             any.ifPresent(subCommand -> subCommand.setAlias(alias));
         });
