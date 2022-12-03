@@ -2,11 +2,10 @@ package com.modnmetl.virtualrealty.commands.plot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.managers.PlotManager;
-import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.objects.data.PlotMember;
-import lombok.NoArgsConstructor;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.manager.PlotManager;
+import com.modnmetl.virtualrealty.model.plot.Plot;
+import com.modnmetl.virtualrealty.model.plot.PlotMember;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -64,7 +63,7 @@ public class GmSubCommand extends SubCommand {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().gamemodeDisabled);
             return;
         }
-        Plot plot = PlotManager.getInstance().getBorderedPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (plot == null) {
             sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantSwitchGamemode);
             return;

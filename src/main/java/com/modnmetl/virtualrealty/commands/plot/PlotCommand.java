@@ -3,21 +3,18 @@ package com.modnmetl.virtualrealty.commands.plot;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.CommandRegistry;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.enums.commands.CommandType;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
+import com.modnmetl.virtualrealty.model.other.CommandType;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.logging.Level;
-
-import static com.modnmetl.virtualrealty.commands.CommandRegistry.PLOT_SUB_COMMAND_LIST;
 
 public class PlotCommand implements CommandExecutor {
 

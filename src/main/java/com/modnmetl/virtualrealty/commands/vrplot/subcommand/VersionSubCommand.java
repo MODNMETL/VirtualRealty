@@ -2,9 +2,8 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
-import lombok.NoArgsConstructor;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;

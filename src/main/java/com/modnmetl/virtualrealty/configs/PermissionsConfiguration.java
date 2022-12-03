@@ -1,11 +1,9 @@
 package com.modnmetl.virtualrealty.configs;
 
-import com.modnmetl.virtualrealty.enums.permissions.RegionPermission;
+import com.modnmetl.virtualrealty.model.permission.RegionPermission;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
 
-import javax.swing.plaf.synth.Region;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;

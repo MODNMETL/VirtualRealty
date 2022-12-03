@@ -5,11 +5,9 @@ import com.modnmetl.virtualrealty.commands.CommandRegistry;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
-import com.modnmetl.virtualrealty.enums.commands.CommandType;
+import com.modnmetl.virtualrealty.model.other.CommandType;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;

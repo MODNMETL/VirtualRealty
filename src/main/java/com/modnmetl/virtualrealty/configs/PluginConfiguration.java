@@ -1,8 +1,8 @@
 package com.modnmetl.virtualrealty.configs;
 
-import com.modnmetl.virtualrealty.enums.WorldSetting;
-import com.modnmetl.virtualrealty.enums.dynmap.HighlightType;
-import com.modnmetl.virtualrealty.enums.ServerVersion;
+import com.modnmetl.virtualrealty.model.other.HighlightType;
+import com.modnmetl.virtualrealty.model.other.WorldSetting;
+import com.modnmetl.virtualrealty.model.other.ServerVersion;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
 import com.modnmetl.virtualrealty.VirtualRealty;

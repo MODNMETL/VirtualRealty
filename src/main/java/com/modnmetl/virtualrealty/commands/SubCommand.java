@@ -1,10 +1,10 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.enums.commands.CommandType;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
-import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
+import com.modnmetl.virtualrealty.model.other.CommandType;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.exception.InsufficientPermissionsException;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;

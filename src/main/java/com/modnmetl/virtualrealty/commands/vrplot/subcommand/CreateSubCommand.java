@@ -2,16 +2,16 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.enums.Direction;
-import com.modnmetl.virtualrealty.enums.PlotSize;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.managers.PlotManager;
-import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.objects.region.Cuboid;
-import com.modnmetl.virtualrealty.objects.region.GridStructure;
-import com.modnmetl.virtualrealty.utils.RegionUtil;
-import com.modnmetl.virtualrealty.utils.multiversion.ChatMessage;
-import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
+import com.modnmetl.virtualrealty.model.math.Direction;
+import com.modnmetl.virtualrealty.model.plot.PlotSize;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.manager.PlotManager;
+import com.modnmetl.virtualrealty.model.plot.Plot;
+import com.modnmetl.virtualrealty.model.region.Cuboid;
+import com.modnmetl.virtualrealty.model.region.GridStructure;
+import com.modnmetl.virtualrealty.util.RegionUtil;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
+import com.modnmetl.virtualrealty.util.multiversion.VMaterial;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -88,7 +88,7 @@ public class CreateSubCommand extends SubCommand {
                 }
                 ChatMessage.of(VirtualRealty.getMessages().notCollidingCreating).sendWithPrefix(sender);
                 long timeStart = System.currentTimeMillis();
-                Plot plot = PlotManager.getInstance().createPlot(location, PlotSize.AREA, length, height, width, true);
+                Plot plot = PlotManager.getInstance().createArea(location, length, height, width);
                 long timeEnd = System.currentTimeMillis();
                 BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
                 BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
@@ -135,9 +135,8 @@ public class CreateSubCommand extends SubCommand {
                         ChatMessage.of(VirtualRealty.getMessages().cantGetFloorMaterial).sendWithPrefix(sender);
                         return;
                     }
-                    if (args[2].split(":").length == 2) {
+                    if (args[2].split(":").length == 2)
                         floorData = Byte.parseByte(args[2].split(":")[1]);
-                    }
                 }
                 if (args.length >= 4) {
                     try {
@@ -150,13 +149,12 @@ public class CreateSubCommand extends SubCommand {
                         ChatMessage.of(VirtualRealty.getMessages().cantGetBorderMaterial).sendWithPrefix(sender);
                         return;
                     }
-                    if (args[3].split(":").length == 2) {
+                    if (args[3].split(":").length == 2)
                         borderData = Byte.parseByte(args[3].split(":")[1]);
-                    }
                 }
                 ChatMessage.of(VirtualRealty.getMessages().notCollidingCreating).sendWithPrefix(sender);
                 long timeStart = System.currentTimeMillis();
-                Plot plot = PlotManager.getInstance().createPlot(location, plotSize, plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth(), natural);
+                Plot plot = PlotManager.getInstance().createPlot(location, plotSize, natural);
                 if (!natural) {
                     if (floorMaterial != null) {
                         plot.setFloorMaterial(floorMaterial, floorData);
@@ -252,14 +250,12 @@ public class CreateSubCommand extends SubCommand {
             }
             ChatMessage.of(VirtualRealty.getMessages().notCollidingCreating).sendWithPrefix(sender);
             long timeStart = System.currentTimeMillis();
-            Plot plot = PlotManager.getInstance().createPlot(location, PlotSize.CUSTOM, length, height, width, natural);
+            Plot plot = PlotManager.getInstance().createCustomPlot(location, length, height, width, natural);
             if (!natural) {
-                if (floorMaterial != null) {
+                if (floorMaterial != null)
                     plot.setFloorMaterial(floorMaterial, floorData);
-                }
-                if (borderMaterial != null) {
+                if (borderMaterial != null)
                     plot.setBorderMaterial(borderMaterial, borderData);
-                }
             }
             long timeEnd = System.currentTimeMillis();
             BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
@@ -287,6 +283,5 @@ public class CreateSubCommand extends SubCommand {
             }.runTaskLater(VirtualRealty.getInstance(), 20);
         }
     }
-
 
 }

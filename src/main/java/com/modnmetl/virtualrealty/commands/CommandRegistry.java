@@ -1,7 +1,7 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.enums.commands.CommandType;
+import com.modnmetl.virtualrealty.model.other.CommandType;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;
