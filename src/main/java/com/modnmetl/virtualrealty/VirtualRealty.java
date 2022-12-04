@@ -340,7 +340,7 @@ public final class VirtualRealty extends JavaPlugin {
         new ConfirmationListener(this);
         try {
             List<Class<?>> classes = new ArrayList<>();
-            classes.add(Class.forName("com.modnmetl.virtualrealty.listeners.premium.PanelListener", true, getLoader()));
+            classes.add(Class.forName("com.modnmetl.virtualrealty.listener.premium.PanelListener", true, getLoader()));
             for (Class<?> aClass : classes) {
                 aClass.getConstructors()[0].newInstance(this);
             }
