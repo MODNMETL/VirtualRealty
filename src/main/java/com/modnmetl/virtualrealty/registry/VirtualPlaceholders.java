@@ -1,9 +1,9 @@
 package com.modnmetl.virtualrealty.registry;
 
-import com.modnmetl.virtualrealty.managers.PlotManager;
+import com.modnmetl.virtualrealty.manager.PlotManager;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.objects.Plot;
+import com.modnmetl.virtualrealty.model.plot.Plot;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,7 +101,7 @@ public class VirtualPlaceholders extends PlaceholderExpansion {
     public String onPlaceholderRequest(Player player, @NotNull String identifier){
         if(player == null) return "";
 
-        Plot plot = PlotManager.getBorderedPlot(player.getLocation());
+        Plot plot = PlotManager.getInstance().getPlot(player.getLocation());
         if (identifier.equals("plot_id")) {
             if (plot == null) return "";
             return String.valueOf(plot.getID());

@@ -2,10 +2,10 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.managers.PlotManager;
-import com.modnmetl.virtualrealty.objects.Plot;
-import lombok.NoArgsConstructor;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.manager.PlotManager;
+import com.modnmetl.virtualrealty.model.plot.Plot;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -30,9 +30,9 @@ public class InfoSubCommand extends SubCommand {
         assertPermission();
         if (args.length < 2) {
             assertPlayer();
-            Plot plot = PlotManager.getPlot(((Player) sender).getLocation());
+            Plot plot = PlotManager.getInstance().getPlot(((Player) sender).getLocation());
             if (plot == null) {
-                sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notStandingOnPlot);
+                ChatMessage.of(VirtualRealty.getMessages().notStandingOnPlot).sendWithPrefix(sender);
                 return;
             }
             printInfo(sender, plot);
@@ -42,24 +42,26 @@ public class InfoSubCommand extends SubCommand {
         try {
             plotID = Integer.parseInt(args[1]);
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().useNaturalNumbersOnly);
+            ChatMessage.of(VirtualRealty.getMessages().useNaturalNumbersOnly).sendWithPrefix(sender);
             return;
         }
-        if (PlotManager.getPlots().isEmpty()) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlots);
+        if (PlotManager.getInstance().getPlots().isEmpty()) {
+            ChatMessage.of(VirtualRealty.getMessages().noPlots).sendWithPrefix(sender);
             return;
         }
-        if (plotID < PlotManager.getPlotMinID()) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().minPlotID.replaceAll("%min_id%", String.valueOf(PlotManager.getPlotMinID())));
+        if (plotID < PlotManager.getInstance().getPlotMinID()) {
+            String message = VirtualRealty.getMessages().minPlotID.replaceAll("%min_id%", String.valueOf(PlotManager.getInstance().getPlotMinID()));
+            ChatMessage.of(message).sendWithPrefix(sender);
             return;
         }
-        if (plotID > PlotManager.getPlotMaxID()) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().maxPlotID.replaceAll("%max_id%", String.valueOf(PlotManager.getPlotMaxID())));
+        if (plotID > PlotManager.getInstance().getPlotMaxID()) {
+            String message = VirtualRealty.getMessages().maxPlotID.replaceAll("%max_id%", String.valueOf(PlotManager.getInstance().getPlotMaxID()));
+            ChatMessage.of(message).sendWithPrefix(sender);
             return;
         }
-        Plot plot = PlotManager.getPlot(plotID);
+        Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
+            ChatMessage.of(VirtualRealty.getMessages().noPlotFound).sendWithPrefix(sender);
             return;
         }
         printInfo(sender, plot);
@@ -85,27 +87,27 @@ public class InfoSubCommand extends SubCommand {
                 }
             }
         }
-        sender.sendMessage(" ");
-        sender.sendMessage(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»");
-        sender.sendMessage(" §7Plot ID §8§l‣ §f" + plot.getID());
-        sender.sendMessage(" §7Owned By §8§l‣ §a" + (plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable"));
+        ChatMessage.of(" ").sendWithPrefix(sender);
+        ChatMessage.of(" §8§l«§8§m                    §8[§aVirtualRealty§8]§m                    §8§l»").sendWithPrefix(sender);
+        ChatMessage.of(" §7Plot ID §8§l‣ §f" + plot.getID()).sendWithPrefix(sender);
+        ChatMessage.of(" §7Owned By §8§l‣ §a" + (plot.getOwnedBy() != null ? (Bukkit.getOfflinePlayer(plot.getOwnedBy()).isOnline() ? "§a" : "§c") + Bukkit.getOfflinePlayer(plot.getOwnedBy()).getName() : "§cAvailable")).sendWithPrefix(sender);
         if (plot.getMembers().size() != 0) {
-            sender.sendMessage(" §7Members §8§l↴");
+            ChatMessage.of(" §7Members §8§l↴").send(sender);
             for (OfflinePlayer offlinePlayer : plot.getPlayerMembers()) {
-                sender.sendMessage(" §8§l⁍ §" + (offlinePlayer.isOnline() ? "a" : "c") + offlinePlayer.getName());
+                ChatMessage.of(" §8§l⁍ §" + (offlinePlayer.isOnline() ? "a" : "c") + offlinePlayer.getName()).send(sender);
             }
         }
-        sender.sendMessage(" §7Assigned By §8§l‣ §a" + assignedBy);
-        sender.sendMessage(" §7Owned Until §8§l‣ §f" + dateTimeFormatter.format(localDateTime));
-        sender.sendMessage(" §7Size §8§l‣ §f" + plot.getPlotSize());
-        sender.sendMessage(" §7Length §8§l‣ §f" + plot.getLength());
-        sender.sendMessage(" §7Height §8§l‣ §f" + plot.getHeight());
-        sender.sendMessage(" §7Width §8§l‣ §f" + plot.getWidth());
-        sender.sendMessage(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterialName());
-        sender.sendMessage(" §7Border Material §8§l‣ §f" + plot.getBorderMaterialName());
-        sender.sendMessage(" §7Pos 1 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getBottomLeftCorner().toString());
-        sender.sendMessage(" §7Pos 2 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getTopRightCorner().toString());
-        sender.sendMessage(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name());
+        ChatMessage.of(" §7Assigned By §8§l‣ §a" + assignedBy).send(sender);
+        ChatMessage.of(" §7Owned Until §8§l‣ §f" + dateTimeFormatter.format(localDateTime)).send(sender);
+        ChatMessage.of(" §7Size §8§l‣ §f" + plot.getPlotSize()).send(sender);
+        ChatMessage.of(" §7Length §8§l‣ §f" + plot.getLength()).send(sender);
+        ChatMessage.of(" §7Height §8§l‣ §f" + plot.getHeight()).send(sender);
+        ChatMessage.of(" §7Width §8§l‣ §f" + plot.getWidth()).send(sender);
+        ChatMessage.of(" §7Floor Material §8§l‣ §f" + plot.getFloorMaterialName()).send(sender);
+        ChatMessage.of(" §7Border Material §8§l‣ §f" + plot.getBorderMaterialName()).send(sender);
+        ChatMessage.of(" §7Pos 1 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getBottomLeftCorner().toString()).send(sender);
+        ChatMessage.of(" §7Pos 2 §8( §7X §8| §7Y §8| §7Z §8) §8§l‣ §f" + plot.getTopRightCorner().toString()).send(sender);
+        ChatMessage.of(" §7Created Direction §8§l‣ §f" + plot.getCreatedDirection().name()).send(sender);
     }
 
 }

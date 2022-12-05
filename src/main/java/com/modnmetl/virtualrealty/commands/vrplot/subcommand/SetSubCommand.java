@@ -2,12 +2,11 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.managers.PlotManager;
-import com.modnmetl.virtualrealty.objects.Plot;
-import com.modnmetl.virtualrealty.utils.UUIDUtils;
-import com.modnmetl.virtualrealty.utils.multiversion.VMaterial;
-import lombok.NoArgsConstructor;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.manager.PlotManager;
+import com.modnmetl.virtualrealty.model.plot.Plot;
+import com.modnmetl.virtualrealty.util.UUIDUtils;
+import com.modnmetl.virtualrealty.util.multiversion.VMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -75,7 +74,7 @@ public class SetSubCommand extends SubCommand {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
                     return;
                 }
-                Plot plot = PlotManager.getPlot(plotID);
+                Plot plot = PlotManager.getInstance().getPlot(plotID);
                 if (plot == null) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                     return;
@@ -137,7 +136,7 @@ public class SetSubCommand extends SubCommand {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetMaterial);
                     return;
                 }
-                Plot plot = PlotManager.getPlot(plotID);
+                Plot plot = PlotManager.getInstance().getPlot(plotID);
                 if (plot == null) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                     return;
@@ -175,7 +174,7 @@ public class SetSubCommand extends SubCommand {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cantGetMaterial);
                     return;
                 }
-                Plot plot = PlotManager.getPlot(plotID);
+                Plot plot = PlotManager.getInstance().getPlot(plotID);
                 if (plot == null) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                     return;
@@ -224,7 +223,7 @@ public class SetSubCommand extends SubCommand {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().invalidDateProvided);
                     return;
                 }
-                Plot plot = PlotManager.getPlot(plotID);
+                Plot plot = PlotManager.getInstance().getPlot(plotID);
                 if (plot == null) {
                     sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().noPlotFound);
                     return;

@@ -1,10 +1,10 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.enums.WorldsSetting;
-import com.modnmetl.virtualrealty.enums.commands.CommandType;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.exceptions.InsufficientPermissionsException;
+import com.modnmetl.virtualrealty.model.other.CommandType;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.exception.InsufficientPermissionsException;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -62,7 +62,7 @@ public abstract class SubCommand {
 
     public void assertPlayer() throws FailedCommandException {
         if (!(commandSender instanceof Player)) {
-            commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().cmdOnlyPlayers);
+            ChatMessage.of(VirtualRealty.getMessages().cmdOnlyPlayers).sendWithPrefix(commandSender);
             throw new FailedCommandException();
         }
     }
@@ -96,9 +96,9 @@ public abstract class SubCommand {
     public void assertPermission() throws InsufficientPermissionsException {
         if (!commandSender.hasPermission(getDefaultPermission())) {
             if (commandSender.isOp()) {
-                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", getDefaultPermission()));
+                ChatMessage.of(VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", getDefaultPermission())).sendWithPrefix(commandSender);
             } else {
-                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissionsShort.replaceAll("%permission%", getDefaultPermission()));
+                ChatMessage.of(VirtualRealty.getMessages().insufficientPermissionsShort.replaceAll("%permission%", getDefaultPermission())).sendWithPrefix(commandSender);
             }
             throw new InsufficientPermissionsException();
         }
@@ -107,25 +107,12 @@ public abstract class SubCommand {
     public void assertPermission(String permission) throws InsufficientPermissionsException {
         if (!commandSender.hasPermission(permission)) {
             if (commandSender.isOp()) {
-                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", permission));
+                ChatMessage.of(VirtualRealty.getMessages().insufficientPermissions.replaceAll("%permission%", permission)).sendWithPrefix(commandSender);
             } else {
-                commandSender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().insufficientPermissionsShort.replaceAll("%permission%", permission));
+                ChatMessage.of(VirtualRealty.getMessages().insufficientPermissionsShort.replaceAll("%permission%", permission)).sendWithPrefix(commandSender);
             }
             throw new InsufficientPermissionsException();
         }
-    }
-
-    public boolean canCreateInWorld(Player player) {
-        switch (WorldsSetting.valueOf(VirtualRealty.getPluginConfiguration().worldsSetting.toUpperCase())) {
-            case ALL:
-                break;
-            case INCLUDED:
-                if (VirtualRealty.getPluginConfiguration().getWorldsList().stream().noneMatch(s -> player.getWorld().getName().equalsIgnoreCase(s))) return false;
-                break;
-            case EXCLUDED:
-                if (VirtualRealty.getPluginConfiguration().getWorldsList().stream().anyMatch(s -> player.getWorld().getName().equalsIgnoreCase(s))) return false;
-        }
-        return true;
     }
 
     public boolean isBypass() {
@@ -134,7 +121,8 @@ public abstract class SubCommand {
 
     public void printHelp() throws FailedCommandException {
         for (String s : HELP_LIST) {
-            commandSender.sendMessage(s.replaceAll("%command%", getSubCommandName()));
+            String message = s.replaceAll("%command%", getSubCommandName());
+            ChatMessage.of(message).send(commandSender);
         }
         throw new FailedCommandException();
     }

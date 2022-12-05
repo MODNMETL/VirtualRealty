@@ -2,12 +2,12 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
-import com.modnmetl.virtualrealty.enums.PlotSize;
-import com.modnmetl.virtualrealty.enums.items.VItem;
-import com.modnmetl.virtualrealty.exceptions.FailedCommandException;
-import com.modnmetl.virtualrealty.objects.data.PlotItem;
-import com.modnmetl.virtualrealty.utils.EnumUtils;
-import lombok.NoArgsConstructor;
+import com.modnmetl.virtualrealty.model.plot.PlotSize;
+import com.modnmetl.virtualrealty.model.other.VItem;
+import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.model.plot.PlotItem;
+import com.modnmetl.virtualrealty.util.EnumUtils;
+import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -113,27 +113,27 @@ public class ItemSubCommand extends SubCommand {
         try {
             additionalDays = Integer.parseInt(args[7-backwardArgs]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            ChatMessage.of(VirtualRealty.getMessages().incorrectValue).sendWithPrefix(sender);
             return;
         }
         if (additionalDays < 0) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            ChatMessage.of(VirtualRealty.getMessages().incorrectValue).sendWithPrefix(sender);
             return;
         }
         int itemsAmount;
         try {
             itemsAmount = Integer.parseInt(args[8-backwardArgs]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            ChatMessage.of(VirtualRealty.getMessages().incorrectValue).sendWithPrefix(sender);
             return;
         }
         if (itemsAmount < 1) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().incorrectValue);
+            ChatMessage.of(VirtualRealty.getMessages().incorrectValue).sendWithPrefix(sender);
             return;
         }
         Player onlinePlayer = Bukkit.getPlayer(args[9-backwardArgs]);
         if (onlinePlayer == null) {
-            sender.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().playerNotFoundWithUsername);
+            ChatMessage.of(VirtualRealty.getMessages().playerNotFoundWithUsername).sendWithPrefix(sender);
             return;
         }
         for (int i = 0; i < itemsAmount; i++) {
@@ -141,11 +141,11 @@ public class ItemSubCommand extends SubCommand {
             ItemStack itemStack = plotItem.getItemStack();
             onlinePlayer.getInventory().addItem(itemStack);
             if (onlinePlayer.getInventory().contains(itemStack)) {
-                sender.sendMessage(VirtualRealty.PREFIX + "§aPlot item has been assigned to " + onlinePlayer.getName() + " by " + (sender.getName()) + "!");
-                onlinePlayer.sendMessage(VirtualRealty.PREFIX + "§aYou received a plot item from " + (sender.getName()) + "!");
+                ChatMessage.of("§aPlot item has been assigned to " + onlinePlayer.getName() + " by " + (sender.getName()) + "!").sendWithPrefix(sender);
+                ChatMessage.of("§aYou received a plot item from " + (sender.getName()) + "!").sendWithPrefix(onlinePlayer);
             } else {
-                sender.sendMessage(VirtualRealty.PREFIX + "§c" + onlinePlayer.getName() + " has no inventory space to receive plot item!");
-                onlinePlayer.sendMessage(VirtualRealty.PREFIX + "§cNo inventory space to receive plot item from " + (sender.getName()) + "!");
+                ChatMessage.of("§c" + onlinePlayer.getName() + " has no inventory space to receive plot item!").sendWithPrefix(sender);
+                ChatMessage.of("§cNo inventory space to receive plot item from " + (sender.getName()) + "!").sendWithPrefix(onlinePlayer);
             }
         }
     }

@@ -1,15 +1,14 @@
 package com.modnmetl.virtualrealty.configs;
 
-import com.modnmetl.virtualrealty.enums.WorldsSetting;
-import com.modnmetl.virtualrealty.enums.dynmap.HighlightType;
-import com.modnmetl.virtualrealty.enums.ServerVersion;
+import com.modnmetl.virtualrealty.model.other.HighlightType;
+import com.modnmetl.virtualrealty.model.other.WorldSetting;
+import com.modnmetl.virtualrealty.model.other.ServerVersion;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import lombok.NoArgsConstructor;
 import org.bukkit.GameMode;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
@@ -22,14 +21,14 @@ import java.util.*;
 @Names(strategy = NameStrategy.HYPHEN_CASE, modifier = NameModifier.TO_LOWER_CASE)
 public class PluginConfiguration extends OkaeriConfig {
 
-    @Comment("Changing this value will break your plugin!")
+    @Comment("Changing this value might break your plugin!")
     @CustomKey("initial-version")
     public String initServerVersion = VirtualRealty.legacyVersion ? ServerVersion.LEGACY.toString() : ServerVersion.MODERN.toString();
 
-    @Comment("Debug mode")
+    @Comment("Debug mode (Displays more detailed info about plugin executions)")
     public boolean debugMode = false;
 
-    @Comment("Loader debug mode (only for devs)")
+    @Comment("Local loader mode (for devs)")
     public boolean loaderDebugMode = false;
 
     @Comment("Here you put your license details")
@@ -47,6 +46,9 @@ public class PluginConfiguration extends OkaeriConfig {
     public boolean enablePlotGamemode = false;
 
     @Comment("Set your wanted language (locale)")
+    @Comment("You can create your own configuration for your language")
+    @Comment("To do so: go into the `messages` folder and create new file called `messages_%locale%.yml`")
+    @Comment("Replace `%locale%` with your locale (It doesn't matter if it conforms to the standard, it should just match the locale here in `config.yml`)")
     public String locale = "en_GB";
 
     @Comment("Set which gamemode players change to when they enter their plot")
@@ -63,7 +65,7 @@ public class PluginConfiguration extends OkaeriConfig {
     @Comment("ALL - all worlds are capable of creating plots with plot claim items and 'worlds-list' setting is skipped")
     @Comment("INCLUDED - only worlds included in 'worlds-list' setting are capable of creating plots with plot claim items")
     @Comment("EXCLUDED - all worlds mentioned in 'worlds-list' setting won't be capable of creating plots with plot claim items")
-    public String worldsSetting = WorldsSetting.ALL.name();
+    public String worldsSetting = WorldSetting.ALL.name();
     @Comment("List of worlds")
     public List<String> worldsList = Arrays.asList("%world%", "%world%_nether", "%world%_the_end");
 
@@ -88,7 +90,8 @@ public class PluginConfiguration extends OkaeriConfig {
         try {
             return GameMode.valueOf(plotGamemode);
         } catch (Exception e) {
-            VirtualRealty.getInstance().getLogger().warning("Couldn't parse plot-gamemode from config.yml\nUsing default: SURVIVAL");
+            VirtualRealty.getInstance().getLogger().warning("Couldn't parse plot-gamemode from config.yml");
+            VirtualRealty.getInstance().getLogger().warning("Using default: SURVIVAL");
             return GameMode.SURVIVAL;
         }
     }

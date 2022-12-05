@@ -2,8 +2,7 @@ package com.modnmetl.virtualrealty.configs;
 
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.*;
-import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.enums.PlotSize;
+import com.modnmetl.virtualrealty.model.plot.PlotSize;
 import lombok.NoArgsConstructor;
 
 @Header("--------------------------------------------------------------#")

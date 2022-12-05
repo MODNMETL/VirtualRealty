@@ -79,6 +79,7 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String unassigned = "§aPlot has been unassigned!";
     public String cantAddYourself = "§cYou can't add yourself to the plot!";
     public String cantKickYourself = "§cYou can't kick yourself from the plot!";
+    public String cantKickOwner = "§cYou can't kick the owner!";
     public String alreadyInMembers = "§cThis player is already one of the plot members!";
     public String standingOnPlot = "§cYou are standing on a plot!";
     public String notStandingOnPlot = "§cYou aren't standing on any plot!";
@@ -96,20 +97,19 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String enteredProtectedArea = "§6You have entered a protected area!";
     public String leftProtectedArea = "§6You have left a protected area!";
 
-    //Draft
+    //Claim Mode
     public String notHoldingPlotClaim = "§cYou currently don't hold any plot claim item in your hand.";
-    public String cantPlaceDraftItems = "§cYou can't place draft items.";
-    public String noDraftClaimEnabled = "§cYou don't have plot draft claim enabled.";
-    public String draftModeDisabled = "§aDraft mode successfully disabled!";
-    public String draftModeCancelledBedrock = "§cDraft cancelled. Colliding with bedrock.";
-    public String draftModeCancelledCollision = "§cDraft cancelled. Colliding with another plot.";
-    public String draftModeDisabledDueToDeath = "§cDraft mode has been disabled due to death.";
-    public List<String> draftEnabled = Arrays.asList(
+    public String cantPlaceClaimItems = "§cYou can't place claim items.";
+    public String claimModeDisabled = "§aClaim mode successfully disabled!";
+    public String claimModeCancelledBedrock = "§cClaim cancelled. Colliding with bedrock.";
+    public String claimModeCancelledCollision = "§cClaim cancelled. Colliding with another plot.";
+    public String claimModeDisabledDueToDeath = "§cClaim mode has been disabled due to death.";
+    public List<String> claimEnabled = Arrays.asList(
             " ",
-            " §8§l«§8§m                    §8[§aDraft Mode§8]§m                    §8§l»",
+            " §8§l«§8§m                    §8[§aClaim Mode§8]§m                    §8§l»",
             " ",
-            " §8§l» §7Type §a/plot stake §7to %feature%.",
-            " §8§l» §7If you want to leave draft mode type §a/plot draft",
+            " §8§l» §aLeft-Click §7to %feature%.",
+            " §8§l» §7If you want to leave claim mode §cRight-Click.",
             " "
     );
 
