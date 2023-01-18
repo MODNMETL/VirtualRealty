@@ -6,7 +6,7 @@
 
     <groupId>com.modnmetl</groupId>
     <artifactId>virtualrealty</artifactId>
-    <version>2.5.0</version>
+    <version>2.5.2</version>
     <packaging>jar</packaging>
 
     <description>A plot creation and management plugin for Minecraft</description>
@@ -73,6 +73,10 @@
 
     <repositories>
         <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
             <id>papermc-repo</id>
             <url>https://papermc.io/repo/repository/maven-public/</url>
         </repository>
@@ -100,16 +104,11 @@
     </repositories>
 
     <dependencies>
+        <!--This adds the Spigot API artifact to the build -->
         <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>23.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.spigot</groupId>
-            <artifactId>spigot</artifactId>
-            <version>1.13.2</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.13.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -123,6 +122,12 @@
             <artifactId>bstats-bukkit</artifactId>
             <version>3.0.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>23.1.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>eu.okaeri</groupId>
@@ -160,12 +165,12 @@
             <version>2.10.9</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.modnmetl</groupId>
-            <artifactId>virtualrealty-premium</artifactId>
-            <version>2.1.0</version>
-            <scope>provided</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.modnmetl</groupId>-->
+<!--            <artifactId>virtualrealty-premium</artifactId>-->
+<!--            <version>2.1.0</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -175,13 +180,13 @@
         <dependency>
             <groupId>de.tr7zw</groupId>
             <artifactId>item-nbt-api-plugin</artifactId>
-            <version>2.10.0</version>
+            <version>2.11.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>5.0.1</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

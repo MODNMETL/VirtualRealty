@@ -68,7 +68,7 @@ public class PlayerActionListener extends VirtualListener {
     @EventHandler
     public void onPlotItemStake(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (e.getHand() == EquipmentSlot.OFF_HAND) return;
+        if (!VirtualRealty.legacyVersion && e.getHand() == EquipmentSlot.OFF_HAND) return;
         if (!(e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) return;
         if (!DraftListener.DRAFT_MAP.containsKey(player)) return;
         e.setCancelled(true);
@@ -257,7 +257,7 @@ public class PlayerActionListener extends VirtualListener {
     @EventHandler
     public void onPlotItemDraft(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (e.getHand() == EquipmentSlot.OFF_HAND) return;
+        if (!VirtualRealty.legacyVersion && e.getHand() == EquipmentSlot.OFF_HAND) return;
         if (!(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
         if (DraftListener.DRAFT_MAP.containsKey(player)) {
             e.setCancelled(true);
