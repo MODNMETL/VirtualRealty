@@ -90,7 +90,11 @@ public class PlayerActionListener extends VirtualListener {
                         @Override
                         public void success() {
                             ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
-                            this.getSender().getInventory().remove(plotItemStack);
+                            int firstPlotItemStack = this.getSender().getInventory().first(plotItemStack);
+                            boolean foundItemStack = firstPlotItemStack != -1;
+                            if (foundItemStack) {
+                                this.getSender().getInventory().clear(firstPlotItemStack);
+                            }
                             plot.setOwnedBy(this.getSender().getUniqueId());
                             plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
                             gridStructure.removeGrid();
@@ -132,7 +136,11 @@ public class PlayerActionListener extends VirtualListener {
                         public void success() {
                             PlotItem plotItem = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey();
                             ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
-                            this.getSender().getInventory().remove(plotItemStack);
+                            int firstPlotItemStack = this.getSender().getInventory().first(plotItemStack);
+                            boolean foundItemStack = firstPlotItemStack != -1;
+                            if (foundItemStack) {
+                                this.getSender().getInventory().clear(firstPlotItemStack);
+                            }
                             if (plot.isOwnershipExpired())
                                 plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
                             else
@@ -213,7 +221,11 @@ public class PlayerActionListener extends VirtualListener {
                 } else {
                     plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
                 }
-                this.getSender().getInventory().remove(plotItemStack);
+                int firstPlotItemStack = this.getSender().getInventory().first(plotItemStack);
+                boolean foundItemStack = firstPlotItemStack != -1;
+                if (foundItemStack) {
+                    this.getSender().getInventory().clear(firstPlotItemStack);
+                }
                 long timeEnd = System.currentTimeMillis();
                 BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
                 BaseComponent textComponent2 = new TextComponent(VirtualRealty.getMessages().creationPlotComponent2.replaceAll("%plot_id%", String.valueOf(plot.getID())));
