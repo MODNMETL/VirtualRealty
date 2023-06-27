@@ -4,7 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.model.other.VItem;
 import com.modnmetl.virtualrealty.util.data.ItemBuilder;
 import com.modnmetl.virtualrealty.util.data.SkullUtil;
-import de.tr7zw.nbtapi.NBTItem;
+import de.tr7zw.changeme.nbtapi.NBTItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

@@ -4,7 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.listener.VirtualListener;
 import com.modnmetl.virtualrealty.model.plot.PlotItem;
 import com.modnmetl.virtualrealty.model.region.GridStructure;
-import de.tr7zw.nbtapi.NBTItem;
+import de.tr7zw.changeme.nbtapi.NBTItem;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

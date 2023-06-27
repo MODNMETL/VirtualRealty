@@ -4,6 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 public class ChatMessage {
 
@@ -29,12 +30,20 @@ public class ChatMessage {
         return new ChatMessage(message);
     }
 
-    public void sendWithPrefix(CommandSender player) {
-        player.spigot().sendMessage(new TextComponent(VirtualRealty.PREFIX), message);
+    public void sendWithPrefix(CommandSender sender) {
+        if (sender instanceof Player) {
+            ((Player)sender).spigot().sendMessage(new TextComponent(VirtualRealty.PREFIX), message);
+        } else {
+            sender.sendMessage(VirtualRealty.PREFIX + message.toLegacyText());
+        }
     }
 
-    public void send(CommandSender player) {
-        player.spigot().sendMessage(message);
+    public void send(CommandSender sender) {
+        if (sender instanceof Player) {
+            ((Player)sender).spigot().sendMessage(message);
+        } else {
+            sender.sendMessage(message.toLegacyText());
+        }
     }
 
 }

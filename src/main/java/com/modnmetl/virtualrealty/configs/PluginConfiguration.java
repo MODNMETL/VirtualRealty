@@ -55,10 +55,10 @@ public class PluginConfiguration extends OkaeriConfig {
     @CustomKey("default-plot-gamemode")
     public String plotGamemode = "SURVIVAL";
 
-    @Comment("Disable natural spawning of monster mobs in plots/areas")
+    @Comment("Disable natural spawning of all mobs in plots/areas")
     public boolean disablePlotMobsSpawn = false;
 
-    @Comment("Disable natural spawning of all mobs in plots/areas")
+    @Comment("Disable natural spawning of monster mobs in plots/areas")
     public boolean disablePlotMonsterSpawn = false;
 
     @Comment("Worlds restrictions setting ( ALL | INCLUDED | EXCLUDED )")
