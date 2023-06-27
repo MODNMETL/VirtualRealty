@@ -25,7 +25,7 @@ public class ConfirmationListener extends VirtualListener {
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        if (confirmation.getProceedText().equalsIgnoreCase(e.getMessage())) {
+                        if (e.getMessage().matches(".*(?i)" + confirmation.getProceedText() +".*")) {
                             confirmation.success();
                         } else {
                             confirmation.failed();

@@ -10,10 +10,7 @@ import org.sqlite.SQLiteDataSource;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class Database {
 
@@ -67,6 +64,43 @@ public class Database {
              ps.execute();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        switch (this.dataModel) {
+            case MYSQL: {
+                try (Connection conn = getConnection();
+                     PreparedStatement ps = conn.prepareStatement("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD COLUMN IF NOT EXISTS `depth` INT(24) AFTER `height`;")) {
+                    ps.execute();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case SQLITE: {
+                // Check if the column already exists
+                boolean columnExists = false;
+                try (Connection conn = getConnection();
+                     ResultSet rs = conn.createStatement().executeQuery("PRAGMA table_info(" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + ");")) {
+                    while (rs.next()) {
+                        if (rs.getString("name").equalsIgnoreCase("depth")) {
+                            columnExists = true;
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    break;
+                }
+                if (!columnExists) {
+                    // Column does not exist, so add it
+                    try (Connection conn = getConnection();
+                         PreparedStatement ps = conn.prepareStatement("ALTER TABLE `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "` ADD COLUMN `depth` INT(24);")) {
+                        ps.execute();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            }
         }
     }
 

@@ -17,12 +17,13 @@ import com.modnmetl.virtualrealty.model.region.Cuboid;
 import com.modnmetl.virtualrealty.model.region.GridStructure;
 import com.modnmetl.virtualrealty.util.RegionUtil;
 import com.modnmetl.virtualrealty.model.other.ChatMessage;
-import de.tr7zw.nbtapi.NBTItem;
+import de.tr7zw.changeme.nbtapi.NBTItem;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -198,12 +199,23 @@ public class PlayerActionListener extends VirtualListener {
                 GridStructure gridStructure = DraftListener.DRAFT_MAP.get(this.getSender()).getKey();
                 PlotItem plotItem = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey();
                 PlotSize plotSize = plotItem.getPlotSize();
+                int length = plotItem.getLength();
+                int height = plotItem.getHeight();
+                int width = plotItem.getWidth();
                 ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
                 NBTItem item = new NBTItem(plotItemStack);
                 gridStructure.removeGrid();
                 this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                 long timeStart = System.currentTimeMillis();
-                Plot plot = PlotManager.getInstance().createPlot(gridStructure.getPreviewLocation().subtract(0, 1, 0), plotSize, plotItem.isNatural());
+                Plot plot;
+                Location location = gridStructure.getPreviewLocation().subtract(0, 1, 0);
+                if (plotSize == PlotSize.AREA) {
+                    plot = PlotManager.getInstance().createArea(location, length, height, width);
+                } else if (plotSize == PlotSize.CUSTOM) {
+                    plot = PlotManager.getInstance().createCustomPlot(location, length, height, width, plotItem.isNatural());
+                } else {
+                    plot = PlotManager.getInstance().createPlot(location, plotSize, plotItem.isNatural());
+                }
                 AbstractMap.SimpleEntry<String, Byte> floorData = new AbstractMap.SimpleEntry<>(item.getString("vrplot_floor_material"), item.getByte("vrplot_floor_data"));
                 AbstractMap.SimpleEntry<String, Byte> borderData = new AbstractMap.SimpleEntry<>(item.getString("vrplot_border_material"), item.getByte("vrplot_border_data"));
                 if (!plotItem.isNatural()) {
