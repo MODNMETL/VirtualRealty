@@ -125,6 +125,13 @@ public class PlotItem {
         );
     }
 
+    public static UUID getPlotItemUuid(ItemStack itemStack) {
+        NBTItem nbtItem = new NBTItem(itemStack);
+        String string = nbtItem.getString(NBT_PREFIX + "stack_uuid");
+        if (string == null) return UUID.randomUUID();
+        return UUID.fromString(string);
+    }
+
     public static PlotItem fromItemStack(ItemStack itemStack, VItem itemType) {
         PlotItem plotItem = fromItemStack(itemStack);
         return new PlotItem(itemType, plotItem.getPlotSize(), plotItem.getLength(), plotItem.getHeight(), plotItem.getWidth(), plotItem.floorData, plotItem.borderData, plotItem.isNatural(), plotItem.getAdditionalDays(), plotItem.getUuid());
