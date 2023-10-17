@@ -137,10 +137,11 @@ public class PlayerActionListener extends VirtualListener {
                         public void success() {
                             PlotItem plotItem = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey();
                             ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
-                            int firstPlotItemStack = this.getSender().getInventory().first(plotItemStack);
-                            boolean foundItemStack = firstPlotItemStack != -1;
-                            if (foundItemStack) {
-                                this.getSender().getInventory().clear(firstPlotItemStack);
+                            for (ItemStack content : this.getSender().getInventory().getContents()) {
+                                if (content == null || content.getType() == Material.AIR) continue;
+                                if (PlotItem.getPlotItemUuid(content).equals(PlotItem.getPlotItemUuid(plotItemStack))) {
+                                    this.getSender().getInventory().removeItem(content);
+                                }
                             }
                             if (plot.isOwnershipExpired())
                                 plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
@@ -155,8 +156,14 @@ public class PlayerActionListener extends VirtualListener {
 
                         @Override
                         public void failed() {
-                            this.getSender().getInventory().removeItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
-                            this.getSender().getInventory().remove(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
+                            ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender())
+                                    .getValue().getValue().getItemStack();
+                            for (ItemStack content : this.getSender().getInventory().getContents()) {
+                                if (content == null || content.getType() == Material.AIR) continue;
+                                if (PlotItem.getPlotItemUuid(content).equals(PlotItem.getPlotItemUuid(plotItemStack))) {
+                                    this.getSender().getInventory().removeItem(content);
+                                }
+                            }
                             this.getSender().getInventory().addItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey().getItemStack());
                             DraftListener.DRAFT_MAP.get(this.getSender()).getKey().removeGrid();
                             DraftListener.DRAFT_MAP.remove(this.getSender());
@@ -180,7 +187,14 @@ public class PlayerActionListener extends VirtualListener {
             return;
         }
         if (RegionUtil.isCollidingWithAnotherPlot(cuboid)) {
-            player.getInventory().remove(DraftListener.DRAFT_MAP.get(player).getValue().getValue().getItemStack());
+            ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(player)
+                    .getValue().getValue().getItemStack();
+            for (ItemStack content : player.getInventory().getContents()) {
+                if (content == null || content.getType() == Material.AIR) continue;
+                if (PlotItem.getPlotItemUuid(content).equals(PlotItem.getPlotItemUuid(plotItemStack))) {
+                    player.getInventory().removeItem(content);
+                }
+            }
             player.getInventory().addItem(DraftListener.DRAFT_MAP.get(player).getValue().getKey().getItemStack());
             DraftListener.DRAFT_MAP.get(player).getKey().removeGrid();
             DraftListener.DRAFT_MAP.remove(player);
@@ -233,10 +247,11 @@ public class PlayerActionListener extends VirtualListener {
                 } else {
                     plot.setOwnedUntilDate(LocalDateTime.now().plusDays(plotItem.getAdditionalDays()));
                 }
-                int firstPlotItemStack = this.getSender().getInventory().first(plotItemStack);
-                boolean foundItemStack = firstPlotItemStack != -1;
-                if (foundItemStack) {
-                    this.getSender().getInventory().clear(firstPlotItemStack);
+                for (ItemStack content : this.getSender().getInventory().getContents()) {
+                    if (content == null || content.getType() == Material.AIR) continue;
+                    if (PlotItem.getPlotItemUuid(content).equals(PlotItem.getPlotItemUuid(plotItemStack))) {
+                        this.getSender().getInventory().removeItem(content);
+                    }
                 }
                 long timeEnd = System.currentTimeMillis();
                 BaseComponent textComponent = new TextComponent(VirtualRealty.PREFIX + VirtualRealty.getMessages().creationPlotComponent1);
@@ -261,8 +276,14 @@ public class PlayerActionListener extends VirtualListener {
             }
             @Override
             public void failed() {
-                this.getSender().getInventory().removeItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
-                this.getSender().getInventory().remove(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack());
+                ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender())
+                        .getValue().getValue().getItemStack();
+                for (ItemStack content : this.getSender().getInventory().getContents()) {
+                    if (content == null || content.getType() == Material.AIR) continue;
+                    if (PlotItem.getPlotItemUuid(content).equals(PlotItem.getPlotItemUuid(plotItemStack))) {
+                        this.getSender().getInventory().removeItem(content);
+                    }
+                }
                 this.getSender().getInventory().addItem(DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getKey().getItemStack());
                 DraftListener.DRAFT_MAP.get(this.getSender()).getKey().removeGrid();
                 DraftListener.DRAFT_MAP.remove(this.getSender());
@@ -285,7 +306,16 @@ public class PlayerActionListener extends VirtualListener {
         if (!(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
         if (DraftListener.DRAFT_MAP.containsKey(player)) {
             e.setCancelled(true);
-            player.getInventory().remove(DraftListener.DRAFT_MAP.get(player).getValue().getValue().getItemStack());
+
+            ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(player)
+                    .getValue().getValue().getItemStack();
+            for (ItemStack content : player.getInventory().getContents()) {
+                if (content == null || content.getType() == Material.AIR) continue;
+                if (PlotItem.getPlotItemUuid(content).equals(PlotItem.getPlotItemUuid(plotItemStack))) {
+                    player.getInventory().removeItem(content);
+                }
+            }
+
             player.getInventory().addItem(DraftListener.DRAFT_MAP.get(player).getValue().getKey().getItemStack());
             DraftListener.DRAFT_MAP.get(player).getKey().removeGrid();
             DraftListener.DRAFT_MAP.remove(player);
