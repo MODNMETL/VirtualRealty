@@ -2,6 +2,7 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.model.other.CommandType;
 import com.modnmetl.virtualrealty.model.plot.PlotSize;
 import com.modnmetl.virtualrealty.model.other.VItem;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
@@ -40,7 +41,7 @@ public class ItemSubCommand extends SubCommand {
         boolean isNatural = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--natural"));
         args = Arrays.stream(args).filter(s1 -> !s1.equalsIgnoreCase("--natural")).toArray(String[]::new);
         if (args.length < 2) {
-            printHelp();
+            printHelp(CommandType.VRPLOT);
             return;
         }
         PlotSize plotSize = PlotSize.valueOf(args[1].toUpperCase());

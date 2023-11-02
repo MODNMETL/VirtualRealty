@@ -2,6 +2,7 @@ package com.modnmetl.virtualrealty.commands.plot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.model.other.CommandType;
 import com.modnmetl.virtualrealty.model.permission.ManagementPermission;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
 import com.modnmetl.virtualrealty.manager.PlotManager;
@@ -38,7 +39,7 @@ public class AddSubCommand extends SubCommand {
         assertPlayer();
         Player player = ((Player) sender);
         if (args.length < 3) {
-            printHelp();
+            printHelp(CommandType.PLOT);
             return;
         }
         int plotID;

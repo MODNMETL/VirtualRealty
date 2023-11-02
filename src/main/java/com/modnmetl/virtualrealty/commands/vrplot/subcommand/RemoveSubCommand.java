@@ -2,6 +2,7 @@ package com.modnmetl.virtualrealty.commands.vrplot.subcommand;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
+import com.modnmetl.virtualrealty.model.other.CommandType;
 import com.modnmetl.virtualrealty.model.other.ConfirmationType;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
 import com.modnmetl.virtualrealty.manager.ConfirmationManager;
@@ -39,7 +40,7 @@ public class RemoveSubCommand extends SubCommand {
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPermission();
         if (args.length < 2) {
-            printHelp();
+            printHelp(CommandType.VRPLOT);
             return;
         }
         int plotID;
