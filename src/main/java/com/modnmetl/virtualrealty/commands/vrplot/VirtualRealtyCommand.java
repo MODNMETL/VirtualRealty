@@ -82,7 +82,7 @@ public class VirtualRealtyCommand implements CommandExecutor {
     }
 
     private static void printHelp(CommandSender sender) {
-        for (String message : HELP_LIST) {
+        for (String message : VirtualRealty.getCommands().vrplotCommandsHelp.get("vrplot")) {
             final String[] finalMessage = {message};
             CommandRegistry.VRPLOT_PLACEHOLDERS.forEach((s, s2) -> {
                 finalMessage[0] = finalMessage[0].replaceAll(s, s2);

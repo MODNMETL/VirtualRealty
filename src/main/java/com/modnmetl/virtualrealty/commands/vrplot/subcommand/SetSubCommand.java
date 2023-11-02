@@ -4,6 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
 import com.modnmetl.virtualrealty.manager.PlotManager;
+import com.modnmetl.virtualrealty.model.other.CommandType;
 import com.modnmetl.virtualrealty.model.plot.Plot;
 import com.modnmetl.virtualrealty.util.UUIDUtils;
 import com.modnmetl.virtualrealty.util.multiversion.VMaterial;
@@ -42,7 +43,7 @@ public class SetSubCommand extends SubCommand {
     public void exec(CommandSender sender, Command command, String label, String[] args) throws Exception {
         assertPermission();
         if (args.length < 3) {
-            printHelp();
+            printHelp(CommandType.VRPLOT);
             return;
         }
         switch (args[2].toUpperCase()) {

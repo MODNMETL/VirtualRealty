@@ -1,19 +1,23 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.model.other.CommandType;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
 import com.modnmetl.virtualrealty.exception.InsufficientPermissionsException;
 import com.modnmetl.virtualrealty.model.other.ChatMessage;
+import com.modnmetl.virtualrealty.util.MapUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand.COMMAND_PERMISSION;
@@ -119,9 +123,25 @@ public abstract class SubCommand {
         return this.bypass;
     }
 
-    public void printHelp() throws FailedCommandException {
-        for (String s : HELP_LIST) {
-            String message = s.replaceAll("%command%", getSubCommandName());
+    public void printHelp(CommandType commandType) throws FailedCommandException {
+        Map<String, LinkedList<String>> commandsHelp = null;
+        Map<String, String> commandsAliases = null;
+        switch (commandType) {
+            case VRPLOT: {
+                commandsHelp = VirtualRealty.getCommands().vrplotCommandsHelp;
+                commandsAliases = VirtualRealty.getCommands().vrplotAliases;
+                break;
+            }
+            case PLOT: {
+                commandsHelp = VirtualRealty.getCommands().plotCommandsHelp;
+                commandsAliases = VirtualRealty.getCommands().plotAliases.getAliasesMap();
+                break;
+            }
+        }
+        String subCommandName = getSubCommandName();
+        String keyByValue = MapUtils.getKeyByValue(commandsAliases, subCommandName);
+        for (String s : commandsHelp.get(keyByValue)) {
+            String message = s.replaceAll("%command%", subCommandName);
             ChatMessage.of(message).send(commandSender);
         }
         throw new FailedCommandException();

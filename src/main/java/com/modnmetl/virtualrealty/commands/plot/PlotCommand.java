@@ -80,7 +80,7 @@ public class PlotCommand implements CommandExecutor {
     }
 
     private static void printHelp(CommandSender sender) {
-        for (String message : HELP_LIST) {
+        for (String message : VirtualRealty.getCommands().plotCommandsHelp.get("plot")) {
             final String[] finalMessage = { message };
             CommandRegistry.PLOT_PLACEHOLDERS.forEach((s, s2) -> {
                 finalMessage[0] = finalMessage[0].replaceAll(s, s2);

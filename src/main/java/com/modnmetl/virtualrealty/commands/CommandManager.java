@@ -9,6 +9,7 @@ import com.modnmetl.virtualrealty.model.permission.ManagementPermission;
 import com.modnmetl.virtualrealty.manager.PlotManager;
 import com.modnmetl.virtualrealty.model.plot.Plot;
 import com.modnmetl.virtualrealty.util.EnumUtils;
+import com.modnmetl.virtualrealty.util.MapUtils;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -47,11 +48,12 @@ public class CommandManager implements TabCompleter {
     @SneakyThrows
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        LinkedList<String> tabCompleter = new LinkedList<>();
+        List<String> tabCompleter = new LinkedList<>();
         if (command.getName().equalsIgnoreCase("virtualrealty")) {
             if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName())) return null;
+            Map<String, String> vrplotAliases = VirtualRealty.getCommands().vrplotAliases;
             if (args.length <= 1) {
-                for (String subcommand : SUBCOMMANDS.get(VirtualRealtyCommand.class)) {
+                for (String subcommand : vrplotAliases.values()) {
                     if (args[0].isEmpty()) {
                         tabCompleter.add(subcommand);
                     } else if (subcommand.startsWith(args[0])) {
@@ -59,7 +61,12 @@ public class CommandManager implements TabCompleter {
                     }
                 }
             }
-            switch (args[0].toUpperCase(Locale.ROOT)) {
+            String subCommand = args[0].toLowerCase();
+            String keyByValue = MapUtils.getKeyByValue(vrplotAliases, subCommand);
+            if (subCommand.isEmpty() || keyByValue == null) {
+                return tabCompleter;
+            }
+            switch (keyByValue.toUpperCase()) {
                 case "CREATE": {
                     if (assertPermission(sender, VirtualRealtyCommand.COMMAND_PERMISSION.getName() + "." + args[0].toLowerCase())) return null;
                     if (args.length > 1) {
@@ -359,8 +366,9 @@ public class CommandManager implements TabCompleter {
         } else if (command.getName().equalsIgnoreCase("plot")) {
             if (!(sender instanceof Player)) return null;
             Player player = ((Player) sender);
+            Map<String, String> plotAliasesMap = VirtualRealty.getCommands().plotAliases.getAliasesMap();
             if (args.length <= 1) {
-                for (String subcommand : SUBCOMMANDS.get(PlotCommand.class)) {
+                for (String subcommand : plotAliasesMap.values()) {
                     if (args[0].isEmpty()) {
                         tabCompleter.add(subcommand);
                     } else if (subcommand.startsWith(args[0])) {
@@ -370,7 +378,12 @@ public class CommandManager implements TabCompleter {
             }
             @NotNull String[] finalArgs = args;
             @NotNull String[] finalArgs1 = args;
-            switch (args[0].toUpperCase(Locale.ROOT)) {
+            String subCommand = args[0].toLowerCase();
+            String keyByValue = MapUtils.getKeyByValue(plotAliasesMap, subCommand);
+            if (subCommand.isEmpty() || keyByValue == null) {
+                return tabCompleter;
+            }
+            switch (keyByValue.toUpperCase()) {
                 case "ADD": {
                     if (args.length == 2) {
                         PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
