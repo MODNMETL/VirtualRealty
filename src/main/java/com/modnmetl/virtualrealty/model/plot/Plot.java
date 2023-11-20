@@ -210,7 +210,7 @@ public final class Plot {
     }
 
     public void removeAllMembers() {
-        for (PlotMember member : members) {
+        for (PlotMember member : new LinkedList<>(members)) {
             removeMember(member);
         }
     }
