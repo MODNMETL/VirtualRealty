@@ -128,7 +128,8 @@ public class PlotItem {
     public static UUID getPlotItemUuid(ItemStack itemStack) {
         NBTItem nbtItem = new NBTItem(itemStack);
         String string = nbtItem.getString(NBT_PREFIX + "stack_uuid");
-        if (string == null) return UUID.randomUUID();
+        if (string == null || string.isEmpty())
+            return UUID.randomUUID();
         return UUID.fromString(string);
     }
 
