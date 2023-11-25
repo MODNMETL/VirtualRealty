@@ -10,6 +10,7 @@ import com.modnmetl.virtualrealty.sql.Database;
 import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -157,7 +158,7 @@ public final class PlotManager {
     public List<Plot> getPlots(String world) {
         List<Plot> newPlots = new LinkedList<>();
         for (Plot plot : plots)
-            if (plot.getCreatedWorldString().equals(world)) newPlots.add(plot);
+            if (plot.getCreatedWorldRaw().equals(world)) newPlots.add(plot);
         return newPlots;
     }
 
@@ -170,10 +171,19 @@ public final class PlotManager {
         return plotHashMap;
     }
 
+    public HashMap<Integer, Plot> getMembershipPlots(UUID player) {
+        HashMap<Integer, Plot> membershipMap = new HashMap<>();
+        for (Plot plot : plots) {
+            if (plot.getMember(player) != null)
+                membershipMap.put(plot.getID(), plot);
+        }
+        return membershipMap;
+    }
+
     public HashMap<Integer, Plot> getAccessPlots(UUID player) {
         HashMap<Integer, Plot> plotHashMap = new HashMap<>();
         for (Plot plot : plots) {
-            if (plot.getMember(player) != null || (plot.getOwnedBy() != null && plot.getPlotOwner().getUniqueId() == player))
+            if (plot.getMember(player) != null || (plot.getOwnedBy() != null && plot.getPlotOwner().getUniqueId().equals(player)))
                 plotHashMap.put(plot.getID(), plot);
         }
         return plotHashMap;
@@ -208,18 +218,6 @@ public final class PlotManager {
         return region.isIn(newVector, location.getWorld());
     }
 
-//    public Plot getPlot(Location location) {
-//        BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-//        for (Plot plot : plots) {
-//            Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-//            if (region.isIn(newVector, plot.getCreatedWorld())) {
-//                return plot;
-//            }
-//        }
-//        return null;
-//    }
-//
-
     public Plot getPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
@@ -240,7 +238,11 @@ public final class PlotManager {
             if (withBorder) {
                 return getBorderedPlot(location);
             } else {
-                Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
+                World world = location.getWorld();
+                assert world != null;
+                Cuboid region = plot.getCuboid();
+                if (!region.getWorld().getName().equals(world.getName()))
+                    continue;
                 if (region.isIn(newVector, plot.getCreatedWorld()))
                     return plot;
             }
@@ -251,8 +253,12 @@ public final class PlotManager {
     private Plot getBorderedPlot(Location location) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         for (Plot plot : plots) {
-            Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
-            if (region.isIn(newVector, plot.getCreatedWorld()))
+            World world = location.getWorld();
+            assert world != null;
+            Cuboid borderedRegion = plot.getBorderedCuboid();
+            if (!borderedRegion.getWorld().getName().equals(world.getName()))
+                continue;
+            if (borderedRegion.isIn(newVector, plot.getCreatedWorld()))
                 return plot;
         }
         return null;

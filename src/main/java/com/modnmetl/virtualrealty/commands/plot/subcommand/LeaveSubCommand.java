@@ -4,16 +4,21 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
 import com.modnmetl.virtualrealty.manager.PlotManager;
-import com.modnmetl.virtualrealty.model.other.CommandType;
-import com.modnmetl.virtualrealty.model.plot.Plot;
 import com.modnmetl.virtualrealty.model.other.ChatMessage;
+import com.modnmetl.virtualrealty.model.other.CommandType;
+import com.modnmetl.virtualrealty.model.permission.ManagementPermission;
+import com.modnmetl.virtualrealty.model.plot.Plot;
+import com.modnmetl.virtualrealty.model.plot.PlotMember;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.time.LocalDateTime;
 import java.util.LinkedList;
 
-public class TpSubCommand extends SubCommand {
+public class LeaveSubCommand extends SubCommand {
 
     public static LinkedList<String> HELP = new LinkedList<>();
 
@@ -23,9 +28,9 @@ public class TpSubCommand extends SubCommand {
         HELP.add(" §a/plot %command% §8<§7plot§8>");
     }
 
-    public TpSubCommand() {}
+    public LeaveSubCommand() {}
 
-    public TpSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
+    public LeaveSubCommand(CommandSender sender, Command command, String label, String[] args) throws FailedCommandException {
         super(sender, command, label, args, HELP);
     }
 
@@ -53,8 +58,13 @@ public class TpSubCommand extends SubCommand {
             ChatMessage.of(VirtualRealty.getMessages().notYourPlot).sendWithPrefix(sender);
             return;
         }
-        plot.teleportPlayer(player);
-        ChatMessage.of(VirtualRealty.getMessages().teleportedToPlot).sendWithPrefix(sender);
+        PlotMember plotMember = plot.getMember(player.getUniqueId());
+        if (plot.getOwnedBy().equals(player.getUniqueId())) {
+            ChatMessage.of(VirtualRealty.getMessages().cantLeaveOwnPlot).sendWithPrefix(sender);
+            return;
+        }
+        plot.removeMember(plotMember);
+        ChatMessage.of(VirtualRealty.getMessages().plotLeave.replaceAll("%plot_id%", String.valueOf(plot.getID()))).sendWithPrefix(sender);
     }
-    
+
 }

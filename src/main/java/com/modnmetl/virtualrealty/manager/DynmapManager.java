@@ -105,7 +105,7 @@ public class DynmapManager {
         if (marker == null) {
             marker = VirtualRealty.getDynmapManager().markerset.createAreaMarker("virtualrealty.plots." + plot.getID(),
                     plot.getOwnedBy() == null ? String.format(MARKER_STRING, plot.getID()) : String.format(MARKER_OWNED_STRING, plot.getID(), ownedBy, dateTimeFormatter.format(localDateTime)), true,
-                    plot.getCreatedWorldString(), new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
+                    plot.getCreatedWorldRaw(), new double[]{plot.getXMin(), plot.getXMax()}, new double[]{plot.getZMin(), plot.getZMax()}, true);
             areaMarkers.add(marker);
         } else {
             marker.setLabel(

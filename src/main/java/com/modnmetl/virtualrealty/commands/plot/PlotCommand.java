@@ -15,6 +15,7 @@ import org.bukkit.command.CommandSender;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public class PlotCommand implements CommandExecutor {
 
@@ -28,6 +29,7 @@ public class PlotCommand implements CommandExecutor {
         HELP_LIST.add(" §a/plot %gm_command% §8- §7Changes gamemode");
         HELP_LIST.add(" §a/plot %add_command% §8- §7Adds a member");
         HELP_LIST.add(" §a/plot %kick_command% §8- §7Kicks a member");
+        HELP_LIST.add(" §a/plot %leave_command% §8- §7Leaves a plot");
         HELP_LIST.add(" §a/plot %list_command% §8- §7Shows your plots");
         HELP_LIST.add(" §a/plot %tp_command% §8- §7Teleports to the plot");
     }
@@ -81,7 +83,7 @@ public class PlotCommand implements CommandExecutor {
 
     private static void printHelp(CommandSender sender) {
         for (String message : VirtualRealty.getCommands().plotCommandsHelp.get("plot")) {
-            final String[] finalMessage = { message };
+            final String[] finalMessage = {message};
             CommandRegistry.PLOT_PLACEHOLDERS.forEach((s, s2) -> {
                 finalMessage[0] = finalMessage[0].replaceAll(s, s2);
             });

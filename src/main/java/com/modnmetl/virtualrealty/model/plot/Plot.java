@@ -54,6 +54,9 @@ public final class Plot {
     private Instant modified;
     private LocalDateTime createdAt;
 
+    private transient Cuboid cachedCuboid;
+    private transient Cuboid cachedBorderedCuboid;
+
     public Plot(Location location, Material floorMaterial, Material borderMaterial, PlotSize plotSize, int length, int width, int height, boolean natural) {
         this.ID =  PlotManager.getInstance().getPlots().isEmpty() ? 10000 : PlotManager.getInstance().getPlotMaxID() + 1;
         this.ownedBy = null;
@@ -280,14 +283,32 @@ public final class Plot {
     }
 
     public Cuboid getCuboid() {
-        return new Cuboid(bottomLeftCorner, topRightCorner, getCreatedWorld());
+        if (cachedCuboid == null) {
+            cachedCuboid = new Cuboid(
+                    bottomLeftCorner,
+                    topRightCorner,
+                    getCreatedWorld()
+            );
+        }
+        return cachedCuboid;
+    }
+
+    public Cuboid getBorderedCuboid() {
+        if (cachedBorderedCuboid == null) {
+            cachedBorderedCuboid = new Cuboid(
+                    borderBottomLeftCorner,
+                    borderTopRightCorner,
+                    getCreatedWorld()
+            );
+        }
+        return cachedBorderedCuboid;
     }
 
     public org.bukkit.World getCreatedWorld() {
         return Bukkit.getWorld(createdWorld);
     }
 
-    public String getCreatedWorldString() {
+    public String getCreatedWorldRaw() {
         return createdWorld;
     }
 

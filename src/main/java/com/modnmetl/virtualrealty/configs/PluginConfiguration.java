@@ -55,6 +55,9 @@ public class PluginConfiguration extends OkaeriConfig {
     @CustomKey("default-plot-gamemode")
     public String plotGamemode = "SURVIVAL";
 
+    @Comment("The number of days before plot expiration when players should be notified")
+    public int daysUntilExpirationThreshold = 2;
+
     @Comment("Disable natural spawning of all mobs in plots/areas")
     public boolean disablePlotMobsSpawn = false;
 

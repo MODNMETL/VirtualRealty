@@ -6,6 +6,7 @@ import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.commands.plot.PlotCommand;
 import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.configs.*;
+import com.modnmetl.virtualrealty.listener.player.PlayerListener;
 import com.modnmetl.virtualrealty.model.plot.PlotSize;
 import com.modnmetl.virtualrealty.model.other.ServerVersion;
 import com.modnmetl.virtualrealty.exception.MaterialMatchException;
@@ -46,6 +47,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public final class VirtualRealty extends JavaPlugin {
 
@@ -149,6 +151,7 @@ public final class VirtualRealty extends JavaPlugin {
         loadDynMapHook();
         registerCommands();
         loadCommandsConfiguration();
+        updateCommandsConfig();
         registerListeners();
         registerPlaceholders();
         debug("Server version: " + this.getServer().getBukkitVersion() + " | " + this.getServer().getVersion());
@@ -188,6 +191,43 @@ public final class VirtualRealty extends JavaPlugin {
         if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
         new VirtualPlaceholders(this).register();
         debug("Registered new placeholders");
+    }
+
+    private void updateCommandsConfig() {
+        {
+            List<String> messages = VirtualRealty.getCommands().plotCommandsHelp.get("plot");
+            Set<String> subCommands = VirtualRealty.getCommands().plotAliases.getAliasesMap().keySet();
+            List<String> missingSubCommands = subCommands.stream()
+                    .filter(subCommand -> messages
+                            .stream()
+                            .noneMatch(helpMessage -> helpMessage.contains("%" + subCommand + "_command%"))
+                    ).collect(Collectors.toList());
+            for (String subCommand : missingSubCommands) {
+                PlotCommand.HELP_LIST.stream()
+                        .filter(helpMessage -> helpMessage.contains("%" + subCommand + "_command%"))
+                        .forEach(messages::add);
+            }
+            if (!missingSubCommands.isEmpty()) {
+                VirtualRealty.getCommands().save();
+            }
+        }
+        {
+            List<String> messages = VirtualRealty.getCommands().vrplotCommandsHelp.get("vrplot");
+            Set<String> subCommands = VirtualRealty.getCommands().vrplotAliases.keySet();
+            List<String> missingSubCommands = subCommands.stream()
+                    .filter(subCommand -> messages
+                            .stream()
+                            .noneMatch(helpMessage -> helpMessage.contains("%" + subCommand + "_command%"))
+                    ).collect(Collectors.toList());
+            for (String subCommand : missingSubCommands) {
+                VirtualRealtyCommand.HELP_LIST.stream()
+                        .filter(helpMessage -> helpMessage.contains("%" + subCommand + "_command%"))
+                        .forEach(messages::add);
+            }
+            if (!missingSubCommands.isEmpty()) {
+                VirtualRealty.getCommands().save();
+            }
+        }
     }
 
     public void checkUpdates() {
@@ -332,6 +372,7 @@ public final class VirtualRealty extends JavaPlugin {
 
     private void registerListeners() {
         new BorderProtectionListener(this);
+        new PlayerListener(this);
         new PlotProtectionListener(this);
         new WorldProtectionListener(this);
         new PlotEntranceListener(this);
