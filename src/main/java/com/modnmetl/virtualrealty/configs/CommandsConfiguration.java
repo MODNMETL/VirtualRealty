@@ -28,7 +28,6 @@ public class CommandsConfiguration extends OkaeriConfig {
     public Map<String, LinkedList<String>> vrplotCommandsHelp = getCommandsHelp(CommandType.VRPLOT);
 
 
-
     @Names(strategy = NameStrategy.HYPHEN_CASE)
     public static class PlotAliases extends OkaeriConfig  {
 
@@ -37,6 +36,7 @@ public class CommandsConfiguration extends OkaeriConfig {
         public String gm = "gm";
         public String info = "info";
         public String kick = "kick";
+        public String leave = "leave";
         public String list = "list";
         public String tp = "tp";
 

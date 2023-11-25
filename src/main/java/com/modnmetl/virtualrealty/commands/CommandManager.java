@@ -409,6 +409,19 @@ public class CommandManager implements TabCompleter {
                     }
                     break;
                 }
+                case "LEAVE": {
+                    if (args.length == 2) {
+                        String trim = finalArgs[1].trim();
+                        PlotManager.getInstance().getMembershipPlots(player.getUniqueId()).forEach((integer, plot) -> {
+                            if (trim.isEmpty()) {
+                                tabCompleter.add(String.valueOf(plot.getID()));
+                            } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(trim.toLowerCase())) {
+                                tabCompleter.add(String.valueOf(plot.getID()));
+                            }
+                        });
+                    }
+                    return tabCompleter;
+                }
                 case "KICK": {
                     if (args.length == 2) {
                         PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
@@ -422,7 +435,13 @@ public class CommandManager implements TabCompleter {
                         return tabCompleter;
                     }
                     if (args.length == 3) {
-                        Plot plot = PlotManager.getInstance().getPlot(Integer.parseInt(args[1]));
+                        String arg = args[1];
+                        try {
+                            Integer.parseInt(arg.trim());
+                        } catch (NumberFormatException e) {
+                            return tabCompleter;
+                        }
+                        Plot plot = PlotManager.getInstance().getPlot(Integer.parseInt(arg));
                         if (plot == null) return null;
                         for (OfflinePlayer offlinePlayer : plot.getPlayerMembers()) {
                             if (Objects.equals(offlinePlayer.getName(), player.getName())) continue;

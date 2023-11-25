@@ -1,7 +1,6 @@
 package com.modnmetl.virtualrealty.commands;
 
 import com.modnmetl.virtualrealty.VirtualRealty;
-import com.modnmetl.virtualrealty.commands.vrplot.VirtualRealtyCommand;
 import com.modnmetl.virtualrealty.model.other.CommandType;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
 import com.modnmetl.virtualrealty.exception.InsufficientPermissionsException;
@@ -11,12 +10,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,7 +26,7 @@ public abstract class SubCommand {
     private final String[] args;
     private final CommandSender commandSender;
     @Getter
-    public LinkedList<String> HELP_LIST;
+    public LinkedList<String> helpMessages;
     private final boolean bypass;
     @Getter
     @Setter
@@ -37,15 +36,15 @@ public abstract class SubCommand {
     public SubCommand() {
         this.args = null;
         this.commandSender = null;
-        this.HELP_LIST = null;
+        this.helpMessages = null;
         this.bypass = false;
         this.alias = null;
     }
 
     @SneakyThrows
-    public SubCommand(CommandSender sender, Command command, String label, String[] args, boolean bypass, LinkedList<String> HELP_LIST) throws FailedCommandException {
+    public SubCommand(CommandSender sender, Command command, String label, String[] args, boolean bypass, LinkedList<String> helpMessages) throws FailedCommandException {
         this.args = args;
-        this.HELP_LIST = HELP_LIST;
+        this.helpMessages = helpMessages;
         this.commandSender = sender;
         this.bypass = bypass;
         this.alias = null;
@@ -53,9 +52,9 @@ public abstract class SubCommand {
     }
 
     @SneakyThrows
-    public SubCommand(CommandSender sender, Command command, String label, String[] args, LinkedList<String> HELP_LIST) throws FailedCommandException {
+    public SubCommand(CommandSender sender, Command command, String label, String[] args, LinkedList<String> helpMessages) throws FailedCommandException {
         this.args = args;
-        this.HELP_LIST = HELP_LIST;
+        this.helpMessages = helpMessages;
         this.commandSender = sender;
         this.bypass = false;
         this.alias = null;
@@ -140,7 +139,13 @@ public abstract class SubCommand {
         }
         String subCommandName = getSubCommandName();
         String keyByValue = MapUtils.getKeyByValue(commandsAliases, subCommandName);
-        for (String s : commandsHelp.get(keyByValue)) {
+        List<String> subCommandHelpMessages = commandsHelp.get(keyByValue);
+        if (subCommandHelpMessages == null) {
+            commandsHelp.put(subCommandName, getHelpMessages());
+            subCommandHelpMessages = getHelpMessages();
+            VirtualRealty.getCommands().save();
+        }
+        for (String s : subCommandHelpMessages) {
             String message = s.replaceAll("%command%", subCommandName);
             ChatMessage.of(message).send(commandSender);
         }

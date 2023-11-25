@@ -58,6 +58,10 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String noPlotFound = "§cCouldn't get plot with specified ID!";
     public String notYourPlot = "§cIt's not your plot!";
     public String ownershipExpired = "§cYour ownership has expired!";
+    public String ownershipExpiredJoinMessage = "§cYour %plot_size% plot %plot_id% has expired!";
+    public String daysUntilExpirationThresholdMessage = "§6Your %plot_size% plot %plot_id% is due to expire in %days% days and %hours% hours," +
+            " use another plot claim item of the same size type while standing inside it to extend its lease," +
+            " or it could be claimed by another player after that time!";
     public String teleportedToPlot = "§aYou have been teleported to the plot!";
     public String gamemodeFeatureDisabled = "§cGamemode feature is disabled!";
     public String gamemodeDisabled = "§cThis gamemode is disabled!";
@@ -84,6 +88,8 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String standingOnPlot = "§cYou are standing on a plot!";
     public String notStandingOnPlot = "§cYou aren't standing on any plot!";
     public String playerKick = "§aPlayer §7%player% §ahas been kicked out of your plot!";
+    public String plotLeave = "§aYou have left the plot with id %plot_id%!";
+    public String cantLeaveOwnPlot = "§6You can't leave your own plot!";
     public String playerAdd = "§aPlayer §7%player% §ahas been added to your plot!";
     public String gamemodeSwitched = "§aYour gamemode has changed!";
     public String gamemodeAlreadySelected = "§cThis gamemode is already selected!";
