@@ -89,7 +89,6 @@ public class MessagesConfiguration extends OkaeriConfig {
     public String notStandingOnPlot = "§cYou aren't standing on any plot!";
     public String playerKick = "§aPlayer §7%player% §ahas been kicked out of your plot!";
     public String plotLeave = "§aYou have left the plot with id %plot_id%!";
-    public String cantLeaveOwnPlot = "§6You can't leave your own plot!";
     public String playerAdd = "§aPlayer §7%player% §ahas been added to your plot!";
     public String gamemodeSwitched = "§aYour gamemode has changed!";
     public String gamemodeAlreadySelected = "§cThis gamemode is already selected!";
@@ -142,6 +141,11 @@ public class MessagesConfiguration extends OkaeriConfig {
             "§7You are about to remove §a%plot_id%§7, once done you cannot undo.",
             "§7Type §aYES §7to proceed."
     );
+    public List<String> leaveConfirmation = Arrays.asList(
+            "§7You are about to leave your owned plot §a%plot_id%§7.",
+            "§7Type §aYES §7to confirm."
+    );
+    public String leaveConfirmationCancelled = "§cLeaving process cancelled!";
 
     //Other
     public String confirmationExpired = "§cConfirmation not received, command cancelled.";
