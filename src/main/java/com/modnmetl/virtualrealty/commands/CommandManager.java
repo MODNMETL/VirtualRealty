@@ -412,7 +412,7 @@ public class CommandManager implements TabCompleter {
                 case "LEAVE": {
                     if (args.length == 2) {
                         String trim = finalArgs[1].trim();
-                        PlotManager.getInstance().getMembershipPlots(player.getUniqueId()).forEach((integer, plot) -> {
+                        PlotManager.getInstance().getAccessPlots(player.getUniqueId()).forEach((integer, plot) -> {
                             if (trim.isEmpty()) {
                                 tabCompleter.add(String.valueOf(plot.getID()));
                             } else if (String.valueOf(plot.getID()).toLowerCase().startsWith(trim.toLowerCase())) {

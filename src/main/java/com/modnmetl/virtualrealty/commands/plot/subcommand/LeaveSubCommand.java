@@ -3,9 +3,12 @@ package com.modnmetl.virtualrealty.commands.plot.subcommand;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.commands.SubCommand;
 import com.modnmetl.virtualrealty.exception.FailedCommandException;
+import com.modnmetl.virtualrealty.manager.ConfirmationManager;
 import com.modnmetl.virtualrealty.manager.PlotManager;
 import com.modnmetl.virtualrealty.model.other.ChatMessage;
 import com.modnmetl.virtualrealty.model.other.CommandType;
+import com.modnmetl.virtualrealty.model.other.Confirmation;
+import com.modnmetl.virtualrealty.model.other.ConfirmationType;
 import com.modnmetl.virtualrealty.model.permission.ManagementPermission;
 import com.modnmetl.virtualrealty.model.plot.Plot;
 import com.modnmetl.virtualrealty.model.plot.PlotMember;
@@ -60,11 +63,38 @@ public class LeaveSubCommand extends SubCommand {
         }
         PlotMember plotMember = plot.getMember(player.getUniqueId());
         if (plot.getOwnedBy().equals(player.getUniqueId())) {
-            ChatMessage.of(VirtualRealty.getMessages().cantLeaveOwnPlot).sendWithPrefix(sender);
-            return;
+            for (String s : VirtualRealty.getMessages().leaveConfirmation) {
+                player.sendMessage(VirtualRealty.PREFIX + s.replaceAll("%plot_id%", String.valueOf(plotID)));
+            }
+            Confirmation confirmation = new Confirmation(ConfirmationType.PLOT_OWNER_LEAVE, player, "YES") {
+                @Override
+                public void success() {
+                    ChatMessage.of(VirtualRealty.getMessages().plotLeave.replaceAll("%plot_id%", String.valueOf(plotID)))
+                            .sendWithPrefix(sender);
+                    plot.removeAllMembers();
+                    plot.setAssignedBy(null);
+                    plot.setOwnedBy(null);
+                    plot.update();
+                    ConfirmationManager.removeConfirmations(this.getConfirmationType());
+                }
+                @Override
+                public void failed() {
+                    ChatMessage.of(VirtualRealty.getMessages().leaveConfirmationCancelled.replaceAll("%plot_id%", String.valueOf(plotID)))
+                            .sendWithPrefix(sender);
+                    ConfirmationManager.removeConfirmations(this.getConfirmationType());
+                }
+                @Override
+                public void expiry() {
+                    ChatMessage.of(VirtualRealty.getMessages().confirmationExpired.replaceAll("%plot_id%", String.valueOf(plotID)))
+                            .sendWithPrefix(sender);
+                    ConfirmationManager.removeConfirmations(this.getConfirmationType());
+                }
+            };
+            ConfirmationManager.addConfirmation(confirmation);
+        } else {
+            plot.removeMember(plotMember);
+            ChatMessage.of(VirtualRealty.getMessages().plotLeave.replaceAll("%plot_id%", String.valueOf(plot.getID()))).sendWithPrefix(sender);
         }
-        plot.removeMember(plotMember);
-        ChatMessage.of(VirtualRealty.getMessages().plotLeave.replaceAll("%plot_id%", String.valueOf(plot.getID()))).sendWithPrefix(sender);
     }
 
 }

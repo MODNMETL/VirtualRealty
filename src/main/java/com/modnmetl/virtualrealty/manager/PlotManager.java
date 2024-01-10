@@ -215,7 +215,7 @@ public final class PlotManager {
     public boolean isLocationInPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-        return region.isIn(newVector, location.getWorld());
+        return region.isIn(newVector, location.getWorld().getName());
     }
 
     public Plot getPlot(Location location) {
@@ -225,7 +225,7 @@ public final class PlotManager {
                 return getBorderedPlot(location);
             } else {
                 Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-                if (region.isIn(newVector, plot.getCreatedWorld()))
+                if (region.isIn(newVector, plot.getCreatedWorldRaw()))
                     return plot;
             }
         }
@@ -243,7 +243,7 @@ public final class PlotManager {
                 Cuboid region = plot.getCuboid();
                 if (!region.getWorld().getName().equals(world.getName()))
                     continue;
-                if (region.isIn(newVector, plot.getCreatedWorld()))
+                if (region.isIn(newVector, plot.getCreatedWorldRaw()))
                     return plot;
             }
         }
@@ -258,7 +258,7 @@ public final class PlotManager {
             Cuboid borderedRegion = plot.getBorderedCuboid();
             if (!borderedRegion.getWorld().getName().equals(world.getName()))
                 continue;
-            if (borderedRegion.isIn(newVector, plot.getCreatedWorld()))
+            if (borderedRegion.isIn(newVector, plot.getCreatedWorldRaw()))
                 return plot;
         }
         return null;
@@ -267,7 +267,7 @@ public final class PlotManager {
     public boolean isLocationInBorderedPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
-        return region.isIn(newVector, plot.getCreatedWorld());
+        return region.isIn(newVector, plot.getCreatedWorldRaw());
     }
 
     public static PlotManager getInstance() {

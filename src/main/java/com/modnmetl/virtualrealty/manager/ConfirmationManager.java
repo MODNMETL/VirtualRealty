@@ -25,6 +25,10 @@ public class ConfirmationManager {
         confirmations.removeIf(confirmation -> confirmation.getPlotID() == plotID && confirmation.getConfirmationType() == confirmationType);
     }
 
+    public static void removeConfirmations(ConfirmationType confirmationType) {
+        confirmations.removeIf(confirmation -> confirmation.getConfirmationType() == confirmationType);
+    }
+
     public static void removeStakeConfirmations(ConfirmationType confirmationType, UUID sender) {
         confirmations.removeIf(confirmation -> confirmation.getConfirmationType() == confirmationType && confirmation.getSender().getUniqueId() == sender);
     }
