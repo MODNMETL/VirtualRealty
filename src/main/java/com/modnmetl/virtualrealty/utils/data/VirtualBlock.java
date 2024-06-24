@@ -1,12 +1,15 @@
-package com.modnmetl.virtualrealty.model.region;
+package com.modnmetl.virtualrealty.utils.data;
 
+import com.modnmetl.virtualrealty.model.region.IVirtualBlock;
 import lombok.Data;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.io.*;
 
+// DO NOT TOUCH
 @Data
+@Deprecated
 public class VirtualBlock implements Serializable, IVirtualBlock {
 
     private static final long serialVersionUID = -4262694990318416275L;
@@ -38,5 +41,6 @@ public class VirtualBlock implements Serializable, IVirtualBlock {
     public Block getBlock(World world) {
         return world.getBlockAt(x,y,z);
     }
+
 
 }

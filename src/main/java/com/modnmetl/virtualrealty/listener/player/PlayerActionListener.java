@@ -17,7 +17,7 @@ import com.modnmetl.virtualrealty.model.region.Cuboid;
 import com.modnmetl.virtualrealty.model.region.GridStructure;
 import com.modnmetl.virtualrealty.util.RegionUtil;
 import com.modnmetl.virtualrealty.model.other.ChatMessage;
-import de.tr7zw.changeme.nbtapi.NBTItem;
+import de.tr7zw.changeme.nbtapi.NBT;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -37,6 +37,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
+import java.util.Map;
 
 public class PlayerActionListener extends VirtualListener {
 
@@ -217,7 +218,6 @@ public class PlayerActionListener extends VirtualListener {
                 int height = plotItem.getHeight();
                 int width = plotItem.getWidth();
                 ItemStack plotItemStack = DraftListener.DRAFT_MAP.get(this.getSender()).getValue().getValue().getItemStack();
-                NBTItem item = new NBTItem(plotItemStack);
                 gridStructure.removeGrid();
                 this.getSender().sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().notCollidingCreating);
                 long timeStart = System.currentTimeMillis();
@@ -230,15 +230,27 @@ public class PlayerActionListener extends VirtualListener {
                 } else {
                     plot = PlotManager.getInstance().createPlot(location, plotSize, plotItem.isNatural());
                 }
-                AbstractMap.SimpleEntry<String, Byte> floorData = new AbstractMap.SimpleEntry<>(item.getString("vrplot_floor_material"), item.getByte("vrplot_floor_data"));
-                AbstractMap.SimpleEntry<String, Byte> borderData = new AbstractMap.SimpleEntry<>(item.getString("vrplot_border_material"), item.getByte("vrplot_border_data"));
+                String floorMaterial = NBT.get(plotItemStack, nbt -> {
+                    return nbt.getString("vrplot_floor_material");
+                });
+                byte floorData = NBT.get(plotItemStack, nbt -> {
+                    return nbt.getByte("vrplot_floor_data");
+                });
+                String borderMaterial = NBT.get(plotItemStack, nbt -> {
+                    return nbt.getString("vrplot_border_material");
+                });
+                byte borderData = NBT.get(plotItemStack, nbt -> {
+                    return nbt.getByte("vrplot_border_data");
+                });
+                AbstractMap.SimpleEntry<String, Byte> floorDataEntry = new AbstractMap.SimpleEntry<>(floorMaterial, floorData);
+                AbstractMap.SimpleEntry<String, Byte> borderDataEntry = new AbstractMap.SimpleEntry<>(borderMaterial, borderData);
                 if (!plotItem.isNatural()) {
                     if (VirtualRealty.legacyVersion) {
-                        plot.setFloorMaterial(Material.valueOf(floorData.getKey()), floorData.getValue());
-                        plot.setBorderMaterial(Material.valueOf(borderData.getKey()), borderData.getValue());
+                        plot.setFloorMaterial(Material.valueOf(floorDataEntry.getKey()), floorDataEntry.getValue());
+                        plot.setBorderMaterial(Material.valueOf(borderDataEntry.getKey()), borderDataEntry.getValue());
                     } else {
-                        plot.setFloorMaterial(Bukkit.createBlockData(floorData.getKey()).getMaterial(), floorData.getValue());
-                        plot.setBorderMaterial(Bukkit.createBlockData(borderData.getKey()).getMaterial(), borderData.getValue());
+                        plot.setFloorMaterial(Bukkit.createBlockData(floorDataEntry.getKey()).getMaterial(), floorDataEntry.getValue());
+                        plot.setBorderMaterial(Bukkit.createBlockData(borderDataEntry.getKey()).getMaterial(), borderDataEntry.getValue());
                     }
                 }
                 plot.setOwnedBy(this.getSender().getUniqueId());
@@ -325,10 +337,12 @@ public class PlayerActionListener extends VirtualListener {
         }
         PlayerInventory inv = player.getInventory();
         ItemStack claimItem = VirtualRealty.legacyVersion ? player.getItemInHand() : inv.getItemInMainHand();
-        NBTItem claimNbtItem;
+
+        String item = NBT.get(claimItem, nbt -> {
+            return nbt.getString("vrplot_item");
+        });
         if (!(claimItem.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD)
-                &&
-                (claimNbtItem = new NBTItem(claimItem)).getString("vrplot_item") != null && claimNbtItem.getString("vrplot_item").equals("CLAIM"))) {
+                && item != null && item.equals("CLAIM"))) {
             return;
         }
         e.setCancelled(true);
@@ -385,7 +399,10 @@ public class PlayerActionListener extends VirtualListener {
             ));
             return;
         }
-        PlotSize plotSize = PlotSize.valueOf(claimNbtItem.getString("vrplot_size"));
+        String size = NBT.get(claimItem, nbt -> {
+            return nbt.getString("vrplot_size");
+        });
+        PlotSize plotSize = PlotSize.valueOf(size);
         Cuboid cuboid = RegionUtil.getRegion(player.getLocation(), Direction.byYaw(player.getLocation().getYaw()), plotSize.getLength(), plotSize.getHeight(), plotSize.getWidth());
         if (RegionUtil.isCollidingWithAnotherPlot(cuboid)) {
             player.sendMessage(VirtualRealty.PREFIX + VirtualRealty.getMessages().claimModeCancelledCollision);

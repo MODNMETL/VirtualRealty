@@ -3,14 +3,16 @@ package com.modnmetl.virtualrealty.manager;
 import com.modnmetl.virtualrealty.model.plot.PlotSize;
 import com.modnmetl.virtualrealty.model.plot.PlotMember;
 import com.modnmetl.virtualrealty.VirtualRealty;
+import com.modnmetl.virtualrealty.model.region.ChunkData;
 import com.modnmetl.virtualrealty.model.region.Cuboid;
 import com.modnmetl.virtualrealty.model.plot.Plot;
 import com.modnmetl.virtualrealty.model.math.BlockVector3;
+import com.modnmetl.virtualrealty.model.region.ChunkPlotData;
+import com.modnmetl.virtualrealty.model.region.WorldPlotData;
 import com.modnmetl.virtualrealty.sql.Database;
 import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,18 +28,57 @@ public final class PlotManager {
     private final Set<Plot> plots;
 
     private final List<PlotMember> plotMembers;
+    private final Map<String, WorldPlotData> worldPlotDataMap;
 
     public PlotManager(VirtualRealty plugin) {
         this.plugin = plugin;
         this.plots = new LinkedHashSet<>();
         this.plotMembers = new ArrayList<>();
+        this.worldPlotDataMap = new HashMap<>();
+    }
+
+    public static ChunkData getChunkCords(Location location) {
+        return new ChunkData(location.getBlockX() >> 4, location.getBlockZ() >> 4);
+    }
+
+    public static long createChunkKey(int chunkX, int chunkZ) {
+        return chunkZ ^ ((long) chunkX << 32);
+    }
+
+    public static List<Long> getChunksForPlot(Plot plot, boolean withBorder) {
+        List<Long> chunks = new ArrayList<>();
+
+        Cuboid cuboid = plot.getCuboid();
+        Cuboid borderedCuboid = plot.getBorderedCuboid();
+
+        int minChunkX = (withBorder ? borderedCuboid.getMinimumPoint().getBlockX() : cuboid.getMinimumPoint().getBlockX()) >> 4;
+        int minChunkZ = (withBorder ? borderedCuboid.getMinimumPoint().getBlockZ() : cuboid.getMinimumPoint().getBlockZ()) >> 4;;
+        int maxChunkX = (withBorder ? borderedCuboid.getMaximumPoint().getBlockX() : cuboid.getMaximumPoint().getBlockX()) >> 4;
+        int maxChunkZ = (withBorder ? borderedCuboid.getMaximumPoint().getBlockZ() : cuboid.getMaximumPoint().getBlockZ()) >> 4;
+
+        for (int x = minChunkX; x <= maxChunkX; x++) {
+            for (int z = minChunkZ; z <= maxChunkZ; z++) {
+                chunks.add(createChunkKey(x, z));
+            }
+        }
+
+        return chunks;
     }
 
     public void loadPlots() {
         try (Connection conn = Database.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + VirtualRealty.getPluginConfiguration().mysql.plotsTableName + "`"); ResultSet rs = ps.executeQuery()) {
             plots.clear();
-            while (rs.next())
-                plots.add(new Plot(rs));
+            while (rs.next()) {
+                Plot plot = new Plot(rs);
+                plots.add(plot);
+                worldPlotDataMap.putIfAbsent(plot.getCreatedWorldRaw(), new WorldPlotData());
+                WorldPlotData worldPlotData = worldPlotDataMap.get(plot.getCreatedWorldRaw());
+                List<Long> chunksForPlot = getChunksForPlot(plot, true);
+                for (Long chunkKey : chunksForPlot) {
+                    ChunkPlotData chunkPlotData = worldPlotData.getChunkPlotData(chunkKey);
+                    chunkPlotData.addPlot(plot);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -141,6 +182,13 @@ public final class PlotManager {
     private Plot createPlot(Location creationLocation, PlotSize plotSize, int length, int height, int width, Material floorMaterial, Material borderMaterial, boolean natural) {
         Plot plot = new Plot(creationLocation, floorMaterial, borderMaterial, plotSize, length, width, height, natural);
         plots.add(plot);
+        worldPlotDataMap.putIfAbsent(plot.getCreatedWorldRaw(), new WorldPlotData());
+        WorldPlotData worldPlotData = worldPlotDataMap.get(plot.getCreatedWorldRaw());
+        List<Long> chunksForPlot = getChunksForPlot(plot, true);
+        for (Long chunkKey : chunksForPlot) {
+            ChunkPlotData chunkPlotData = worldPlotData.getChunkPlotData(chunkKey);
+            chunkPlotData.addPlot(plot);
+        }
         long time = System.currentTimeMillis();
         plot.insert();
         VirtualRealty.debug("Plot database insertion time: " + (System.currentTimeMillis() - time) + " ms");
@@ -215,51 +263,31 @@ public final class PlotManager {
     public boolean isLocationInPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-        return region.isIn(newVector, location.getWorld());
+        return region.isIn(newVector, location.getWorld().getName());
     }
 
     public Plot getPlot(Location location) {
-        BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-        for (Plot plot : plots) {
-            if (plot.isBorderLess()) {
-                return getBorderedPlot(location);
-            } else {
-                Cuboid region = new Cuboid(plot.getBottomLeftCorner(), plot.getTopRightCorner(), location.getWorld());
-                if (region.isIn(newVector, plot.getCreatedWorld()))
-                    return plot;
-            }
-        }
-        return null;
+        return getPlot(location, false);
     }
 
     public Plot getPlot(Location location, boolean withBorder) {
-        BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-        for (Plot plot : plots) {
-            if (withBorder) {
-                return getBorderedPlot(location);
-            } else {
-                World world = location.getWorld();
-                assert world != null;
-                Cuboid region = plot.getCuboid();
-                if (!region.getWorld().getName().equals(world.getName()))
-                    continue;
-                if (region.isIn(newVector, plot.getCreatedWorld()))
-                    return plot;
-            }
+        ChunkData chunkCords = getChunkCords(location);
+        String worldName = Objects.requireNonNull(location.getWorld()).getName();
+        WorldPlotData worldPlotData = worldPlotDataMap.get(worldName);
+        if (worldPlotData == null) {
+            return null;
         }
-        return null;
-    }
-
-    private Plot getBorderedPlot(Location location) {
-        BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-        for (Plot plot : plots) {
-            World world = location.getWorld();
-            assert world != null;
-            Cuboid borderedRegion = plot.getBorderedCuboid();
-            if (!borderedRegion.getWorld().getName().equals(world.getName()))
-                continue;
-            if (borderedRegion.isIn(newVector, plot.getCreatedWorld()))
-                return plot;
+        ChunkPlotData chunkPlotData = worldPlotData.getChunkPlotData(createChunkKey(chunkCords.getX(), chunkCords.getZ()));
+        for (Plot plot : chunkPlotData.getPlots()) {
+            if (withBorder) {
+                if (plot.getBorderedCuboid().isIn(location)) {
+                    return plot;
+                }
+            } else {
+                if (plot.getCuboid().isIn(location)) {
+                    return plot;
+                }
+            }
         }
         return null;
     }
@@ -267,7 +295,7 @@ public final class PlotManager {
     public boolean isLocationInBorderedPlot(Location location, Plot plot) {
         BlockVector3 newVector = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Cuboid region = new Cuboid(plot.getBorderBottomLeftCorner(), plot.getBorderTopRightCorner(), location.getWorld());
-        return region.isIn(newVector, plot.getCreatedWorld());
+        return region.isIn(newVector, plot.getCreatedWorldRaw());
     }
 
     public static PlotManager getInstance() {

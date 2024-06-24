@@ -5,6 +5,7 @@ public enum ConfirmationType {
     STAKE,
     CLAIM,
     EXTEND,
-    REMOVE
+    REMOVE,
+    PLOT_OWNER_LEAVE,
 
 }

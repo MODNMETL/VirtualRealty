@@ -2,6 +2,7 @@ package com.modnmetl.virtualrealty.model.region;
 
 import com.modnmetl.virtualrealty.model.math.BlockVector2;
 import com.modnmetl.virtualrealty.model.math.BlockVector3;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -16,7 +17,8 @@ public class Cuboid {
     private final int yMax;
     private final int zMin;
     private final int zMax;
-    private final World world;
+    private final String world;
+    private World bukkitWorld; // Lazy initialization
     private BlockVector3 centerVector; // Lazy initialization
     private List<BlockVector2> walls; // Lazy initialization
 
@@ -27,7 +29,7 @@ public class Cuboid {
         this.yMax = Math.max(point1.getBlockY(), point2.getBlockY());
         this.zMin = Math.min(point1.getBlockZ(), point2.getBlockZ());
         this.zMax = Math.max(point1.getBlockZ(), point2.getBlockZ());
-        this.world = point1.getWorld();
+        this.world = point1.getWorld().getName();
     }
 
     public Cuboid(BlockVector3 point1, BlockVector3 point2, World world) {
@@ -37,7 +39,7 @@ public class Cuboid {
         this.yMax = Math.max(point1.getBlockY(), point2.getBlockY());
         this.zMin = Math.min(point1.getBlockZ(), point2.getBlockZ());
         this.zMax = Math.max(point1.getBlockZ(), point2.getBlockZ());
-        this.world = world;
+        this.world = world.getName();
     }
 
     public List<BlockVector2> getWalls() {
@@ -60,7 +62,7 @@ public class Cuboid {
         for (int x = this.xMin; x <= this.xMax; ++x) {
             for (int y = this.yMin; y <= this.yMax; ++y) {
                 for (int z = this.zMin; z <= this.zMax; ++z) {
-                    blocks.add(this.world.getBlockAt(x, y, z));
+                    blocks.add(getWorld().getBlockAt(x, y, z));
                 }
             }
         }
@@ -71,7 +73,7 @@ public class Cuboid {
         List<Block> blocks = new ArrayList<>();
         for (int x = this.xMin; x <= this.xMax; ++x) {
             for (int z = this.zMin; z <= this.zMax; ++z) {
-                blocks.add(this.world.getBlockAt(x, 0, z));
+                blocks.add(getWorld().getBlockAt(x, 0, z));
             }
         }
         return blocks;
@@ -87,7 +89,7 @@ public class Cuboid {
 
 
     public Location getCenter() {
-        return new Location(this.world, (this.xMax - this.xMin) / 2 + this.xMin + 1, (this.yMax - this.yMin) / 2 + this.yMin, (this.zMax - this.zMin) / 2 + this.zMin + 1);
+        return new Location(getWorld(), (this.xMax - this.xMin) / 2 + this.xMin + 1, (this.yMax - this.yMin) / 2 + this.yMin, (this.zMax - this.zMin) / 2 + this.zMin + 1);
     }
 
     // Suggestion 3 - Lazy calculation and cached results
@@ -123,15 +125,15 @@ public class Cuboid {
     }
 
     public Location getPoint1() {
-        return new Location(this.world, this.xMin, this.yMin, this.zMin);
+        return new Location(getWorld(), this.xMin, this.yMin, this.zMin);
     }
 
     public Location getPoint2() {
-        return new Location(this.world, this.xMax, this.yMax, this.zMax);
+        return new Location(getWorld(), this.xMax, this.yMax, this.zMax);
     }
 
     public boolean isIn(BlockVector3 vector3, String world) {
-        return world.equals(this.world.getName())
+        return world.equals(this.world)
                 && vector3.getBlockX() >= this.xMin && vector3.getBlockX() <= this.xMax
                 && vector3.getBlockY() >= this.yMin && vector3.getBlockY() <= this.yMax
                 && vector3.getBlockZ() >= this.zMin && vector3.getBlockZ() <= this.zMax;
@@ -150,23 +152,23 @@ public class Cuboid {
     }
 
     public boolean isIn(Location loc) {
-        return loc.getWorld() == this.world
+        return loc.getWorld().getName().equals(this.world)
                 && loc.getBlockX() >= this.xMin && loc.getBlockX() <= this.xMax
                 && loc.getBlockY() >= this.yMin && loc.getBlockY() <= this.yMax
                 && loc.getBlockZ() >= this.zMin && loc.getBlockZ() <= this.zMax;
     }
 
-    public boolean isIn(BlockVector2 vector2, World world, int spacing) {
-        return world == this.world && vector2.getBlockX() >= this.xMin - spacing && vector2.getBlockX() <= this.xMax + spacing &&
+    public boolean isIn(BlockVector2 vector2, String world, int spacing) {
+        return world.equals(this.world) && vector2.getBlockX() >= this.xMin - spacing && vector2.getBlockX() <= this.xMax + spacing &&
                 vector2.getBlockZ() >= this.zMin - spacing && vector2.getBlockZ() <= this.zMax + spacing;
     }
 
-    public boolean isIn(BlockVector2 vector2, World world) {
+    public boolean isIn(BlockVector2 vector2, String world) {
         return this.isIn(vector2, world, 0);
     }
 
     public boolean isColliding(Cuboid other) {
-        return this.world == other.world &&
+        return this.world.equals(other.world) &&
                 this.xMax >= other.xMin && this.xMin <= other.xMax &&
                 this.yMax >= other.yMin && this.yMin <= other.yMax &&
                 this.zMax >= other.zMin && this.zMin <= other.zMax;
@@ -184,17 +186,11 @@ public class Cuboid {
                 this.zMin >= other.zMin && this.zMax <= other.zMax;
     }
 
-    public boolean containsBlock(Block block) {
-        Location blockLocation = block.getLocation();
-        if (block.getWorld() != world) return false;
-        for (BlockVector2 vector2 : getFlatRegion()) {
-            if (vector2.getBlockX() == blockLocation.getBlockX() && vector2.getBlockZ() == blockLocation.getBlockZ()) return true;
-        }
-        return false;
-    }
-
     public World getWorld() {
-        return world;
+        if (this.bukkitWorld == null) {
+            this.bukkitWorld = Bukkit.getWorld(this.world);
+        }
+        return bukkitWorld;
     }
 
 }

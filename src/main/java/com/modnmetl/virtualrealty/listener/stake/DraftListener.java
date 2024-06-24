@@ -4,7 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.listener.VirtualListener;
 import com.modnmetl.virtualrealty.model.plot.PlotItem;
 import com.modnmetl.virtualrealty.model.region.GridStructure;
-import de.tr7zw.changeme.nbtapi.NBTItem;
+import de.tr7zw.changeme.nbtapi.NBT;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -73,7 +73,10 @@ public class DraftListener extends VirtualListener {
     public void onBlockPlace(BlockPlaceEvent e) {
         Player player = e.getPlayer();
         ItemStack itemInHand = VirtualRealty.legacyVersion ? player.getItemInHand() : player.getInventory().getItemInMainHand();
-        if (itemInHand.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD) && (new NBTItem(itemInHand)).hasKey("vrplot_item")) {
+        boolean hasItemKey = NBT.get(itemInHand, nbt -> {
+            return nbt.hasTag("vrplot_item");
+        });
+        if (itemInHand.getType() == (VirtualRealty.legacyVersion ? Material.valueOf("SKULL_ITEM") : Material.PLAYER_HEAD) && hasItemKey) {
             e.setCancelled(true);
         }
     }

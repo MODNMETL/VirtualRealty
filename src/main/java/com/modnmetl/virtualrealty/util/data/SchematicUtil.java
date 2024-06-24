@@ -3,6 +3,7 @@ package com.modnmetl.virtualrealty.util.data;
 import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.manager.PlotManager;
 import com.modnmetl.virtualrealty.model.plot.Plot;
+import com.modnmetl.virtualrealty.model.region.IVirtualBlock;
 import com.modnmetl.virtualrealty.model.region.VirtualBlock;
 import com.modnmetl.virtualrealty.model.region.VirtualLocation;
 import com.modnmetl.virtualrealty.util.multiversion.VMaterial;
@@ -53,7 +54,7 @@ public class SchematicUtil {
     }
 
     public static void paste(int plotID) {
-        List<VirtualBlock> blocks = load(plotID);
+        List<IVirtualBlock> blocks = load(plotID);
         if (blocks == null) return;
         Plot plot = PlotManager.getInstance().getPlot(plotID);
         if (plot == null) return;
@@ -89,15 +90,15 @@ public class SchematicUtil {
                 }
                 VirtualRealty.debug("Pasted " + i + " air blocks in: " + (System.currentTimeMillis() - time) + " ms");
                 Bukkit.getScheduler().runTaskAsynchronously(VirtualRealty.getInstance(), () -> {
-                    List<List<VirtualBlock>> chunks = chunkArrayList(blocks, 15000);
+                    List<List<IVirtualBlock>> chunks = chunkArrayList(blocks, 15000);
                     Bukkit.getScheduler().scheduleSyncDelayedTask(VirtualRealty.getInstance(), () -> {
                         for (int j = 0; j < chunks.size(); j++) {
                             int finalJ = j;
                             new BukkitRunnable() {
                                 @Override
                                 public void run() {
-                                    List<VirtualBlock> virtualBlocks = chunks.get(finalJ);
-                                    for (VirtualBlock block : virtualBlocks) {
+                                    List<IVirtualBlock> virtualBlocks = chunks.get(finalJ);
+                                    for (IVirtualBlock block : virtualBlocks) {
                                         Location blockLocation = new Location(plot.getCreatedWorld(), block.getX(), block.getY(), block.getZ());
                                         Block oldBlock = blockLocation.getBlock();
                                         if (VirtualRealty.legacyVersion) {
@@ -128,8 +129,8 @@ public class SchematicUtil {
         });
     }
 
-    private static ArrayList<List<VirtualBlock>> chunkArrayList(List<VirtualBlock> arrayToChunk, int chunkSize) {
-        ArrayList<List<VirtualBlock>> chunkList = new ArrayList<>();
+    private static ArrayList<List<IVirtualBlock>> chunkArrayList(List<IVirtualBlock> arrayToChunk, int chunkSize) {
+        ArrayList<List<IVirtualBlock>> chunkList = new ArrayList<>();
         int guide = arrayToChunk.size();
         int index = 0;
         int tale = chunkSize;
@@ -166,27 +167,39 @@ public class SchematicUtil {
     }
 
     @SneakyThrows
-    public static LinkedList<VirtualBlock> load(int plotID) {
+    public static LinkedList<IVirtualBlock> load(int plotID) {
         long time = System.currentTimeMillis();
         File region = new File(VirtualRealty.plotsSchemaFolder, REGION_PREFIX + plotID + REGION_SUFFIX);
         File legacyRegion = new File(VirtualRealty.plotsSchemaFolder, LEGACY_REGION_PREFIX + plotID + REGION_SUFFIX);
-        ByteArrayInputStream bais;
-        ObjectInputStream ois;
-        if (region.exists()) {
-            byte[] bytes = new DataCompressor().decompressData(region);
-            bais = new ByteArrayInputStream(bytes);
-            ois = new ObjectInputStream(bais);
-            VirtualRealty.debug("Loaded in: " + (System.currentTimeMillis() - time) + " ms");
-            return (LinkedList<VirtualBlock>) ois.readObject();
-        } else if (legacyRegion.exists()) {
-            byte[] bytes = new DataCompressor().decompressData(legacyRegion);
-            bais = new ByteArrayInputStream(bytes);
-            ois = new ObjectInputStream(bais);
-            VirtualRealty.debug("Loaded in: " + (System.currentTimeMillis() - time) + " ms");
-            return (LinkedList<VirtualBlock>) ois.readObject();
+
+        if (region.exists() || legacyRegion.exists()) {
+            File fileToRead = region.exists() ? region : legacyRegion;
+            byte[] bytes = new DataCompressor().decompressData(fileToRead);
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+
+            try (ObjectInputStream ois = new ObjectInputStream(bais)) {
+                Object readObject = ois.readObject();
+                LinkedList<IVirtualBlock> result = new LinkedList<>();
+
+                if (readObject instanceof LinkedList) {
+                    LinkedList<?> list = (LinkedList<?>) readObject;
+                    for (Object obj : list) {
+                        if (obj instanceof com.modnmetl.virtualrealty.model.region.VirtualBlock) {
+                            result.add((com.modnmetl.virtualrealty.model.region.VirtualBlock) obj);
+                        } else if (obj instanceof com.modnmetl.virtualrealty.utils.data.VirtualBlock) {
+                            result.add((com.modnmetl.virtualrealty.utils.data.VirtualBlock) obj);
+                        }
+                    }
+                }
+                VirtualRealty.debug("Loaded in: " + (System.currentTimeMillis() - time) + " ms");
+                return result;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return null;
     }
+
 
     public static boolean doesPlotFileExist(int plotID) {
         File region = new File(VirtualRealty.plotsSchemaFolder, REGION_PREFIX + plotID + REGION_SUFFIX);

@@ -28,6 +28,7 @@ import com.modnmetl.virtualrealty.util.configuration.ConfigurationFactory;
 import com.modnmetl.virtualrealty.util.multiversion.VMaterial;
 import com.modnmetl.virtualrealty.util.UpdateChecker;
 import com.zaxxer.hikari.HikariDataSource;
+import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.io.FileUtils;

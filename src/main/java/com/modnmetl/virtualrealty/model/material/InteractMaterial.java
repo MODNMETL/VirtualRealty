@@ -130,4 +130,10 @@ public enum InteractMaterial {
     WOOD_BUTTON,
     YELLOW_BED,
 
+    CHERRY_TRAPDOOR,
+    CHERRY_FENCE,
+    CHERRY_FENCE_GATE,
+    CHERRY_BOAT,
+    CHERRY_BUTTON,
+
 }
