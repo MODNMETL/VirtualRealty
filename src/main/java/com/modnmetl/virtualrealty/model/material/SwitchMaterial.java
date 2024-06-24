@@ -15,6 +15,7 @@ public enum SwitchMaterial {
     WARPED_BUTTON,
     CRIMSON_BUTTON,
     POLISHED_BLACKSTONE_BUTTON,
+    CHERRY_BUTTON,
 
     TRIPWIRE,
     COMPARATOR,

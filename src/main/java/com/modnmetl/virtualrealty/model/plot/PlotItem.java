@@ -4,6 +4,7 @@ import com.modnmetl.virtualrealty.VirtualRealty;
 import com.modnmetl.virtualrealty.model.other.VItem;
 import com.modnmetl.virtualrealty.util.data.ItemBuilder;
 import com.modnmetl.virtualrealty.util.data.SkullUtil;
+import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -72,21 +73,21 @@ public class PlotItem {
                 .addLoreLine(" §8┣ §fBorder: §7" + (border == Material.AIR ? "NONE" : border.name()))
                 .addLoreLine(" §8┗ §fLease days: §7" + (additionalDays == 0 ? "No Expiry" : additionalDays));
         ItemStack itemStack = itemBuilder.toItemStack();
-        NBTItem nbtItem = new NBTItem(itemStack);
 
-        nbtItem.setString(NBT_PREFIX + "item", itemType.name());
-        nbtItem.setString(NBT_PREFIX + "size", plotSize.name());
-        nbtItem.setInteger(NBT_PREFIX + "length", length);
-        nbtItem.setInteger(NBT_PREFIX + "height", height);
-        nbtItem.setInteger(NBT_PREFIX + "width", width);
-        nbtItem.setString(NBT_PREFIX + "floor_material", floorData.getKey());
-        nbtItem.setByte(NBT_PREFIX + "floor_data", floorData.getValue());
-        nbtItem.setString(NBT_PREFIX + "border_material", borderData.getKey());
-        nbtItem.setByte(NBT_PREFIX + "border_data", borderData.getValue());
-        nbtItem.setBoolean(NBT_PREFIX + "natural", natural);
-        nbtItem.setInteger(NBT_PREFIX + "additional_days", additionalDays);
-        nbtItem.setString(NBT_PREFIX + "stack_uuid", uuid == null ? UUID.randomUUID().toString() : uuid.toString());
-        nbtItem.applyNBT(itemStack);
+        NBT.modify(itemStack, nbt -> {
+            nbt.setString(NBT_PREFIX + "item", itemType.name());
+            nbt.setString(NBT_PREFIX + "size", plotSize.name());
+            nbt.setInteger(NBT_PREFIX + "length", length);
+            nbt.setInteger(NBT_PREFIX + "height", height);
+            nbt.setInteger(NBT_PREFIX + "width", width);
+            nbt.setString(NBT_PREFIX + "floor_material", floorData.getKey());
+            nbt.setByte(NBT_PREFIX + "floor_data", floorData.getValue());
+            nbt.setString(NBT_PREFIX + "border_material", borderData.getKey());
+            nbt.setByte(NBT_PREFIX + "border_data", borderData.getValue());
+            nbt.setBoolean(NBT_PREFIX + "natural", natural);
+            nbt.setInteger(NBT_PREFIX + "additional_days", additionalDays);
+            nbt.setString(NBT_PREFIX + "stack_uuid", uuid == null ? UUID.randomUUID().toString() : uuid.toString());
+        });
         return itemStack;
     }
 
@@ -107,27 +108,62 @@ public class PlotItem {
     }
 
     public static PlotItem fromItemStack(ItemStack itemStack) {
-        NBTItem nbtItem = new NBTItem(itemStack);
-        Map.Entry<String, Byte> floorData = new AbstractMap.SimpleEntry<>(nbtItem.getString("vrplot_floor_material"), nbtItem.getByte("vrplot_floor_data"));
-        Map.Entry<String, Byte> borderData = new AbstractMap.SimpleEntry<>(nbtItem.getString("vrplot_border_material"), nbtItem.getByte("vrplot_border_data"));
-        PlotSize plotSize = PlotSize.valueOf(nbtItem.getString("vrplot_size"));
+        String floorMaterial = NBT.get(itemStack, nbt -> {
+            return nbt.getString("vrplot_floor_material");
+        });
+        byte floorData = NBT.get(itemStack, nbt -> {
+            return nbt.getByte("vrplot_floor_data");
+        });
+        Map.Entry<String, Byte> floorDataEntry = new AbstractMap.SimpleEntry<>(floorMaterial, floorData);
+        String borderMaterial = NBT.get(itemStack, nbt -> {
+            return nbt.getString("vrplot_border_material");
+        });
+        byte borderData = NBT.get(itemStack, nbt -> {
+            return nbt.getByte("vrplot_border_data");
+        });
+        Map.Entry<String, Byte> borderDataEntry = new AbstractMap.SimpleEntry<>(borderMaterial, borderData);
+        PlotSize plotSize = PlotSize.valueOf(NBT.get(itemStack, nbt -> {
+            return nbt.getString("vrplot_size");
+        }));
+        String item = NBT.get(itemStack, nbt -> {
+            return nbt.getString(NBT_PREFIX + "item");
+        });
+        Integer length = NBT.get(itemStack, nbt -> {
+            return nbt.getInteger(NBT_PREFIX + "length");
+        });
+        Integer height = NBT.get(itemStack, nbt -> {
+            return nbt.getInteger(NBT_PREFIX + "height");
+        });
+        Integer width = NBT.get(itemStack, nbt -> {
+            return nbt.getInteger(NBT_PREFIX + "width");
+        });
+        boolean natural = NBT.get(itemStack, nbt -> {
+            return nbt.getBoolean(NBT_PREFIX + "natural");
+        });
+        Integer additionalDays = NBT.get(itemStack, nbt -> {
+            return nbt.getInteger(NBT_PREFIX + "additional_days");
+        });
+        String uuid = NBT.get(itemStack, nbt -> {
+            return nbt.getString(NBT_PREFIX + "stack_uuid");
+        });
         return new PlotItem(
-                VItem.valueOf(nbtItem.getString(NBT_PREFIX + "item")),
+                VItem.valueOf(item),
                 plotSize,
-                nbtItem.getInteger(NBT_PREFIX + "length"),
-                nbtItem.getInteger(NBT_PREFIX + "height"),
-                nbtItem.getInteger(NBT_PREFIX + "width"),
-                floorData,
-                borderData,
-                nbtItem.getBoolean(NBT_PREFIX + "natural"),
-                nbtItem.getInteger(NBT_PREFIX + "additional_days"),
-                UUID.fromString(nbtItem.getString(NBT_PREFIX + "stack_uuid"))
+                length,
+                height,
+                width,
+                floorDataEntry,
+                borderDataEntry,
+                natural,
+                additionalDays,
+                UUID.fromString(uuid)
         );
     }
 
     public static UUID getPlotItemUuid(ItemStack itemStack) {
-        NBTItem nbtItem = new NBTItem(itemStack);
-        String string = nbtItem.getString(NBT_PREFIX + "stack_uuid");
+        String string = NBT.get(itemStack, nbt -> {
+            return nbt.getString(NBT_PREFIX + "stack_uuid");
+        });
         if (string == null || string.isEmpty())
             return UUID.randomUUID();
         return UUID.fromString(string);

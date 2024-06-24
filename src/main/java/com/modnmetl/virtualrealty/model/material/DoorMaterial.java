@@ -12,6 +12,7 @@ public enum DoorMaterial {
     IRON_DOOR,
     JUNGLE_DOOR,
     OAK_DOOR,
-    SPRUCE_DOOR
+    SPRUCE_DOOR,
+    CHERRY_DOOR
 
 }
