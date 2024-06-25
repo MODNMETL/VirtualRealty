@@ -30,7 +30,6 @@ public class SkullUtil {
                 propertiesNbt.setString("name", "textures");
                 propertiesNbt.setString("value", textureValue);
             });
-            System.out.println(">=1.20.5");
         } else {
             NBT.modify(item, nbt -> {
                 final ReadWriteNBT skullOwnerCompound = nbt.getOrCreateCompound("SkullOwner");
@@ -40,10 +39,7 @@ public class SkullUtil {
                         .addCompound()
                         .setString("Value", textureValue);
             });
-            System.out.println("<1.20.5");
         }
-//        System.out.println(item);
-        System.out.println(NBT.itemStackToNBT(item));
         return item;
     }
 
