@@ -338,8 +338,6 @@ public class PlayerActionListener extends VirtualListener {
         PlayerInventory inv = player.getInventory();
         ItemStack claimItem = VirtualRealty.legacyVersion ? player.getItemInHand() : inv.getItemInMainHand();
 
-        if (claimItem == null || claimItem.getType() == Material.AIR) return;
-
         String item = NBT.get(claimItem, nbt -> {
             return nbt.getString("vrplot_item");
         });

@@ -73,7 +73,6 @@ public class DraftListener extends VirtualListener {
     public void onBlockPlace(BlockPlaceEvent e) {
         Player player = e.getPlayer();
         ItemStack itemInHand = VirtualRealty.legacyVersion ? player.getItemInHand() : player.getInventory().getItemInMainHand();
-        if (itemInHand == null || itemInHand.getType() == Material.AIR) return;
         boolean hasItemKey = NBT.get(itemInHand, nbt -> {
             return nbt.hasTag("vrplot_item");
         });
