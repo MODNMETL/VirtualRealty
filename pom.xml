@@ -6,13 +6,13 @@
 
     <groupId>com.modnmetl</groupId>
     <artifactId>virtualrealty</artifactId>
-    <version>2.8.2</version>
+    <version>2.8.3</version>
     <packaging>jar</packaging>
 
     <description>A plot creation and management plugin for Minecraft</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mainclass>com.modnmetl.virtualrealty.VirtualRealty</mainclass>
     </properties>
@@ -187,13 +187,13 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>1.18.34</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>de.tr7zw</groupId>
             <artifactId>item-nbt-api</artifactId>
-            <version>2.13.1</version>
+            <version>2.13.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
